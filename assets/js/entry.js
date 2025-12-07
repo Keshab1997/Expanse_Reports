@@ -76,6 +76,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // হেল্পার ফাংশনসমূহ (এখানে ক্যাটাগরি ফিক্স করা হয়েছে)
 // ============================
 
+// Optimized loadCategories Function
 async function loadCategories(selectElement) {
     if(!window.db) return console.error("Database not connected!");
 
@@ -84,19 +85,22 @@ async function loadCategories(selectElement) {
     const { data: { user } } = await window.db.auth.getUser();
     if (!user) return;
 
-    // ১. 'categories' টেবিল থেকে ডাটা আনা (যেগুলো প্লাস বাটন দিয়ে বানিয়েছেন)
+    // ১. সেভ করা ক্যাটাগরি (categories টেবিল থেকে)
     const { data: savedCats } = await window.db
         .from('categories')
         .select('name')
         .order('name');
 
-    // ২. 'expenses' টেবিল থেকে ডাটা আনা (যেগুলো এক্সেল দিয়ে আপলোড হয়েছে)
+    // ২. ব্যবহৃত ক্যাটাগরি (expenses টেবিল থেকে)
+    // ফিক্স: আগে সব ডাটা আনত, এখন আমরা শুধু লাস্ট ৫০০ এন্ট্রি চেক করব
     const { data: usedCats } = await window.db
         .from('expenses')
         .select('category')
-        .not('category', 'is', null);
+        .not('category', 'is', null)
+        .order('date', { ascending: false }) // লেটেস্ট গুলো আগে
+        .limit(500); // মাত্র ৫০০ ডাটা আনবে (মিলিসেকেন্ডে হয়ে যাবে)
 
-    // ৩. দুটি লিস্ট মার্জ (Merge) করা এবং ডুপ্লিকেট রিমুভ করা
+    // ৩. মার্জ করা
     let allCategories = [];
 
     if (savedCats) {
@@ -105,6 +109,27 @@ async function loadCategories(selectElement) {
     if (usedCats) {
         allCategories.push(...usedCats.map(c => c.category));
     }
+
+    // ইউনিক করা
+    const uniqueCategories = [...new Set(allCategories)].filter(Boolean).sort();
+
+    // ৪. অপশন সেট করা
+    selectElement.innerHTML = '<option value="" disabled selected>Select Category</option>';
+    
+    if (uniqueCategories.length > 0) {
+        uniqueCategories.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            selectElement.appendChild(opt);
+        });
+    } else {
+        const opt = document.createElement('option');
+        opt.disabled = true;
+        opt.textContent = "No categories found";
+        selectElement.appendChild(opt);
+    }
+}
 
     // Set ব্যবহার করে ইউনিক নাম বের করা এবং সর্ট করা
     const uniqueCategories = [...new Set(allCategories)].filter(Boolean).sort();
