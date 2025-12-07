@@ -6,17 +6,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeSidebar = document.getElementById('closeSidebar');
 
     if (sidebar && menuToggle) {
+        // মেনু খোলা
         menuToggle.addEventListener('click', (e) => {
             e.stopPropagation();
             sidebar.classList.add('active');
         });
 
+        // মেনু বন্ধ করা (X বাটন)
         if (closeSidebar) {
             closeSidebar.addEventListener('click', () => {
                 sidebar.classList.remove('active');
             });
         }
 
+        // বাইরে ক্লিক করলে মেনু বন্ধ
         document.addEventListener('click', (e) => {
             if (sidebar.classList.contains('active') && 
                 !sidebar.contains(e.target) && 
@@ -26,76 +29,46 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ২. হেডার প্রোফাইল ছবি লোড করার কল
+    // ২. হেডার প্রোফাইল ছবি লোড কল
     loadHeaderAvatar();
 });
 
-// ৩. ছবি লোড করার ফাংশন (উন্নত ডিবাগিং সহ)
+// ৩. ছবি লোড করার ফাংশন
 async function loadHeaderAvatar() {
     const avatarImg = document.getElementById('headerAvatar');
     
-    // ডিফল্ট ছবি যদি লোড না হয়, তবে একটি আইকন বা সলিড কালার দেখানোর জন্য
-    if(avatarImg) {
-        avatarImg.onerror = function() {
-            this.src = 'https://cdn-icons-png.flaticon.com/512/149/149071.png'; // একটি নির্ভরযোগ্য ডিফল্ট আইকন
-        };
-    }
-
-    if (!avatarImg || typeof window.db === 'undefined') {
-        console.warn("⚠️ loadHeaderAvatar: Image tag missing or DB not connected.");
-        return;
-    }
+    // চেক করা হচ্ছে db এবং ইমেজ ট্যাগ আছে কিনা
+    if (!avatarImg || typeof window.db === 'undefined') return;
 
     try {
-        console.log("🔹 1. Checking Auth User...");
+        // ১. ইউজার চেক
         const { data: { user } } = await window.db.auth.getUser();
         
-        if (!user) {
-            console.log("❌ No user logged in.");
-            return;
-        }
-        console.log("✅ User found:", user.id);
+        if (user) {
+            // ২. ডাটাবেস থেকে avatar_url আনা
+            const { data } = await window.db
+                .from('profiles')
+                .select('avatar_url')
+                .eq('id', user.id)
+                .single();
 
-        console.log("🔹 2. Fetching Profile Data...");
-        const { data, error } = await window.db
-            .from('profiles')
-            .select('avatar_url')
-            .eq('id', user.id)
-            .single();
+            if (data && data.avatar_url) {
+                let finalUrl = data.avatar_url;
 
-        if (error) {
-            console.error("❌ Profile Fetch Error:", error.message);
-            return;
-        }
+                // ৩. চেক করা হচ্ছে এটা ফুল লিংক নাকি শুধু পাথ
+                if (!finalUrl.startsWith('http')) {
+                    const { data: publicData } = window.db
+                        .storage
+                        .from('avatars')
+                        .getPublicUrl(finalUrl);
+                    finalUrl = publicData.publicUrl;
+                }
 
-        console.log("✅ Profile Data:", data);
-
-        if (data && data.avatar_url) {
-            let finalUrl = "";
-
-            // চেক করা হচ্ছে এটা কি পূর্ণ লিংক নাকি শুধু পাথ
-            if (data.avatar_url.startsWith('http')) {
-                finalUrl = data.avatar_url;
-                console.log("🔹 Direct Link Found");
-            } else {
-                // স্টোরেজ থেকে পাবলিক লিংক তৈরি
-                const { data: publicData } = window.db
-                    .storage
-                    .from('avatars') // আপনার বাকেটের নাম
-                    .getPublicUrl(data.avatar_url);
-                
-                finalUrl = publicData.publicUrl;
-                console.log("🔹 Generated Public URL:", finalUrl);
+                // ৪. ছবি সেট করা (ক্যাশ এড়াতে টাইমস্ট্যাম্প সহ)
+                avatarImg.src = finalUrl + '?t=' + new Date().getTime();
             }
-
-            // সোর্স সেট করা
-            avatarImg.src = finalUrl + '?t=' + new Date().getTime(); // ক্যাশ এড়াতে
-            console.log("✅ Image Source Updated!");
-        } else {
-            console.warn("⚠️ No avatar_url found in database for this user.");
         }
-
     } catch (err) {
-        console.error("❌ Unexpected Error in loadHeaderAvatar:", err);
+        console.error("Avatar Load Error:", err);
     }
 }
