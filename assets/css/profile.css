@@ -1,0 +1,160 @@
+/* মেইন কন্টেইনার */
+.main-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 80vh;
+    padding: 20px;
+    background: #f8fafc; /* হালকা ব্যাকগ্রাউন্ড */
+}
+
+/* প্রোফাইল কার্ড ডিজাইন */
+.profile-card {
+    background: white;
+    width: 100%;
+    max-width: 480px; /* কার্ড খুব চওড়া হবে না */
+    padding: 40px 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 
+                0 8px 10px -6px rgba(0, 0, 0, 0.01);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* উপরের নীল বর্ডার স্ট্রিপ */
+.profile-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 6px;
+    background: linear-gradient(90deg, #3b82f6, #2563eb);
+}
+
+.profile-card h3 {
+    margin: 0 0 30px 0;
+    color: #1e293b;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+/* অ্যাভেটার (ছবি) সেকশন */
+.avatar-container {
+    position: relative;
+    width: 130px;
+    height: 130px;
+    margin: 0 auto 35px;
+}
+
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 5px solid #fff;
+    box-shadow: 0 0 0 4px #e2e8f0; /* ডাবল বর্ডার ইফেক্ট */
+    transition: transform 0.3s ease;
+}
+
+.avatar-img:hover {
+    transform: scale(1.02);
+}
+
+/* ক্যামেরা আইকন বাটন */
+.upload-btn {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background: #2563eb;
+    color: white;
+    border: 3px solid white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+    transition: all 0.2s;
+}
+
+.upload-btn:hover {
+    background: #1d4ed8;
+    transform: scale(1.1);
+}
+
+.upload-btn:active {
+    transform: scale(0.95);
+}
+
+/* ফর্ম গ্রুপ */
+.form-group {
+    margin-bottom: 25px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #334155;
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* রিড-অনলি ইনপুট (Email) */
+.form-group input:disabled {
+    background-color: #f1f5f9;
+    color: #94a3b8;
+    border-color: #e2e8f0;
+    cursor: not-allowed;
+}
+
+/* সেভ বাটন */
+.btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 10px;
+}
+
+.btn-primary:hover {
+    background: #1d4ed8;
+}
+
+.btn-primary:active {
+    background: #1e40af;
+}
+
+/* লোডিং বা ডিসেবল বাটন */
+.btn-primary:disabled {
+    background: #94a3b8;
+    cursor: wait;
+}
