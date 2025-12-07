@@ -1,9 +1,9 @@
 let currentData = [];
 let payeeTomSelect = null;
 
-// ১. পেজ লোড হলে ডিফল্ট ডেট সেট এবং অপশন লোড
+// ১. পেজ লোড এবং ইনিশিয়াল সেটআপ
 async function loadInitialData() {
-    // চলতি মাসের ১ তারিখ থেকে আজ পর্যন্ত ডেট সেট করা
+    // ডিফল্ট: চলতি মাসের ১ তারিখ থেকে আজ পর্যন্ত
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
     
@@ -12,74 +12,69 @@ async function loadInitialData() {
     document.getElementById('fromDate').value = formatDate(firstDay);
     document.getElementById('toDate').value = formatDate(today);
 
-    // প্রথমে ফিল্টার অপশনগুলো পপুলেট করা
+    // প্রথমে ফিল্টার অপশন লোড (Category & Payee)
     await loadFilterOptions();
 
     // তারপর ডাটা লোড
     applyFilters(); 
 }
 
-// ২. ক্যাটাগরি এবং Payee লিস্ট লোড (অপ্টিমাইজড)
+// ২. ডাইনামিক ফিল্টার লোড (Category & Payee) - Expenses টেবিল থেকে
 async function loadFilterOptions() {
-    // ইউজার চেক
     const { data: { user } } = await window.db.auth.getUser();
     if(!user) return window.location.href = 'login.html';
 
-    // --- ক্যাটাগরি লোড ---
-    const catSelect = document.getElementById('catFilter');
-    const { data: cats } = await window.db
-        .from('categories')
-        .select('name')
-        .order('name');
-    
-    catSelect.innerHTML = '<option value="">All Categories</option>';
-    if(cats) {
-        cats.forEach(c => {
+    // --- ফিক্স: Category এখন সরাসরি Expenses টেবিল থেকে আসবে ---
+    const { data: expenseData } = await window.db
+        .from('expenses')
+        .select('category, payee') // ক্যাটাগরি এবং পেয়ি একসাথে আনছি
+        .not('category', 'is', null);
+
+    if (expenseData) {
+        // ১. ইউনিক ক্যাটাগরি বের করা
+        const uniqueCats = [...new Set(expenseData.map(item => item.category))].filter(Boolean).sort();
+        
+        const catSelect = document.getElementById('catFilter');
+        catSelect.innerHTML = '<option value="">All Categories</option>';
+        
+        uniqueCats.forEach(cat => {
             const opt = document.createElement('option');
-            opt.value = c.name;
-            opt.textContent = c.name;
+            opt.value = cat;
+            opt.textContent = cat;
             catSelect.appendChild(opt);
         });
+
+        // ২. ইউনিক Payee বের করা (Tom Select এর জন্য)
+        const uniquePayees = [...new Set(expenseData.map(item => item.payee))].filter(Boolean).sort();
+        
+        const payeeSelect = document.getElementById('payeeFilter');
+        
+        // আগের Tom Select ক্লিন করা
+        if (payeeTomSelect) {
+            payeeTomSelect.destroy();
+            payeeSelect.innerHTML = '<option value="">Select Payees...</option>';
+        }
+
+        uniquePayees.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p;
+            opt.textContent = p;
+            payeeSelect.appendChild(opt);
+        });
+
+        // Tom Select পুনরায় চালু করা
+        payeeTomSelect = new TomSelect("#payeeFilter", {
+            plugins: ['remove_button'],
+            create: false,
+            placeholder: "Search & Select Payees...",
+            maxItems: null,
+            onItemAdd: function() { applyFilters(); },
+            onItemRemove: function() { applyFilters(); }
+        });
     }
-
-    // --- Payee লোড (Tom Select) ---
-    // আমরা expenses টেবিল থেকে ইউনিক payee আনব
-    const { data: payees } = await window.db
-        .from('expenses')
-        .select('payee')
-        .not('payee', 'is', null); // নাল ভ্যালু বাদ
-
-    // ইউনিক নাম বের করা
-    const uniquePayees = [...new Set(payees.map(p => p.payee))].sort();
-    
-    const payeeSelect = document.getElementById('payeeFilter');
-    
-    // আগের Tom Select থাকলে ডিলিট করা (রিলোড এর সময়)
-    if (payeeTomSelect) {
-        payeeTomSelect.destroy();
-        payeeSelect.innerHTML = '<option value="">Select Payees...</option>';
-    }
-
-    // অপশন যোগ করা
-    uniquePayees.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p;
-        opt.textContent = p;
-        payeeSelect.appendChild(opt);
-    });
-
-    // Tom Select ইনিশিয়ালাইজ করা
-    payeeTomSelect = new TomSelect("#payeeFilter", {
-        plugins: ['remove_button'],
-        create: false,
-        placeholder: "Search & Select Payees...",
-        maxItems: null,
-        onItemAdd: function() { applyFilters(); },
-        onItemRemove: function() { applyFilters(); }
-    });
 }
 
-// ৩. মেইন ফিল্টার ফাংশন (Server-side Filtering for Speed)
+// ৩. মেইন ফিল্টার লজিক (Server-side Filtering)
 async function applyFilters() {
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; padding:20px; color:#64748b;'>⏳ Loading data...</td></tr>";
@@ -89,7 +84,7 @@ async function applyFilters() {
     const cat = document.getElementById('catFilter').value;
     const selectedPayees = payeeTomSelect ? payeeTomSelect.getValue() : [];
 
-    // সার্ভার সাইড কুয়েরি বিল্ড করা
+    // কুয়েরি তৈরি
     let query = window.db
         .from('expenses')
         .select('*')
@@ -109,7 +104,7 @@ async function applyFilters() {
         tbody.innerHTML = `<tr><td colspan="6" style="color:red; text-align:center;">Error: ${error.message}</td></tr>`;
         document.getElementById('totalAmount').innerText = "0";
     } else {
-        currentData = data; // গ্লোবাল ভেরিয়েবলে রাখা (PDF এর জন্য)
+        currentData = data;
         renderTable(data);
     }
 }
@@ -126,7 +121,6 @@ function renderTable(data) {
         return;
     }
 
-    // ফ্র্যাগমেন্ট ব্যবহার (Fast DOM update)
     const fragment = document.createDocumentFragment();
 
     data.forEach(item => {
@@ -154,11 +148,9 @@ function renderTable(data) {
 document.getElementById('fromDate').addEventListener('change', applyFilters);
 document.getElementById('toDate').addEventListener('change', applyFilters);
 document.getElementById('catFilter').addEventListener('change', applyFilters);
-// Payee change is handled inside TomSelect config
 
 // ৬. রিসেট বাটন
 function resetFilters() {
-    // চলতি মাস রিসেট
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
     const formatDate = (d) => d.toISOString().split('T')[0];
@@ -174,24 +166,22 @@ function resetFilters() {
 
 // ৭. ডিলিট ফাংশন
 async function deleteExpense(id) {
-    if(confirm("Are you sure you want to delete this record?")) {
+    if(confirm("Are you sure?")) {
         const { error } = await window.db.from('expenses').delete().eq('id', id);
-        if(error) {
-            alert("Error: " + error.message);
-        } else {
-            // ডাটাবেস থেকে ডিলিট হলে UI আপডেট (পুরো রিলোড না করে)
-            currentData = currentData.filter(item => item.id !== id);
+        if(error) alert(error.message);
+        else {
+            currentData = currentData.filter(i => i.id !== id);
             renderTable(currentData);
+            // ডাটা ডিলিট হলে ফিল্টার অপশন আপডেট করতে চাইলে: loadFilterOptions();
         }
     }
 }
 
-// ৮. এক্সেল আপলোড ফাংশন
+// ৮. এক্সেল আপলোড
 async function handleFileUpload(input) {
     const file = input.files[0];
     if (!file) return;
 
-    // ইউজার আইডি নেওয়া
     const { data: { user } } = await window.db.auth.getUser();
 
     const reader = new FileReader();
@@ -210,94 +200,63 @@ async function handleFileUpload(input) {
                 user_id: user.id
             })).filter(d => d.amount > 0);
 
-            if(formattedData.length > 0 && confirm(`Ready to upload ${formattedData.length} records?`)) {
+            if(formattedData.length > 0 && confirm(`Upload ${formattedData.length} records?`)) {
                 const { error } = await window.db.from('expenses').insert(formattedData);
                 if(error) throw error;
                 
-                alert("✅ Successfully Uploaded!");
+                alert("✅ Upload Successful!");
                 input.value = '';
-                // নতুন ডাটা দেখতে লিস্ট রিফ্রেশ (Payee list আপডেট হতে পারে তাই ফুল রিলোড)
-                loadFilterOptions().then(applyFilters);
+                // নতুন ডাটা আসলে ফিল্টার অপশন আপডেট করা জরুরি
+                await loadFilterOptions();
+                applyFilters();
             }
         } catch(err) {
             console.error(err);
-            alert("Upload Failed: " + err.message);
+            alert("Error: " + err.message);
         }
     };
     reader.readAsArrayBuffer(file);
 }
 
-// ৯. পিডিএফ জেনারেশন (Top Total & Date Range)
+// ৯. পিডিএফ ডাউনলোড (Top Summary)
 window.downloadPDF = function() {
-    if (!window.jspdf) return alert("PDF Library missing!");
-    
+    if (!window.jspdf) return alert("Library missing!");
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
-    // ক্যালকুলেশন
     const totalAmount = currentData.reduce((sum, item) => sum + item.amount, 0);
     const fromDate = document.getElementById('fromDate').value;
     const toDate = document.getElementById('toDate').value;
     
-    // ডেট ফরম্যাট সুন্দর করা (DD/MM/YYYY)
     const fmt = (d) => d ? d.split('-').reverse().join('/') : '';
     const dateRangeText = (fromDate && toDate) ? `${fmt(fromDate)} to ${fmt(toDate)}` : `Generated: ${new Date().toLocaleDateString('en-IN')}`;
 
-    // --- Header Design ---
-    doc.setFontSize(20);
-    doc.setTextColor(41, 128, 185);
-    doc.text("Expense Report", 14, 20);
+    // Header
+    doc.setFontSize(20); doc.setTextColor(41, 128, 185); doc.text("Expense Report", 14, 20);
+    doc.setFontSize(10); doc.setTextColor(100); doc.text(`Period: ${dateRangeText}`, 14, 27);
 
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Period: ${dateRangeText}`, 14, 27);
-
-    // Top Right Total
-    doc.setFontSize(11);
-    doc.setTextColor(80);
-    doc.text("Total Expenses:", 196, 18, { align: "right" }); 
-
-    doc.setFontSize(16);
-    doc.setTextColor(220, 38, 38); // লাল কালার
-    doc.setFont("helvetica", "bold");
+    // Top Total
+    doc.setFontSize(11); doc.setTextColor(80); doc.text("Total Expenses:", 196, 18, { align: "right" }); 
+    doc.setFontSize(16); doc.setTextColor(220, 38, 38); doc.setFont("helvetica", "bold");
     doc.text(`Rs. ${totalAmount.toLocaleString('en-IN')}`, 196, 26, { align: "right" });
-    
-    doc.setFont("helvetica", "normal"); // ফন্ট রিসেট
+    doc.setFont("helvetica", "normal");
 
-    // --- Table ---
     const tableBody = currentData.map(item => [
-        item.date,
-        item.category || 'General',
-        item.payee,
-        item.purpose,
-        `Rs. ${item.amount.toLocaleString('en-IN')}`
+        item.date, item.category || 'General', item.payee, item.purpose, `Rs. ${item.amount.toLocaleString('en-IN')}`
     ]);
 
     doc.autoTable({
         startY: 35,
         head: [['Date', 'Category', 'Payee', 'Purpose', 'Amount']],
         body: tableBody,
-        // ফুটার অপশনাল (উপরে টোটাল আছে, তাও স্ট্যান্ডার্ড রাখতে নিচে দিলাম)
-        foot: [[
-            { content: 'Grand Total', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
-            { content: `Rs. ${totalAmount.toLocaleString('en-IN')}`, styles: { halign: 'right', fontStyle: 'bold' } }
-        ]],
+        foot: [[ { content: 'Grand Total', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } }, { content: `Rs. ${totalAmount.toLocaleString('en-IN')}`, styles: { halign: 'right', fontStyle: 'bold' } } ]],
         theme: 'striped',
-        headStyles: { 
-            fillColor: [41, 128, 185], 
-            halign: 'center', 
-            fontStyle: 'bold' 
-        },
-        columnStyles: {
-            0: { cellWidth: 25 },
-            4: { halign: 'right', fontStyle: 'bold' }
-        },
+        headStyles: { fillColor: [41, 128, 185], halign: 'center', fontStyle: 'bold' },
+        columnStyles: { 0: { cellWidth: 25 }, 4: { halign: 'right', fontStyle: 'bold' } },
         styles: { fontSize: 9, cellPadding: 3, valign: 'middle' }
     });
 
-    const fileName = `Expense_Report_${fromDate}_to_${toDate}.pdf`;
-    doc.save(fileName);
+    doc.save(`Expense_Report.pdf`);
 }
 
-// Start Application
 loadInitialData();
