@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+    
+    <style>
+        .profile-card {
+            background: white;
+            max-width: 500px;
+            margin: 30px auto;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        .avatar-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+        }
+        .avatar-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #f1f5f9;
+        }
+        .upload-btn {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; color: #64748b; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="index.html" class="nav-link"><span class="nav-icon">🏠</span> Dashboard</a>
+    <a href="entry.html" class="nav-link"><span class="nav-icon">✍️</span> Add Entry</a>
+    <a href="list.html" class="nav-link"><span class="nav-icon">📊</span> Reports</a>
+    <a href="profile.html" class="nav-link active"><span class="nav-icon">👤</span> Profile</a>
+    <a href="#" onclick="logout()" class="nav-link logout"><span class="nav-icon">🚪</span> Logout</a>
+</nav>
+
+<div class="main-container">
+    <div class="profile-card">
+        <h3>Edit Profile</h3>
+        
+        <div class="avatar-container">
+            <img src="https://via.placeholder.com/150" id="avatarPreview" class="avatar-img" alt="Avatar">
+            <!-- Hidden File Input -->
+            <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="uploadAvatar()">
+            <!-- Upload Button -->
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">📷</button>
+        </div>
+
+        <div class="form-group">
+            <label>Email (Read only)</label>
+            <input type="text" id="email" disabled style="background: #f8fafc;">
+        </div>
+
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="fullName" placeholder="Enter your full name">
+        </div>
+
+        <button onclick="updateProfile()" id="saveBtn" class="btn-primary" style="width: 100%;">Save Changes</button>
+    </div>
+</div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/profile.js"></script>
+
+</body>
+</html>

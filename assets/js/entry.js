@@ -1,9 +1,6 @@
-// assets/js/entry.js
-
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("🚀 Page Loaded");
 
-    // ১. গ্লোবাল ভেরিয়েবলগুলো এখানে ডিক্লেয়ার করা হলো (Safe Mode)
     const form = document.getElementById('expenseForm');
     const catSelect = document.getElementById('category');
     const submitBtn = document.querySelector('.btn-primary');
@@ -11,20 +8,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const toast = document.getElementById('toast');
     const dateInput = document.getElementById('date');
 
-    // ২. এলিমেন্টগুলো ঠিকমতো আছে কিনা চেক করা
     if (!form || !catSelect || !submitBtn) {
-        console.error("❌ Critical Error: Required HTML elements not found!");
+        console.error("❌ Critical Error: HTML elements not found!");
         return;
     }
 
-    // ৩. আজকের ডেট সেট করা
     if(dateInput) dateInput.valueAsDate = new Date();
 
-    // ৪. ক্যাটাগরি লোড করা
+    // ক্যাটাগরি লোড ফাংশন কল
     await loadCategories(catSelect);
 
     // ============================
-    // ৫. ফর্ম সাবমিট হ্যান্ডলার
+    // ফর্ম সাবমিট হ্যান্ডলার
     // ============================
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -47,7 +42,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         try {
-            // ইউজার চেক
             const { data: { user } } = await window.db.auth.getUser();
             if(!user) return window.location.href = 'index.html';
 
@@ -67,6 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             showToast("✅ Expense Added Successfully!");
             form.reset();
             dateInput.valueAsDate = new Date();
+            // ডাটা সেভ করার পর ক্যাটাগরি আবার লোড করার দরকার নেই, যদি না নতুন কিছু থাকে
             
         } catch (err) {
             console.error(err);
@@ -78,32 +73,46 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ============================
-// ৬. হেল্পার ফাংশনসমূহ
+// হেল্পার ফাংশনসমূহ (এখানে ক্যাটাগরি ফিক্স করা হয়েছে)
 // ============================
 
 async function loadCategories(selectElement) {
-    if(!window.db) {
-        console.error("Database not connected! Check config.js");
-        return;
-    }
+    if(!window.db) return console.error("Database not connected!");
 
     selectElement.innerHTML = '<option value="" disabled selected>Loading...</option>';
     
     const { data: { user } } = await window.db.auth.getUser();
-    if (!user) {
-        console.log("User not logged in");
-        return;
-    }
+    if (!user) return;
 
-    const { data, error } = await window.db
+    // ১. 'categories' টেবিল থেকে ডাটা আনা (যেগুলো প্লাস বাটন দিয়ে বানিয়েছেন)
+    const { data: savedCats } = await window.db
         .from('categories')
         .select('name')
-        .order('name', { ascending: true });
+        .order('name');
 
+    // ২. 'expenses' টেবিল থেকে ডাটা আনা (যেগুলো এক্সেল দিয়ে আপলোড হয়েছে)
+    const { data: usedCats } = await window.db
+        .from('expenses')
+        .select('category')
+        .not('category', 'is', null);
+
+    // ৩. দুটি লিস্ট মার্জ (Merge) করা এবং ডুপ্লিকেট রিমুভ করা
+    let allCategories = [];
+
+    if (savedCats) {
+        allCategories.push(...savedCats.map(c => c.name));
+    }
+    if (usedCats) {
+        allCategories.push(...usedCats.map(c => c.category));
+    }
+
+    // Set ব্যবহার করে ইউনিক নাম বের করা এবং সর্ট করা
+    const uniqueCategories = [...new Set(allCategories)].filter(Boolean).sort();
+
+    // ৪. ড্রপডাউনে অপশন যোগ করা
     selectElement.innerHTML = '<option value="" disabled selected>Select Category</option>';
     
-    if (data && data.length > 0) {
-        const uniqueCategories = [...new Set(data.map(item => item.name))];
+    if (uniqueCategories.length > 0) {
         uniqueCategories.forEach(name => {
             const opt = document.createElement('option');
             opt.value = name;
@@ -127,7 +136,6 @@ function resetBtn(text, btn, btnTxt) {
 function showToast(message, type = "success") {
     const toast = document.getElementById('toast');
     if(!toast) return;
-    
     toast.innerText = message;
     toast.className = "toast show";
     if (type === "error") toast.classList.add("error");
@@ -138,7 +146,7 @@ function showToast(message, type = "success") {
 }
 
 // ============================
-// ৭. এক্সেল এবং মোডাল (গ্লোবাল ফাংশন)
+// মোডাল এবং ক্যাটাগরি সেভ
 // ============================
 window.openModal = function() { 
     document.getElementById('catModal').style.display = 'flex'; 
@@ -152,21 +160,30 @@ window.closeModal = function() {
 window.saveCategory = async function() {
     const nameInput = document.getElementById('newCatName');
     const name = nameInput.value.trim();
-    if (!name) return alert("Enter name");
+    if (!name) return alert("Enter category name");
 
     const { data: { user } } = await window.db.auth.getUser();
 
+    // নতুন ক্যাটাগরি 'categories' টেবিলে সেভ হবে
     const { error } = await window.db.from('categories').insert([{ name, user_id: user.id }]);
 
-    if (error) alert("Error: " + error.message);
-    else {
+    if (error) {
+        // যদি ডুপ্লিকেট এরর দেয়
+        if(error.code === '23505') alert("Category already exists!");
+        else alert("Error: " + error.message);
+    } else {
         closeModal();
         nameInput.value = "";
-        // পেজ রিফ্রেশ করে লিস্ট আপডেট করা
-        location.reload(); 
+        showToast("Category Created!");
+        // পেজ রিফ্রেশ না করে ড্রপডাউন আপডেট করা
+        const catSelect = document.getElementById('category');
+        await loadCategories(catSelect);
     }
 }
 
+// ============================
+// এক্সেল আপলোড ফাংশন
+// ============================
 window.handleFileUpload = async function(input) {
     const file = input.files[0];
     if (!file) return;
@@ -195,6 +212,9 @@ window.handleFileUpload = async function(input) {
                 else {
                     alert("✅ Uploaded!");
                     input.value = '';
+                    // এক্সেল আপলোডের পর নতুন ক্যাটাগরিগুলো ড্রপডাউনে দেখাতে রিলোড করা হচ্ছে
+                    const catSelect = document.getElementById('category');
+                    await loadCategories(catSelect);
                 }
             }
         } catch (err) {
