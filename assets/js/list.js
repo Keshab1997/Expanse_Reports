@@ -1,8 +1,8 @@
 let allExpenses = [];
+let currentFilteredData = []; // পিডিএফ এর জন্য বর্তমান ডাটা রাখার ভেরিয়েবল
 
-// ১. ডাটা লোড (অটোমেটিক ইউজারের ডাটাই আসবে RLS এর কারণে)
+// ১. ডাটা লোড
 async function loadInitialData() {
-    // ক্যাটাগরি লোড
     const catSelect = document.getElementById('catFilter');
     let { data: categories } = await window.db.from('categories').select('*').order('name');
     if (categories) {
@@ -13,8 +13,6 @@ async function loadInitialData() {
             catSelect.appendChild(opt);
         });
     }
-
-    // এক্সপেন্স ডাটা লোড
     loadExpenses();
 }
 
@@ -28,6 +26,7 @@ async function loadExpenses() {
         console.error(error);
     } else {
         allExpenses = data;
+        currentFilteredData = data; // প্রথমে সব ডাটাই সিলেক্টেড থাকবে
         populatePayee(data);
         renderTable(data);
     }
@@ -37,7 +36,7 @@ async function loadExpenses() {
 function populatePayee(data) {
     const unique = [...new Set(data.map(i => i.payee))];
     const sel = document.getElementById('payeeFilter');
-    sel.innerHTML = '<option value="">All Payees</option>'; // রিসেট
+    sel.innerHTML = '<option value="">All Payees</option>';
     unique.sort().forEach(p => {
         const opt = document.createElement('option');
         opt.value = p;
@@ -62,6 +61,7 @@ function applyFilters() {
         return matchFrom && matchTo && matchCat && matchPayee;
     });
 
+    currentFilteredData = filtered; // ফিল্টার করা ডাটা গ্লোবাল ভেরিয়েবলে আপডেট করা হলো
     renderTable(filtered);
 }
 
@@ -69,7 +69,7 @@ function applyFilters() {
     document.getElementById(id).addEventListener('change', applyFilters);
 });
 
-// ৪. টেবিল রেন্ডার এবং ডিলিট বাটন যোগ
+// ৪. টেবিল রেন্ডার
 function renderTable(data) {
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = "";
@@ -112,38 +112,101 @@ async function deleteExpense(id) {
         if(error) {
             alert("Error deleting: " + error.message);
         } else {
-            // লিস্ট রিফ্রেশ
             loadExpenses();
         }
     }
 }
 
-// ৬. রিসেট এবং পিডিএফ
+// ৬. রিসেট
 function resetFilters() {
     document.getElementById('fromDate').value = "";
     document.getElementById('toDate').value = "";
     document.getElementById('catFilter').value = "";
     document.getElementById('payeeFilter').value = "";
+    currentFilteredData = allExpenses;
     renderTable(allExpenses);
 }
 
+// ==========================================
+// ৭. আপডেটেড পিডিএফ ফাংশন (Professional Footer)
+// ==========================================
 window.downloadPDF = function() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    doc.text("Expense Report", 14, 15);
+
+    // ১. কোম্পানি/টাইটেল সেকশন
+    doc.setFontSize(22);
+    doc.setTextColor(41, 128, 185); // নীল কালার
+    doc.text("Expense Report", 14, 20);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    const dateStr = new Date().toLocaleDateString('en-IN');
+    doc.text(`Generated on: ${dateStr}`, 14, 27);
+
+    // ২. ডাটা প্রসেসিং
+    const totalAmount = currentFilteredData.reduce((sum, item) => sum + item.amount, 0);
+
+    const tableBody = currentFilteredData.map(item => [
+        item.date,
+        item.category || 'General',
+        item.payee,
+        item.purpose,
+        `Rs. ${item.amount.toLocaleString('en-IN')}`
+    ]);
+
+    // ৩. টেবিল জেনারেশন
     doc.autoTable({
-        html: '#expenseTable',
-        startY: 30,
-        columns: [
-            {header: 'Date', dataKey: 'date'},
-            {header: 'Category', dataKey: 'category'},
-            {header: 'Payee', dataKey: 'payee'},
-            {header: 'Purpose', dataKey: 'purpose'},
-            {header: 'Amount', dataKey: 'amount'}
-        ]
-        // Note: PDF এ ডিলিট বাটন কলাম হাইড করার জন্য html id থেকে ডিলিট কলাম বাদ দিতে হতে পারে অথবা ম্যানুয়াল কলাম সিলেক্ট করতে হবে।
+        startY: 35,
+        head: [['Date', 'Category', 'Payee', 'Purpose', 'Amount']],
+        body: tableBody,
+        
+        // --- এই অংশটি পরিবর্তন করা হয়েছে ---
+        foot: [
+            [
+                { 
+                    content: 'Total Amount:', 
+                    colSpan: 4, // প্রথম ৪টি কলাম জোড়া লাগানো হলো
+                    styles: { halign: 'right', fontStyle: 'bold', fontSize: 11 } 
+                },
+                { 
+                    content: `Rs. ${totalAmount.toLocaleString('en-IN')}`, 
+                    styles: { halign: 'right', fontStyle: 'bold', fontSize: 11 } 
+                }
+            ]
+        ],
+        // ---------------------------------
+
+        // স্টাইলিং
+        theme: 'striped', 
+        headStyles: { 
+            fillColor: [41, 128, 185],
+            textColor: 255,
+            halign: 'center',
+            fontStyle: 'bold'
+        },
+        // ফুটার ডিজাইন (টোটাল এরিয়া)
+        footStyles: {
+            fillColor: [255, 255, 255], // সাদা ব্যাকগ্রাউন্ড
+            textColor: [0, 0, 0],       // কালো লেখা
+            lineColor: [41, 128, 185],  // উপরে নীল বর্ডার
+            lineWidth: { top: 0.5 },    // শুধু উপরে চিকন লাইন
+        },
+        columnStyles: {
+            0: { halign: 'center' }, // Date Center
+            4: { halign: 'right' }   // Amount Right aligned
+        },
+        styles: {
+            fontSize: 10,
+            cellPadding: 4,
+            valign: 'middle',
+            lineColor: [200, 200, 200], // টেবিলের সাইড লাইন হালকা
+            lineWidth: 0.1
+        }
     });
-    doc.save('Expense_Report.pdf');
+
+    // পিডিএফ সেভ
+    doc.save(`Expense_Report_${dateStr}.pdf`);
 }
 
 loadInitialData();
