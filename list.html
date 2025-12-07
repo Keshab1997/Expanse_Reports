@@ -170,6 +170,48 @@
         </div> <!-- End content-body -->
     </div> <!-- End main-content -->
 </div>
+<!-- Edit Modal Start -->
+<div id="editModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Edit Expense</h3>
+            <button onclick="closeEditModal()" class="close-modal-btn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="editId">
+            
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="editDate" class="modal-input">
+            </div>
+
+            <div class="form-group">
+                <label>Category</label>
+                <select id="editCategory" class="modal-input">
+                    <!-- Options will be loaded by JS -->
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Payee</label>
+                <input type="text" id="editPayee" class="modal-input">
+            </div>
+
+            <div class="form-group">
+                <label>Purpose</label>
+                <input type="text" id="editPurpose" class="modal-input">
+            </div>
+
+            <div class="form-group">
+                <label>Amount (₹)</label>
+                <input type="number" id="editAmount" class="modal-input">
+            </div>
+
+            <button onclick="saveUpdate()" class="save-btn">Update Change</button>
+        </div>
+    </div>
+</div>
+<!-- Edit Modal End -->
 
 <!-- স্ক্রিপ্টস -->
 <!-- Tom Select JS Library -->

@@ -3,7 +3,6 @@ let payeeTomSelect = null;
 
 // ১. পেজ লোড এবং ইনিশিয়াল সেটআপ
 async function loadInitialData() {
-    // ডিফল্ট: চলতি মাসের ১ তারিখ থেকে আজ পর্যন্ত
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
     
@@ -12,45 +11,45 @@ async function loadInitialData() {
     document.getElementById('fromDate').value = formatDate(firstDay);
     document.getElementById('toDate').value = formatDate(today);
 
-    // প্রথমে ফিল্টার অপশন লোড (Category & Payee)
     await loadFilterOptions();
-
-    // তারপর ডাটা লোড
     applyFilters(); 
 }
 
-// ২. ডাইনামিক ফিল্টার লোড (Category & Payee) - Expenses টেবিল থেকে
+// ২. ডাইনামিক ফিল্টার লোড
 async function loadFilterOptions() {
-    // Auth check
     const { data: { session } } = await window.db.auth.getSession();
     if(!session) return window.location.href = 'login.html';
 
-    // --- Category এবং Payee লোড ---
     const { data: expenseData } = await window.db
         .from('expenses')
         .select('category, payee') 
         .not('category', 'is', null);
 
     if (expenseData) {
-        // ১. ইউনিক ক্যাটাগরি বের করা
+        // Categories
         const uniqueCats = [...new Set(expenseData.map(item => item.category))].filter(Boolean).sort();
-        
         const catSelect = document.getElementById('catFilter');
+        const editCatSelect = document.getElementById('editCategory'); // For Edit Modal
+
         catSelect.innerHTML = '<option value="">All Categories</option>';
-        
+        editCatSelect.innerHTML = ''; // Clear edit modal categories
+
         uniqueCats.forEach(cat => {
+            // Filter Dropdown
             const opt = document.createElement('option');
-            opt.value = cat;
-            opt.textContent = cat;
+            opt.value = cat; opt.textContent = cat;
             catSelect.appendChild(opt);
+
+            // Edit Modal Dropdown
+            const editOpt = document.createElement('option');
+            editOpt.value = cat; editOpt.textContent = cat;
+            editCatSelect.appendChild(editOpt);
         });
 
-        // ২. ইউনিক Payee বের করা (Tom Select এর জন্য)
+        // Payees
         const uniquePayees = [...new Set(expenseData.map(item => item.payee))].filter(Boolean).sort();
-        
         const payeeSelect = document.getElementById('payeeFilter');
         
-        // আগের Tom Select ক্লিন করা
         if (payeeTomSelect) {
             payeeTomSelect.destroy();
             payeeSelect.innerHTML = '<option value="">Select Payees...</option>';
@@ -58,12 +57,10 @@ async function loadFilterOptions() {
 
         uniquePayees.forEach(p => {
             const opt = document.createElement('option');
-            opt.value = p;
-            opt.textContent = p;
+            opt.value = p; opt.textContent = p;
             payeeSelect.appendChild(opt);
         });
 
-        // Tom Select পুনরায় চালু করা
         payeeTomSelect = new TomSelect("#payeeFilter", {
             plugins: ['remove_button'],
             create: false,
@@ -75,7 +72,7 @@ async function loadFilterOptions() {
     }
 }
 
-// ৩. মেইন ফিল্টার লজিক (Server-side Filtering)
+// ৩. মেইন ফিল্টার লজিক
 async function applyFilters() {
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; padding:20px; color:#64748b;'>⏳ Loading data...</td></tr>";
@@ -83,26 +80,17 @@ async function applyFilters() {
     const from = document.getElementById('fromDate').value;
     const to = document.getElementById('toDate').value;
     const cat = document.getElementById('catFilter').value;
-    // Purpose value নেওয়া
     const purpose = document.getElementById('purposeFilter').value.trim();
     const selectedPayees = payeeTomSelect ? payeeTomSelect.getValue() : [];
 
-    // কুয়েরি তৈরি
-    let query = window.db
-        .from('expenses')
-        .select('*')
-        .order('date', { ascending: false });
+    let query = window.db.from('expenses').select('*').order('date', { ascending: false });
 
-    // কন্ডিশন যোগ করা
     if (from) query = query.gte('date', from);
     if (to) query = query.lte('date', to);
     if (cat) query = query.eq('category', cat);
     if (selectedPayees.length > 0) query = query.in('payee', selectedPayees);
-    
-    // Purpose দিয়ে সার্চ লজিক (Case Insensitive Search)
     if (purpose) query = query.ilike('purpose', `%${purpose}%`);
 
-    // ডাটা আনা
     const { data, error } = await query;
 
     if (error) {
@@ -115,14 +103,14 @@ async function applyFilters() {
     }
 }
 
-// ৪. টেবিল রেন্ডার
+// ৪. টেবিল রেন্ডার (Edit Button Added)
 function renderTable(data) {
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = "";
     let total = 0;
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; padding:30px; color:#ef4444;'>No records found for this period!</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; padding:30px; color:#ef4444;'>No records found!</td></tr>";
         document.getElementById('totalAmount').innerText = "0";
         return;
     }
@@ -139,8 +127,9 @@ function renderTable(data) {
             <td>${item.payee}</td>
             <td style="color:#6b7280; font-size:0.9em;">${item.purpose || '-'}</td>
             <td style="text-align: right; font-weight: 700;">₹${item.amount.toLocaleString('en-IN')}</td>
-            <td style="text-align: center;">
-                <button onclick="deleteExpense(${item.id})" title="Delete" style="background:#fee2e2; border:none; color:#dc2626; cursor:pointer; padding:6px 10px; border-radius:4px;">🗑</button>
+            <td style="text-align: center; white-space: nowrap;">
+                <button onclick="openEditModal(${item.id})" class="edit-btn" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                <button onclick="deleteExpense(${item.id})" class="delete-btn" title="Delete"><i class="fa-solid fa-trash"></i></button>
             </td>
         `;
         fragment.appendChild(tr);
@@ -150,21 +139,73 @@ function renderTable(data) {
     document.getElementById('totalAmount').innerText = total.toLocaleString('en-IN');
 }
 
-// হেল্পার: সুন্দর তারিখ দেখানোর জন্য (DD/MM/YYYY)
+// ---------------- EDIT FUNCTIONS START ----------------
+
+// A. মডাল ওপেন করা এবং ডাটা সেট করা
+window.openEditModal = function(id) {
+    const item = currentData.find(d => d.id === id);
+    if (!item) return;
+
+    document.getElementById('editId').value = item.id;
+    document.getElementById('editDate').value = item.date;
+    document.getElementById('editCategory').value = item.category;
+    document.getElementById('editPayee').value = item.payee;
+    document.getElementById('editPurpose').value = item.purpose || '';
+    document.getElementById('editAmount').value = item.amount;
+
+    document.getElementById('editModal').style.display = 'flex';
+}
+
+// B. মডাল বন্ধ করা
+window.closeEditModal = function() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+// C. আপডেট সেভ করা
+window.saveUpdate = async function() {
+    const id = document.getElementById('editId').value;
+    const date = document.getElementById('editDate').value;
+    const category = document.getElementById('editCategory').value;
+    const payee = document.getElementById('editPayee').value;
+    const purpose = document.getElementById('editPurpose').value;
+    const amount = parseFloat(document.getElementById('editAmount').value);
+
+    if (!date || !amount || !payee) {
+        alert("Please fill all required fields!");
+        return;
+    }
+
+    // Supabase Update Call
+    const { error } = await window.db
+        .from('expenses')
+        .update({ date, category, payee, purpose, amount })
+        .eq('id', id);
+
+    if (error) {
+        alert("Update failed: " + error.message);
+    } else {
+        alert("✅ Updated Successfully!");
+        closeEditModal();
+        applyFilters(); // টেবিল রিফ্রেশ
+        loadFilterOptions(); // ক্যাটাগরি বা Payee চেঞ্জ হলে লিস্ট আপডেট হবে
+    }
+}
+// ---------------- EDIT FUNCTIONS END ----------------
+
+// হেল্পার
 function formatDateDisplay(dateStr) {
     if(!dateStr) return '';
     const parts = dateStr.split('-');
     return `${parts[2]}/${parts[1]}/${parts[0]}`; 
 }
 
-// ৫. ইভেন্ট লিসেনার
+// ইভেন্ট লিসেনার
 document.getElementById('fromDate').addEventListener('change', applyFilters);
 document.getElementById('toDate').addEventListener('change', applyFilters);
 document.getElementById('catFilter').addEventListener('change', applyFilters);
-// Purpose ইনপুটে টাইপ করলে সার্চ হবে
 document.getElementById('purposeFilter').addEventListener('input', applyFilters);
 
-// ৬. রিসেট বাটন
+// রিসেট
 function resetFilters() {
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -173,14 +214,13 @@ function resetFilters() {
     document.getElementById('fromDate').value = formatDate(firstDay);
     document.getElementById('toDate').value = formatDate(today);
     document.getElementById('catFilter').value = "";
-    document.getElementById('purposeFilter').value = ""; // Purpose Clear
+    document.getElementById('purposeFilter').value = ""; 
     
     if(payeeTomSelect) payeeTomSelect.clear();
-
     applyFilters();
 }
 
-// ৭. ডিলিট ফাংশন
+// ডিলিট
 async function deleteExpense(id) {
     if(confirm("Are you sure you want to delete this record?")) {
         const { error } = await window.db.from('expenses').delete().eq('id', id);
@@ -192,7 +232,7 @@ async function deleteExpense(id) {
     }
 }
 
-// ৮. এক্সেল আপলোড
+// এক্সেল আপলোড
 async function handleFileUpload(input) {
     const file = input.files[0];
     if (!file) return;
@@ -232,7 +272,7 @@ async function handleFileUpload(input) {
     reader.readAsArrayBuffer(file);
 }
 
-// ৯. পিডিএফ ডাউনলোড (Alignment Fixed)
+// পিডিএফ ডাউনলোড
 window.downloadPDF = function() {
     if (!window.jspdf) return alert("PDF Library missing!");
     const { jsPDF } = window.jspdf;
@@ -245,19 +285,16 @@ window.downloadPDF = function() {
     const fmt = (d) => d ? d.split('-').reverse().join('/') : '';
     const dateRangeText = (fromDate && toDate) ? `${fmt(fromDate)} to ${fmt(toDate)}` : `Generated: ${new Date().toLocaleDateString('en-IN')}`;
 
-    // Header
     doc.setFontSize(20); doc.setTextColor(41, 128, 185); doc.text("Expense Report", 14, 20);
     doc.setFontSize(10); doc.setTextColor(100); doc.text(`Period: ${dateRangeText}`, 14, 27);
 
-    // Top Total
     doc.setFontSize(11); doc.setTextColor(80); doc.text("Total Expenses:", 196, 18, { align: "right" }); 
     doc.setFontSize(16); doc.setTextColor(220, 38, 38); doc.setFont("helvetica", "bold");
     doc.text(`Rs. ${totalAmount.toLocaleString('en-IN')}`, 196, 26, { align: "right" });
     doc.setFont("helvetica", "normal");
 
-    // Table Data Body
     const tableBody = currentData.map(item => [
-        formatDateDisplay(item.date), // Date Display Helper ব্যবহার করা হয়েছে
+        formatDateDisplay(item.date), 
         item.category || 'General', 
         item.payee, 
         item.purpose, 
@@ -270,28 +307,19 @@ window.downloadPDF = function() {
         body: tableBody,
         foot: [[ { content: 'Grand Total', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } }, { content: `Rs. ${totalAmount.toLocaleString('en-IN')}`, styles: { halign: 'right', fontStyle: 'bold' } } ]],
         theme: 'striped',
-        
-        // --- এই অংশটি Alignment ঠিক করবে ---
-        headStyles: { 
-            fillColor: [41, 128, 185], 
-            halign: 'left',  // Header বামে থাকবে
-            fontStyle: 'bold',
-            valign: 'middle'
-        },
+        headStyles: { fillColor: [41, 128, 185], halign: 'left', fontStyle: 'bold', valign: 'middle' },
         columnStyles: { 
-            0: { cellWidth: 25, halign: 'left' },  // Date Left
-            1: { halign: 'left' },                 // Category Left
-            2: { halign: 'left' },                 // Payee Left
-            3: { halign: 'left' },                 // Purpose Left
-            4: { halign: 'right', fontStyle: 'bold' } // Amount Right
+            0: { cellWidth: 25, halign: 'left' },
+            1: { halign: 'left' },
+            2: { halign: 'left' },
+            3: { halign: 'left' },
+            4: { halign: 'right', fontStyle: 'bold' }
         },
-        // ------------------------------------
-
         styles: { fontSize: 9, cellPadding: 3, valign: 'middle' }
     });
 
     doc.save(`Expense_Report.pdf`);
 }
 
-// Start App
+// Start
 loadInitialData();
