@@ -100,40 +100,48 @@
                 </div>
             </div>
 
-            <!-- ফিল্টার সেকশন -->
-            <div class="filter-box">
-                <div class="filter-group">
-                    <label>From Date</label>
-                    <input type="date" id="fromDate" class="filter-input">
-                </div>
-                
-                <div class="filter-group">
-                    <label>To Date</label>
-                    <input type="date" id="toDate" class="filter-input">
-                </div>
+            <!-- Filter Section -->
+<div class="filter-box">
+    <div class="filter-group">
+        <label>From Date</label>
+        <input type="date" id="fromDate" class="filter-input">
+    </div>
+    
+    <div class="filter-group">
+        <label>To Date</label>
+        <input type="date" id="toDate" class="filter-input">
+    </div>
 
-                <div class="filter-group">
-                    <label>Category</label>
-                    <select id="catFilter" class="filter-input">
-                        <option value="">All Categories</option>
-                        <!-- ডায়নামিক অপশন এখানে আসবে -->
-                    </select>
-                </div>
+    <div class="filter-group">
+        <label>Category</label>
+        <select id="catFilter" class="filter-input">
+            <option value="">All Categories</option>
+            <!-- Categories will be loaded dynamically -->
+        </select>
+    </div>
 
-                <!-- Payee সেকশনে মাল্টিপল সিলেক্ট সাপোর্ট -->
-                <div class="filter-group" style="min-width: 250px;">
-                    <label>Payee / Name</label>
-                    <select id="payeeFilter" multiple placeholder="Select Payees..." autocomplete="off">
-                        <option value="">Select Payees...</option>
-                    </select>
-                </div>
+    <div class="filter-group" style="min-width: 200px;">
+        <label>Payee / Name</label>
+        <select id="payeeFilter" multiple placeholder="Select Payees..." autocomplete="off">
+            <option value="">Select Payees...</option>
+        </select>
+    </div>
 
-                <div class="btn-area">
-                    <button onclick="resetFilters()" class="btn-reset" title="Clear Filters"><i class="fa-solid fa-rotate-right"></i> Reset</button>
-                    <button onclick="downloadPDF()" class="btn-pdf" title="Download Report"><i class="fa-solid fa-file-pdf"></i> PDF</button>
-                </div>
-            </div>
+    <!-- NEW: Purpose Filter Added Here -->
+    <div class="filter-group">
+        <label>Purpose</label>
+        <input type="text" id="purposeFilter" class="filter-input" placeholder="Search purpose...">
+    </div>
 
+    <div class="btn-area">
+        <button onclick="resetFilters()" class="btn-reset" title="Clear Filters">
+            <i class="fa-solid fa-rotate-right"></i> Reset
+        </button>
+        <button onclick="downloadPDF()" class="btn-pdf" title="Download Report">
+            <i class="fa-solid fa-file-pdf"></i> PDF
+        </button>
+    </div>
+</div>
             <!-- টোটাল বার -->
             <div class="summary-bar">
                 <span style="font-size: 0.9rem; opacity: 0.9;">Filtered Result</span>

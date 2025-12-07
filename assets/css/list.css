@@ -1,12 +1,45 @@
 /* assets/css/list.css */
 
+/* --- লেআউট এবং কন্টেইনার --- */
 .container {
     max-width: 1200px;
     margin: 30px auto;
     padding: 0 20px;
 }
 
-/* ফিল্টার বক্স ডিজাইন (Responsive Fix) */
+/* --- পেজ হেডার এবং এক্সেল বাটন এরিয়া --- */
+.action-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+/* এক্সেল আপলোড বাটন স্টাইল */
+.btn-excel {
+    background: #10b981;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 5px rgba(16, 185, 129, 0.2);
+    transition: all 0.3s ease;
+}
+
+.btn-excel:hover {
+    background: #059669;
+    transform: translateY(-1px);
+}
+
+/* --- ফিল্টার বক্স ডিজাইন (Purpose Filter সহ) --- */
 .filter-box {
     background: white;
     padding: 20px;
@@ -14,81 +47,99 @@
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     margin-bottom: 25px;
     
-    /* এই অংশটি লেআউট ঠিক করবে */
+    /* ফ্লেক্সবক্স লেআউট */
     display: flex;
     flex-wrap: wrap; /* জায়গা না হলে নিচে নামবে */
     gap: 15px;       /* মাঝখানে ফাঁকা জায়গা */
-    align-items: flex-end; /* সব নিচ বরাবর সমান হবে */
+    align-items: flex-end; /* ইনপুট এবং বাটন নিচ বরাবর সমান হবে */
 }
 
-/* প্রতিটি ফিল্টার গ্রুপ */
+/* প্রতিটি ফিল্টার গ্রুপ (Purpose সহ সব ইনপুট) */
 .filter-group {
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    flex: 1;            /* সমান জায়গা নেওয়ার চেষ্টা করবে */
-    min-width: 180px;   /* খুব ছোট হয়ে চ্যাপ্টা হবে না */
+    gap: 6px;
+    flex: 1;            /* সব ইনপুট সমান জায়গা নেওয়ার চেষ্টা করবে */
+    min-width: 160px;   /* খুব ছোট হয়ে চ্যাপ্টা হবে না */
 }
 
-/* Payee গ্রুপটিকে একটু বড় জায়গা দেওয়া */
-#payeeFilter + .ts-wrapper {
-    min-width: 250px;
+/* Payee গ্রুপটিকে একটু বড় জায়গা দেওয়া (Tom Select) */
+.filter-group:has(#payeeFilter) {
+    min-width: 220px;
+    flex: 1.5; /* অন্যগুলোর চেয়ে একটু বেশি চওড়া হবে */
 }
 
 label {
     font-size: 0.85rem;
     font-weight: 600;
     color: #64748b;
+    margin-left: 2px;
 }
 
-/* সাধারণ ইনপুট ফিল্ড */
+/* সাধারণ ইনপুট ফিল্ড (Date, Category, Purpose) */
 .filter-input {
-    padding: 10px;
+    padding: 0 12px;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
     font-size: 0.9rem;
     outline: none;
-    height: 42px; /* ফিক্সড হাইট */
+    height: 42px; /* সব ইনপুট ফিক্সড হাইট */
+    background-color: #fff;
+    width: 100%;
+    color: #334155;
+    transition: border-color 0.2s;
 }
 
-/* --- Tom Select (Payee Search) এর ডিজাইন ফিক্স --- */
+.filter-input:focus {
+    border-color: #2563eb;
+}
+
+/* --- Tom Select (Payee Search) ডিজাইন ফিক্স --- */
 .ts-control {
     border: 1px solid #e2e8f0 !important;
     border-radius: 6px !important;
-    padding: 8px 10px !important;
+    padding: 0 12px !important;
     font-size: 0.9rem;
     min-height: 42px !important; /* অন্য ইনপুটের সমান হাইট */
     display: flex;
     align-items: center;
     box-shadow: none !important;
+    background-color: #fff !important;
+}
+
+.ts-wrapper.focus .ts-control {
+    border-color: #2563eb !important;
 }
 
 .ts-dropdown {
     border-radius: 6px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     border: 1px solid #e2e8f0;
+    z-index: 100;
 }
 
-/* --- বাটন এরিয়া --- */
+/* --- বাটন এরিয়া (Reset & PDF) --- */
 .btn-area {
     display: flex;
     gap: 10px;
-    margin-top: 5px;
+    /* বাটনগুলো যাতে ইনপুটের হাইটের সাথে মিলে যায় */
+    height: 42px; 
 }
 
 /* বাটন ডিজাইন */
 .btn-reset, .btn-pdf {
-    padding: 10px 20px;
+    padding: 0 20px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
     font-weight: 600;
     font-size: 0.9rem;
-    height: 42px; /* ইনপুটের সমান হাইট */
+    height: 100%; /* প্যারেন্টের হাইট নেবে (42px) */
     display: flex;
     align-items: center;
     justify-content: center;
-    white-space: nowrap;
+    gap: 8px;
+    transition: background 0.2s;
 }
 
 .btn-reset {
@@ -104,12 +155,12 @@ label {
 .btn-reset:hover { background: #64748b; }
 .btn-pdf:hover { background: #dc2626; }
 
-/* টোটাল বার */
+/* --- টোটাল সামারি বার --- */
 .summary-bar {
     background: linear-gradient(135deg, #2563eb, #1d4ed8);
     color: white;
     padding: 15px 25px;
-    border-radius: 8px;
+    border-radius: 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -117,11 +168,30 @@ label {
     box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
 }
 
-/* টেবিল ডিজাইন */
+.summary-label {
+    font-size: 0.9rem; 
+    opacity: 0.9;
+}
+
+.summary-value {
+    font-size: 1.4rem; 
+    font-weight: 700;
+}
+
+/* --- টেবিল ডিজাইন --- */
+.table-responsive {
+    background: white; 
+    border-radius: 12px; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
+    padding: 10px;
+    overflow-x: auto; /* মোবাইলে টেবিল স্ক্রল হবে */
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.95rem;
+    min-width: 600px; /* টেবিল যেন একদম ছোট না হয়ে যায় */
 }
 
 th {
@@ -138,17 +208,79 @@ td {
     padding: 15px;
     border-bottom: 1px solid #f1f5f9;
     color: #334155;
+    vertical-align: middle;
+}
+
+tr:last-child td {
+    border-bottom: none;
 }
 
 tr:hover {
     background-color: #f8fafc;
 }
 
+/* ব্যাজ ডিজাইন */
 .cat-badge {
     background: #e0f2fe;
     color: #0284c7;
-    padding: 4px 10px;
+    padding: 5px 12px;
     border-radius: 20px;
     font-size: 0.8rem;
-    font-weight: 500;
+    font-weight: 600;
+    display: inline-block;
+}
+
+/* ডিলিট বাটন */
+.delete-btn {
+    background: #fee2e2;
+    border: none;
+    color: #dc2626;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-btn:hover {
+    background: #fecaca;
+}
+
+/* --- রেসপন্সিভ ডিজাইন (মোবাইল) --- */
+@media (max-width: 768px) {
+    .filter-box {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-group {
+        min-width: 100%;
+    }
+
+    .btn-area {
+        margin-top: 10px;
+        width: 100%;
+    }
+
+    .btn-reset, .btn-pdf {
+        flex: 1; /* বাটনগুলো সমান ভাগ নেবে */
+    }
+    
+    .action-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .action-header div {
+        width: 100%;
+    }
+    
+    .btn-excel {
+        width: 100%;
+        justify-content: center;
+    }
 }
