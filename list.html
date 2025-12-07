@@ -17,12 +17,28 @@
 </head>
 <body>
 
-   <nav class="navbar">
-        <a href="index.html" class="nav-link">Dashboard</a>
-        <a href="entry.html" class="nav-link">Add Entry</a>
-        <a href="list.html" class="nav-link">Reports</a>
-        <a href="#" onclick="logout()" class="nav-link" style="color:red;">🚪 Logout</a>
-    </nav>
+   <!-- এই কোডটি index, entry, এবং list সব ফাইলে Nav এর জায়গায় বসান -->
+<nav class="navbar">
+    <a href="index.html" class="nav-link">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-text">Dashboard</span>
+    </a>
+    
+    <a href="entry.html" class="nav-link">
+        <span class="nav-icon">✍️</span>
+        <span class="nav-text">Add Entry</span>
+    </a>
+    
+    <a href="list.html" class="nav-link">
+        <span class="nav-icon">📊</span>
+        <span class="nav-text">Reports</span>
+    </a>
+
+    <a href="#" onclick="logout()" class="nav-link logout">
+        <span class="nav-icon">🚪</span>
+        <span class="nav-text">Logout</span>
+    </a>
+</nav>
 
     <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
