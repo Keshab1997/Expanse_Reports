@@ -1,47 +1,63 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // ১. ইউজার চেক
+    
+    // ১. ডাটাবেস কানেকশন চেক (সতর্কতা)
+    if (typeof window.db === 'undefined') {
+        console.error("Database connection not found. Check config.js");
+        return;
+    }
+
+    // ২. ইউজার লগইন চেক
     const { data: { user } } = await window.db.auth.getUser();
     if (!user) return window.location.href = 'login.html';
 
-    // ২. প্রোফাইল ডাটা লোড (নাম এবং ছবি)
-    loadUserProfile(user.id);
+    // ৩. ইউজারের নাম লোড করা (ছবি sidebar.js লোড করবে)
+    loadUserName(user.id);
 
-    // ৩. ড্যাশবোর্ড ডাটা লোড
+    // ৪. ড্যাশবোর্ড ডাটা লোড
     const date = new Date();
     const monthName = date.toLocaleString('default', { month: 'long', year: 'numeric' });
-    document.getElementById('currentMonthName').innerText = monthName;
+    const monthEl = document.getElementById('currentMonthName');
+    if(monthEl) monthEl.innerText = monthName;
     
     await loadDashboardStats(user.id);
 });
 
-// প্রোফাইল লোড ফাংশন
-async function loadUserProfile(userId) {
-    const { data: profile } = await window.db
-        .from('profiles')
-        .select('full_name, avatar_url')
-        .eq('id', userId)
-        .single();
+// শুধু নাম লোড করার ফাংশন
+async function loadUserName(userId) {
+    try {
+        const { data: profile } = await window.db
+            .from('profiles')
+            .select('full_name')
+            .eq('id', userId)
+            .single();
 
-    if (profile) {
-        if(profile.full_name) document.getElementById('userName').innerText = profile.full_name;
-        if(profile.avatar_url) document.getElementById('dashAvatar').src = profile.avatar_url;
-    } else {
-        // ডিফল্ট নাম ইমেইল থেকে
-        const { data: { user } } = await window.db.auth.getUser();
-        const emailName = user.email.split('@')[0];
-        document.getElementById('userName').innerText = emailName;
+        const nameEl = document.getElementById('userName');
+        if (nameEl) {
+            if (profile && profile.full_name) {
+                nameEl.innerText = profile.full_name;
+            } else {
+                // প্রোফাইল না থাকলে ইমেইল থেকে নাম দেখানো
+                const { data: { user } } = await window.db.auth.getUser();
+                if(user) nameEl.innerText = user.email.split('@')[0];
+            }
+        }
+    } catch (error) {
+        console.error("Name load error:", error);
     }
 }
 
-// স্ট্যাটাস এবং চার্ট লোড ফাংশন
+// স্ট্যাটাস এবং চার্ট লোড ফাংশন (অপটিমাইজড)
 async function loadDashboardStats(userId) {
     const date = new Date();
-    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
-    const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+    // মাসের প্রথম দিন
+    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString();
+    // মাসের শেষ দিন
+    const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString();
+    
     const todayStr = new Date().toISOString().split('T')[0];
 
-    // ডাটা আনা
-    const { data: expenses } = await window.db
+    // ডাটা আনা (চলতি মাসের)
+    const { data: expenses, error } = await window.db
         .from('expenses')
         .select('*')
         .gte('date', firstDay)
@@ -49,7 +65,10 @@ async function loadDashboardStats(userId) {
         .eq('user_id', userId)
         .order('date', { ascending: false });
 
-    if (!expenses) return;
+    if (error || !expenses) {
+        console.error("Error loading expenses:", error);
+        return;
+    }
 
     // ক্যালকুলেশন
     let totalMonth = 0;
@@ -64,59 +83,93 @@ async function loadDashboardStats(userId) {
         const cat = item.category || 'General';
         categoryMap[cat] = (categoryMap[cat] || 0) + item.amount;
 
-        const day = item.date.split('-')[2];
+        const day = item.date.split('-')[2]; // শুধু তারিখ (DD)
         dailyMap[day] = (dailyMap[day] || 0) + item.amount;
     });
 
     // UI আপডেট
-    document.getElementById('totalMonth').innerText = totalMonth.toLocaleString('en-IN');
-    document.getElementById('totalToday').innerText = totalToday.toLocaleString('en-IN');
-    document.getElementById('txCount').innerText = expenses.length;
+    const totalMonthEl = document.getElementById('totalMonth');
+    const totalTodayEl = document.getElementById('totalToday');
+    const txCountEl = document.getElementById('txCount');
 
-    // রিসেন্ট টেবিল
+    if(totalMonthEl) totalMonthEl.innerText = totalMonth.toLocaleString('en-IN');
+    if(totalTodayEl) totalTodayEl.innerText = totalToday.toLocaleString('en-IN');
+    if(txCountEl) txCountEl.innerText = expenses.length;
+
+    // রিসেন্ট টেবিল (DOM Performance Optimized)
     const recentTable = document.getElementById('recentTableBody');
-    recentTable.innerHTML = "";
-    expenses.slice(0, 5).forEach(item => {
-        recentTable.innerHTML += `
-            <tr style="border-bottom: 1px solid #f1f5f9;">
-                <td style="padding: 10px; font-size:0.9rem;">${item.date}</td>
-                <td style="padding: 10px;">${item.payee}</td>
-                <td style="padding: 10px; text-align: right; font-weight:600;">₹${item.amount.toLocaleString('en-IN')}</td>
-            </tr>`;
-    });
+    if (recentTable) {
+        if (expenses.length === 0) {
+            recentTable.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:15px;">No transactions this month</td></tr>`;
+        } else {
+            // লুপের বাইরে HTML তৈরি করা হচ্ছে (ফাস্ট লোডিংয়ের জন্য)
+            let html = "";
+            expenses.slice(0, 5).forEach(item => {
+                html += `
+                    <tr>
+                        <td>${item.date}</td>
+                        <td>${item.payee}</td>
+                        <td class="text-right">₹${item.amount.toLocaleString('en-IN')}</td>
+                    </tr>`;
+            });
+            recentTable.innerHTML = html;
+        }
+    }
 
     // চার্ট রেন্ডার
     renderCharts(categoryMap, dailyMap);
 }
 
 function renderCharts(categoryData, dailyData) {
+    // আগের চার্ট থাকলে ডিলেট করা (Chart.js এর বাগ এড়াতে)
+    const pieCanvas = document.getElementById('pieChart');
+    const barCanvas = document.getElementById('barChart');
+
+    if (window.myPieChart) window.myPieChart.destroy();
+    if (window.myBarChart) window.myBarChart.destroy();
+
     // Pie Chart
-    new Chart(document.getElementById('pieChart'), {
-        type: 'doughnut',
-        data: {
-            labels: Object.keys(categoryData),
-            datasets: [{
-                data: Object.values(categoryData),
-                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
-                borderWidth: 0
-            }]
-        },
-        options: { plugins: { legend: { position: 'right', labels: { boxWidth: 10 } } } }
-    });
+    if (pieCanvas) {
+        window.myPieChart = new Chart(pieCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(categoryData),
+                datasets: [{
+                    data: Object.values(categoryData),
+                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#6366f1'],
+                    borderWidth: 0
+                }]
+            },
+            options: { 
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right', labels: { boxWidth: 10 } } } 
+            }
+        });
+    }
 
     // Bar Chart
-    const sortedDays = Object.keys(dailyData).sort();
-    new Chart(document.getElementById('barChart'), {
-        type: 'bar',
-        data: {
-            labels: sortedDays,
-            datasets: [{
-                label: 'Expense',
-                data: sortedDays.map(d => dailyData[d]),
-                backgroundColor: '#3b82f6',
-                borderRadius: 4
-            }]
-        },
-        options: { scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } } }
-    });
+    if (barCanvas) {
+        const sortedDays = Object.keys(dailyData).sort();
+        window.myBarChart = new Chart(barCanvas, {
+            type: 'bar',
+            data: {
+                labels: sortedDays,
+                datasets: [{
+                    label: 'Daily Expense',
+                    data: sortedDays.map(d => dailyData[d]),
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 4
+                }]
+            },
+            options: { 
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { 
+                    y: { beginAtZero: true, grid: { display: false } }, 
+                    x: { grid: { display: false } } 
+                } 
+            }
+        });
+    }
 }
