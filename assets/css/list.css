@@ -1,39 +1,154 @@
 /* assets/css/list.css */
 
-.container { max-width: 1000px; }
-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; background: white; }
-th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
-th { background: #f8fafc; color: #334155; font-weight: 700; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; }
-tr:hover { background: #f1f5f9; }
+.container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
 
-/* ফিল্টার বক্স ডিজাইন */
+/* ফিল্টার বক্স ডিজাইন (Responsive Fix) */
 .filter-box {
     background: white;
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 15px;
-    align-items: end;
-    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin-bottom: 25px;
+    
+    /* এই অংশটি লেআউট ঠিক করবে */
+    display: flex;
+    flex-wrap: wrap; /* জায়গা না হলে নিচে নামবে */
+    gap: 15px;       /* মাঝখানে ফাঁকা জায়গা */
+    align-items: flex-end; /* সব নিচ বরাবর সমান হবে */
 }
-.filter-group label { display: block; font-size: 0.8rem; color: #64748b; margin-bottom: 6px; font-weight: 600; }
-.filter-input { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem; background: #fff; }
-.filter-input:focus { border-color: #2563eb; outline: none; }
 
-/* বাটন এরিয়া */
-.btn-area { display: flex; gap: 10px; }
-.btn-reset { background: #94a3b8; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; flex: 1; transition: 0.2s; }
+/* প্রতিটি ফিল্টার গ্রুপ */
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;            /* সমান জায়গা নেওয়ার চেষ্টা করবে */
+    min-width: 180px;   /* খুব ছোট হয়ে চ্যাপ্টা হবে না */
+}
+
+/* Payee গ্রুপটিকে একটু বড় জায়গা দেওয়া */
+#payeeFilter + .ts-wrapper {
+    min-width: 250px;
+}
+
+label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+/* সাধারণ ইনপুট ফিল্ড */
+.filter-input {
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    outline: none;
+    height: 42px; /* ফিক্সড হাইট */
+}
+
+/* --- Tom Select (Payee Search) এর ডিজাইন ফিক্স --- */
+.ts-control {
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 6px !important;
+    padding: 8px 10px !important;
+    font-size: 0.9rem;
+    min-height: 42px !important; /* অন্য ইনপুটের সমান হাইট */
+    display: flex;
+    align-items: center;
+    box-shadow: none !important;
+}
+
+.ts-dropdown {
+    border-radius: 6px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border: 1px solid #e2e8f0;
+}
+
+/* --- বাটন এরিয়া --- */
+.btn-area {
+    display: flex;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+/* বাটন ডিজাইন */
+.btn-reset, .btn-pdf {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    height: 42px; /* ইনপুটের সমান হাইট */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.btn-reset {
+    background: #94a3b8;
+    color: white;
+}
+
+.btn-pdf {
+    background: #ef4444;
+    color: white;
+}
+
 .btn-reset:hover { background: #64748b; }
-.btn-pdf { background: #ef4444; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; flex: 1; font-weight: 600; transition: 0.2s; }
 .btn-pdf:hover { background: #dc2626; }
 
-/* সামারি বার */
-.summary-bar { 
-    display: flex; justify-content: space-between; align-items: center; 
-    background: linear-gradient(135deg, #2563eb, #1d4ed8); 
-    color: white; padding: 15px 20px; border-radius: 10px; 
+/* টোটাল বার */
+.summary-bar {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
     box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
 }
-.cat-badge { background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+
+/* টেবিল ডিজাইন */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+th {
+    background: #f8fafc;
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #475569;
+    border-bottom: 2px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+td {
+    padding: 15px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+}
+
+tr:hover {
+    background-color: #f8fafc;
+}
+
+.cat-badge {
+    background: #e0f2fe;
+    color: #0284c7;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}

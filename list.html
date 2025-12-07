@@ -10,39 +10,55 @@
     <!-- এই পেজের স্পেসিফিক স্টাইল -->
     <link rel="stylesheet" href="assets/css/list.css">
     
+    <!-- Tom Select CSS (সার্চ এবং মাল্টি-সিলেক্টের জন্য) -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    
     <!-- লাইব্রেরি লোড -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- Excel Reader Library -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
-   <!-- এই কোডটি index, entry, এবং list সব ফাইলে Nav এর জায়গায় বসান -->
-<nav class="navbar">
-    <a href="index.html" class="nav-link">
-        <span class="nav-icon">🏠</span>
-        <span class="nav-text">Dashboard</span>
-    </a>
-    
-    <a href="entry.html" class="nav-link">
-        <span class="nav-icon">✍️</span>
-        <span class="nav-text">Add Entry</span>
-    </a>
-    
-    <a href="list.html" class="nav-link">
-        <span class="nav-icon">📊</span>
-        <span class="nav-text">Reports</span>
-    </a>
+    <!-- নেভিগেশন বার -->
+    <nav class="navbar">
+        <a href="index.html" class="nav-link">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-text">Dashboard</span>
+        </a>
+        
+        <a href="entry.html" class="nav-link">
+            <span class="nav-icon">✍️</span>
+            <span class="nav-text">Add Entry</span>
+        </a>
+        
+        <a href="list.html" class="nav-link active">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">Reports</span>
+        </a>
 
-    <a href="#" onclick="logout()" class="nav-link logout">
-        <span class="nav-icon">🚪</span>
-        <span class="nav-text">Logout</span>
-    </a>
-</nav>
+        <a href="#" onclick="logout()" class="nav-link logout">
+            <span class="nav-icon">🚪</span>
+            <span class="nav-text">Logout</span>
+        </a>
+    </nav>
 
     <div class="container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h2>📊 Advanced Reports</h2>
+        <!-- পেজ হেডার এবং এক্সেল আপলোড বাটন -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+            <h2 style="margin: 0;">📊 Advanced Reports</h2>
+            
+            <!-- Excel Upload Button -->
+            <div>
+                <input type="file" id="excelInput" accept=".xlsx, .xls" style="display: none;" onchange="handleFileUpload(this)">
+                <button onclick="document.getElementById('excelInput').click()" 
+                        style="background: #10b981; color: white; padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px; font-size: 0.9rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                   📂 Upload Excel
+                </button>
+            </div>
         </div>
 
         <!-- ফিল্টার সেকশন -->
@@ -65,10 +81,11 @@
                 </select>
             </div>
 
-            <div class="filter-group">
-                <label>Payee</label>
-                <select id="payeeFilter" class="filter-input">
-                    <option value="">All Payees</option>
+            <!-- Payee সেকশনে মাল্টিপল সিলেক্ট সাপোর্ট -->
+            <div class="filter-group" style="min-width: 250px;">
+                <label>Payee / Name</label>
+                <select id="payeeFilter" multiple placeholder="Select Payees..." autocomplete="off">
+                    <option value="">Select Payees...</option>
                 </select>
             </div>
 
@@ -81,28 +98,31 @@
         <!-- টোটাল বার -->
         <div class="summary-bar">
             <span style="font-size: 0.9rem; opacity: 0.9;">Filtered Result</span>
-            <span style="font-size: 1.4rem; font-weight: 700;">Total: ₹<span id="totalAmount">0</span></span>
+            <span style="font-size: 1.4rem; font-weight: 700; color: #fff;">Total: ₹<span id="totalAmount">0</span></span>
         </div>
         
         <!-- টেবিল -->
-        <div style="overflow-x: auto; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <div style="overflow-x: auto; border-radius: 10px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); background: white;">
             <table id="expenseTable">
                 <thead>
-    <tr>
-        <th>Date</th>
-        <th>Category</th>
-        <th>Payee</th>
-        <th>Purpose</th>
-        <th style="text-align: right;">Amount (₹)</th>
-        <th style="text-align: center; width: 50px;">Action</th> <!-- এই লাইন যোগ করা হয়েছে -->
-    </tr>
-</thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Category</th>
+                        <th>Payee</th>
+                        <th>Purpose</th>
+                        <th style="text-align: right;">Amount (₹)</th>
+                        <th style="text-align: center; width: 50px;">Action</th>
+                    </tr>
+                </thead>
                 <tbody id="tableBody">
-                    <tr><td colspan="5" style="text-align:center; padding:30px; color:#64748b;">Loading data...</td></tr>
+                    <tr><td colspan="6" style="text-align:center; padding:30px; color:#64748b;">Loading data...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
+
+    <!-- Tom Select JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 
     <!-- স্ক্রিপ্ট লোড -->
     <script src="assets/js/config.js"></script>
