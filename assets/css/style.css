@@ -1,167 +1,257 @@
-/* assets/css/style.css */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+/* =========================================
+   1. VARIABLES & RESET
+   ========================================= */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-    --primary: #2563eb; /* নীল রং */
-    --surface: #ffffff;
-    --bg: #f3f4f6;
-    --text: #1f2937;
+    --primary: #4f46e5;       /* মডার্ন ইন্ডিগো কালার */
+    --primary-hover: #4338ca;
+    --bg-light: #f3f4f6;
+    --white: #ffffff;
+    --text-dark: #1f2937;
+    --text-gray: #6b7280;
+    --danger: #ef4444;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --sidebar-width: 280px;   /* সাইডবার একটু চওড়া করা হলো */
 }
 
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: var(--bg);
-    color: var(--text);
-    margin: 0;
-    padding: 20px;
-}
-
-/* assets/css/style.css */
-
-/* ১. ডিফল্ট স্টাইল (Desktop) */
-body {
-    font-family: 'Inter', sans-serif;
+* {
     margin: 0;
     padding: 0;
-    background-color: #f3f4f6;
-    padding-bottom: 80px; /* মোবাইলে নিচের মেনুর জন্য জায়গা রাখা */
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
 }
 
-.navbar {
-    background: white;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    padding: 0 20px;
+body {
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+}
+
+a { text-decoration: none; }
+ul { list-style: none; }
+
+/* =========================================
+   2. MAIN LAYOUT
+   ========================================= */
+.dashboard-wrapper {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden; /* হরাইজন্টাল স্ক্রল বন্ধ রাখা */
+    position: relative;
+}
+
+/* --- SIDEBAR STYLING (Hidden on Right Side) --- */
+.sidebar {
+    width: var(--sidebar-width);
+    background: var(--white);
+    height: 100vh;
+    position: fixed;  
+    top: 0;
+    
+    /* বাম দিক রিসেট করে ডান দিকে সেট করা হলো */
+    left: auto;       
+    right: -100%;     /* শুরুতে ডান দিকে স্ক্রিনের বাইরে লুকানো */
+    
+    border-right: none;
+    border-left: 1px solid #e5e7eb; /* বর্ডার বাম পাশে */
+    
+    display: flex;
+    flex-direction: column;
+    z-index: 2000;    /* সবার উপরে থাকবে */
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* স্মুথ অ্যানিমেশন */
+    box-shadow: -5px 0 15px rgba(0,0,0,0.1); /* শ্যাডো বাম দিকে */
+}
+
+/* Active ক্লাস যোগ হলে ডান দিক থেকে বের হবে */
+.sidebar.active {
+    right: 0;
+}
+
+.sidebar-brand {
+    padding: 20px 25px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.sidebar-menu {
+    padding: 20px;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.sidebar-menu li { margin-bottom: 8px; }
+
+.sidebar-menu a {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    color: var(--text-gray);
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.sidebar-menu a i { width: 25px; font-size: 1.1rem; }
+
+.sidebar-menu a:hover, .sidebar-menu a.active {
+    background-color: #eef2ff;
+    color: var(--primary);
+}
+
+.sidebar-footer { padding: 20px; border-top: 1px solid #f3f4f6; }
+
+.logout-btn {
+    color: var(--danger);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    padding: 10px 15px;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+.logout-btn:hover { background-color: #fee2e2; }
+
+/* --- Main Content Area --- */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-left: 0;
+}
+
+/* =========================================
+   3. TOPBAR HEADER (Full Width Fixed)
+   ========================================= */
+.topbar {
+    background: var(--white);
     height: 70px;
     display: flex;
-    justify-content: center;
     align-items: center;
-    gap: 30px;
+    justify-content: space-between;
+    padding: 0 30px;
+    border-bottom: 1px solid #e5e7eb;
+    
+    /* Sticky Position */
     position: sticky;
     top: 0;
-    z-index: 1000;
-}
-
-.nav-link {
-    text-decoration: none;
-    color: #64748b;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 18px;
-    border-radius: 8px;
-    transition: all 0.3s;
-}
-
-.nav-link:hover, .nav-link.active {
-    background: #eff6ff;
-    color: #2563eb;
-}
-
-.nav-icon { font-size: 1.2rem; }
-
-/* লগআউট বাটন স্টাইল */
-.nav-link.logout:hover {
-    background: #fee2e2;
-    color: #dc2626;
-}
-
-/* ২. মোবাইল রেস্পন্সিভ ডিজাইন (Mobile View) */
-@media (max-width: 768px) {
-    .navbar {
-        position: fixed; /* নিচে ফিক্সড থাকবে */
-        bottom: 0;
-        top: auto; 
-        width: 100%;
-        height: 65px;
-        padding: 0;
-        gap: 0;
-        justify-content: space-around; /* সমান দূরত্বে ছড়িয়ে দেবে */
-        background: white;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.08); /* শ্যাডো উপরে */
-        border-top: 1px solid #f1f5f9;
-    }
-
-    .nav-link {
-        flex-direction: column; /* আইকন উপরে, টেক্সট নিচে */
-        gap: 4px;
-        font-size: 0.7rem;
-        padding: 8px 0;
-        width: 100%; /* ক্লিক এরিয়া বড় করা */
-        justify-content: center;
-        border-radius: 0;
-    }
-
-    .nav-icon {
-        font-size: 1.4rem; /* আইকন বড় করা */
-        margin-bottom: 0;
-    }
+    z-index: 900;
     
-    .nav-text {
-        font-weight: 600;
-    }
-
-    /* অ্যাক্টিভ লিংক বাটন মোবাইলে একটু ভিন্ন হবে */
-    .nav-link:hover, .nav-link.active {
-        background: transparent;
-        color: #2563eb;
-    }
-    .nav-link:hover .nav-icon {
-        transform: translateY(-2px);
-        transition: 0.2s;
-    }
-}
-
-/* ফর্ম স্টাইল */
-.container {
-    max-width: 500px;
-    margin: 0 auto;
-    background: var(--surface);
-    padding: 30px;
-    border-radius: 16px;
-    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-}
-
-h2 { text-align: center; margin-bottom: 25px; color: var(--primary); }
-
-.form-group { margin-bottom: 20px; }
-label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; }
-input, select {
+    /* Full Width Fix */
     width: 100%;
-    padding: 12px;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 1rem;
-    box-sizing: border-box; /* ইনপুট বক্স যাতে ভেঙে না যায় */
-    transition: border-color 0.3s;
+    box-sizing: border-box;
 }
 
-input:focus {
-    border-color: var(--primary);
-    outline: none;
-}
+.page-title { font-size: 1.25rem; font-weight: 600; color: var(--text-dark); }
 
-.btn-submit {
-    width: 100%;
-    padding: 14px;
-    background: var(--primary);
-    color: white;
+.hamburger-btn {
+    display: block;   
+    background: none;
     border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 700;
+    font-size: 1.4rem;
     cursor: pointer;
-    transition: background 0.3s;
+    color: var(--text-dark);
+    padding: 8px;
+    border-radius: 5px;
+    transition: background 0.2s;
+}
+.hamburger-btn:hover { background: #f3f4f6; }
+
+.close-btn {
+    display: block;   
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: var(--text-dark);
+    padding: 5px;
 }
 
-.btn-submit:hover { background: #1d4ed8; }
-
-/* লোডিং বা মেসেজ */
-.status {
-    text-align: center;
-    margin-top: 15px;
-    font-weight: 600;
-    display: none;
+.header-avatar {
+    width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb;
 }
-.success { color: green; }
-.error { color: red; }
+
+/* =========================================
+   4. BODY CONTENT (Charts, Cards)
+   ========================================= */
+.content-body { 
+    padding: 30px; 
+    width: 100%; 
+    max-width: 1400px; /* কন্টেন্ট বেশি ছড়াবে না */
+    margin: 0 auto; 
+}
+
+.user-welcome { margin-bottom: 30px; }
+.user-welcome h1 { font-size: 1.8rem; color: var(--text-dark); }
+.highlight-text { color: var(--primary); font-weight: 600; }
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: var(--white); padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    display: flex; align-items: center; gap: 20px; transition: transform 0.2s; border-left: 5px solid transparent;
+}
+.stat-card:hover { transform: translateY(-3px); }
+.stat-card.blue { border-color: var(--primary); }
+.stat-card.green { border-color: var(--success); }
+.stat-card.orange { border-color: var(--warning); }
+
+.icon-box {
+    width: 50px; height: 50px; background: #f8fafc; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--text-gray);
+}
+.stat-title { font-size: 0.9rem; color: var(--text-gray); margin-bottom: 5px; }
+.stat-value { font-size: 1.6rem; font-weight: 700; color: var(--text-dark); }
+
+/* Charts Area */
+.charts-container { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-bottom: 30px; }
+.chart-box { background: var(--white); padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+.chart-wrapper { position: relative; height: 300px; width: 100%; }
+
+/* Recent Transactions */
+.recent-section { background: var(--white); padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.view-all { color: var(--primary); font-weight: 600; font-size: 0.9rem; }
+.table-responsive { overflow-x: auto; }
+.recent-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+.recent-table th, .recent-table td { padding: 15px; text-align: left; border-bottom: 1px solid #f3f4f6; }
+.recent-table tr:last-child td { border-bottom: none; }
+.loading-text { text-align: center; color: var(--text-gray); padding: 20px; }
+
+/* =========================================
+   5. GENERAL FORM STYLES (Fallback)
+   ========================================= */
+.container { max-width: 500px; margin: 40px auto; background: var(--white); padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+.form-group { margin-bottom: 20px; }
+label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-dark); }
+input, select, textarea { width: 100%; padding: 12px 15px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 1rem; transition: all 0.3s; background: #f9fafb; }
+input:focus, select:focus, textarea:focus { border-color: var(--primary); background: var(--white); outline: none; }
+.btn-submit { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.3s; }
+.btn-submit:hover { background: var(--primary-hover); }
+
+/* =========================================
+   6. MOBILE RESPONSIVE
+   ========================================= */
+@media (max-width: 992px) {
+    .charts-container { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+    .topbar { padding: 0 20px; }
+    .content-body { padding: 20px; }
+    .dashboard-grid { grid-template-columns: 1fr; }
+    .container { margin: 20px; padding: 25px; }
+}

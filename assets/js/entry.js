@@ -8,12 +8,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const toast = document.getElementById('toast');
     const dateInput = document.getElementById('date');
 
+    // ফর্ম এলিমেন্ট আছে কি না চেক করা
     if (!form || !catSelect || !submitBtn) {
         console.error("❌ Critical Error: HTML elements not found!");
         return;
     }
 
-    if(dateInput) dateInput.valueAsDate = new Date();
+    // আজকের তারিখ সেট করা
+    if (dateInput) dateInput.valueAsDate = new Date();
 
     // ক্যাটাগরি লোড ফাংশন কল
     await loadCategories(catSelect);
@@ -43,25 +45,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             const { data: { user } } = await window.db.auth.getUser();
-            if(!user) return window.location.href = 'index.html';
+            if (!user) return window.location.href = 'index.html';
 
             const { error } = await window.db
                 .from('expenses')
-                .insert([{ 
-                    date, 
-                    category, 
-                    payee, 
-                    purpose, 
+                .insert([{
+                    date,
+                    category,
+                    payee,
+                    purpose,
                     amount,
-                    user_id: user.id 
+                    user_id: user.id
                 }]);
 
             if (error) throw error;
 
             showToast("✅ Expense Added Successfully!");
             form.reset();
-            dateInput.valueAsDate = new Date();
-            // ডাটা সেভ করার পর ক্যাটাগরি আবার লোড করার দরকার নেই, যদি না নতুন কিছু থাকে
+            dateInput.valueAsDate = new Date(); // আবার তারিখ সেট করা
             
         } catch (err) {
             console.error(err);
@@ -73,15 +74,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ============================
-// হেল্পার ফাংশনসমূহ (এখানে ক্যাটাগরি ফিক্স করা হয়েছে)
+// হেল্পার ফাংশনসমূহ (Fixed)
 // ============================
 
-// Optimized loadCategories Function
 async function loadCategories(selectElement) {
-    if(!window.db) return console.error("Database not connected!");
+    if (!window.db) return console.error("Database not connected!");
 
     selectElement.innerHTML = '<option value="" disabled selected>Loading...</option>';
-    
+
     const { data: { user } } = await window.db.auth.getUser();
     if (!user) return;
 
@@ -91,16 +91,15 @@ async function loadCategories(selectElement) {
         .select('name')
         .order('name');
 
-    // ২. ব্যবহৃত ক্যাটাগরি (expenses টেবিল থেকে)
-    // ফিক্স: আগে সব ডাটা আনত, এখন আমরা শুধু লাস্ট ৫০০ এন্ট্রি চেক করব
+    // ২. ব্যবহৃত ক্যাটাগরি (expenses টেবিল থেকে) - লাস্ট ৫০০ এন্ট্রি
     const { data: usedCats } = await window.db
         .from('expenses')
         .select('category')
         .not('category', 'is', null)
-        .order('date', { ascending: false }) // লেটেস্ট গুলো আগে
-        .limit(500); // মাত্র ৫০০ ডাটা আনবে (মিলিসেকেন্ডে হয়ে যাবে)
+        .order('date', { ascending: false })
+        .limit(500);
 
-    // ৩. মার্জ করা
+    // ৩. ডাটা মার্জ করা
     let allCategories = [];
 
     if (savedCats) {
@@ -110,33 +109,12 @@ async function loadCategories(selectElement) {
         allCategories.push(...usedCats.map(c => c.category));
     }
 
-    // ইউনিক করা
-    const uniqueCategories = [...new Set(allCategories)].filter(Boolean).sort();
-
-    // ৪. অপশন সেট করা
-    selectElement.innerHTML = '<option value="" disabled selected>Select Category</option>';
-    
-    if (uniqueCategories.length > 0) {
-        uniqueCategories.forEach(name => {
-            const opt = document.createElement('option');
-            opt.value = name;
-            opt.textContent = name;
-            selectElement.appendChild(opt);
-        });
-    } else {
-        const opt = document.createElement('option');
-        opt.disabled = true;
-        opt.textContent = "No categories found";
-        selectElement.appendChild(opt);
-    }
-}
-
-    // Set ব্যবহার করে ইউনিক নাম বের করা এবং সর্ট করা
+    // ইউনিক করা এবং সর্ট করা
     const uniqueCategories = [...new Set(allCategories)].filter(Boolean).sort();
 
     // ৪. ড্রপডাউনে অপশন যোগ করা
     selectElement.innerHTML = '<option value="" disabled selected>Select Category</option>';
-    
+
     if (uniqueCategories.length > 0) {
         uniqueCategories.forEach(name => {
             const opt = document.createElement('option');
@@ -160,12 +138,12 @@ function resetBtn(text, btn, btnTxt) {
 
 function showToast(message, type = "success") {
     const toast = document.getElementById('toast');
-    if(!toast) return;
+    if (!toast) return;
     toast.innerText = message;
     toast.className = "toast show";
     if (type === "error") toast.classList.add("error");
-    setTimeout(() => { 
-        toast.className = toast.className.replace("show", ""); 
+    setTimeout(() => {
+        toast.className = toast.className.replace("show", "");
         toast.classList.remove("error");
     }, 3000);
 }
@@ -173,16 +151,16 @@ function showToast(message, type = "success") {
 // ============================
 // মোডাল এবং ক্যাটাগরি সেভ
 // ============================
-window.openModal = function() { 
-    document.getElementById('catModal').style.display = 'flex'; 
+window.openModal = function () {
+    document.getElementById('catModal').style.display = 'flex';
     document.getElementById('newCatName').focus();
 }
 
-window.closeModal = function() { 
-    document.getElementById('catModal').style.display = 'none'; 
+window.closeModal = function () {
+    document.getElementById('catModal').style.display = 'none';
 }
 
-window.saveCategory = async function() {
+window.saveCategory = async function () {
     const nameInput = document.getElementById('newCatName');
     const name = nameInput.value.trim();
     if (!name) return alert("Enter category name");
@@ -194,7 +172,7 @@ window.saveCategory = async function() {
 
     if (error) {
         // যদি ডুপ্লিকেট এরর দেয়
-        if(error.code === '23505') alert("Category already exists!");
+        if (error.code === '23505') alert("Category already exists!");
         else alert("Error: " + error.message);
     } else {
         closeModal();
@@ -209,14 +187,14 @@ window.saveCategory = async function() {
 // ============================
 // এক্সেল আপলোড ফাংশন
 // ============================
-window.handleFileUpload = async function(input) {
+window.handleFileUpload = async function (input) {
     const file = input.files[0];
     if (!file) return;
 
     const { data: { user } } = await window.db.auth.getUser();
 
     const reader = new FileReader();
-    reader.onload = async function(e) {
+    reader.onload = async function (e) {
         try {
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, { type: 'array' });
@@ -231,9 +209,9 @@ window.handleFileUpload = async function(input) {
                 user_id: user.id
             })).filter(d => d.amount > 0);
 
-            if(formattedData.length > 0 && confirm(`Upload ${formattedData.length} items?`)) {
+            if (formattedData.length > 0 && confirm(`Upload ${formattedData.length} items?`)) {
                 const { error } = await window.db.from('expenses').insert(formattedData);
-                if(error) alert("Failed: " + error.message);
+                if (error) alert("Failed: " + error.message);
                 else {
                     alert("✅ Uploaded!");
                     input.value = '';

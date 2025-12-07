@@ -7,131 +7,161 @@
     
     <!-- ফন্ট এবং স্টাইল -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- FontAwesome Icon CDN (আইকন দেখার জন্য জরুরি) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- ড্যাশবোর্ড স্টাইল -->
-    <style>
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            border-left: 5px solid #3b82f6;
-        }
-        .stat-title { color: #64748b; font-size: 0.9rem; margin-bottom: 5px; }
-        .stat-value { font-size: 1.8rem; font-weight: 700; color: #1e293b; }
-        
-        .charts-container {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .chart-box {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            min-height: 300px;
-        }
-        .recent-list {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .user-welcome { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
-        .user-avatar-small { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #3b82f6; }
-        
-        @media (max-width: 768px) { .charts-container { grid-template-columns: 1fr; } }
-    </style>
+    <link rel="stylesheet" href="assets/css/style.css">
 
+    <!-- স্ক্রিপ্টস -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-<!-- নেভিগেশন বার (Profile লিংক যুক্ত করা হয়েছে) -->
-<nav class="navbar">
-    <a href="index.html" class="nav-link active">
-        <span class="nav-icon">🏠</span> <span class="nav-text">Dashboard</span>
-    </a>
-    <a href="entry.html" class="nav-link">
-        <span class="nav-icon">✍️</span> <span class="nav-text">Add Entry</span>
-    </a>
-    <a href="list.html" class="nav-link">
-        <span class="nav-icon">📊</span> <span class="nav-text">Reports</span>
-    </a>
-    <!-- নতুন প্রোফাইল লিংক -->
-    <a href="profile.html" class="nav-link">
-        <span class="nav-icon">👤</span> <span class="nav-text">Profile</span>
-    </a>
-    <a href="#" onclick="logout()" class="nav-link logout">
-        <span class="nav-icon">🚪</span> <span class="nav-text">Logout</span>
-    </a>
-</nav>
-
-<div class="main-container">
-    <!-- ওয়েলকাম সেকশন -->
-    <div class="user-welcome">
-        <img src="https://via.placeholder.com/150" id="dashAvatar" class="user-avatar-small" alt="Profile">
-        <div>
-            <h2 style="color: #1e293b; margin:0;">Hello, <span id="userName">User</span>!</h2>
-            <p style="color: #64748b; margin:0; font-size:0.9rem;">Overview for <span id="currentMonthName" style="color:#3b82f6; font-weight:bold;">this month</span>.</p>
+<div class="dashboard-wrapper">
+    
+    <!-- ১. সাইডবার (ডেস্কটপে ফিক্সড, মোবাইলে লুকানো) -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <i class="fa-solid fa-wallet"></i> 
+            <span>ExpensePro</span>
+            <!-- ক্লোজ বাটন (শুধু মোবাইলে দেখাবে) -->
+            <button class="close-btn" id="closeSidebar"><i class="fa-solid fa-xmark"></i></button>
         </div>
+
+        <ul class="sidebar-menu">
+            <li>
+                <a href="index.html" class="active">
+                    <i class="fa-solid fa-house"></i> <span>Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="entry.html">
+                    <i class="fa-solid fa-pen"></i> <span>Add Entry</span>
+                </a>
+            </li>
+            <li>
+                <a href="reports.html">
+                    <i class="fa-solid fa-chart-pie"></i> <span>Reports</span>
+                </a>
+            </li>
+            <li>
+                <a href="profile.html">
+                    <i class="fa-solid fa-user"></i> <span>Profile</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <a href="#" onclick="logout()" class="logout-btn">
+                <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- ২. মেইন কন্টেন্ট এরিয়া -->
+    <div class="main-content">
+        
+        <!-- টপ হেডার (হ্যামবার্গার বাটন এখানে) -->
+        <!-- টপ হেডার -->
+<header class="topbar">
+    
+    <!-- বাম পাশ: শুধু পেজের নাম থাকবে -->
+    <div class="header-left">
+        <h2 class="page-title">Dashboard</h2>
     </div>
 
-    <!-- ১. স্ট্যাটাস কার্ড -->
-    <div class="dashboard-grid">
-        <div class="stat-card">
-            <div class="stat-title">Total Spent (Month)</div>
-            <div class="stat-value">₹<span id="totalMonth">0</span></div>
+    <!-- ডান পাশ: প্রোফাইল এবং হ্যামবার্গার বাটন একসাথে -->
+    <div class="header-right" style="display: flex; align-items: center; gap: 15px;">
+        
+        <!-- প্রোফাইল ছবি -->
+        <div class="top-profile">
+            <img src="https://via.placeholder.com/40" id="headerAvatar" class="header-avatar" alt="User">
         </div>
-        <div class="stat-card" style="border-left-color: #10b981;">
-            <div class="stat-title">Spent Today</div>
-            <div class="stat-value">₹<span id="totalToday">0</span></div>
-        </div>
-        <div class="stat-card" style="border-left-color: #f59e0b;">
-            <div class="stat-title">Transactions</div>
-            <div class="stat-value" id="txCount">0</div>
-        </div>
-    </div>
 
-    <!-- ২. চার্ট সেকশন -->
-    <div class="charts-container">
-        <div class="chart-box">
-            <h3 style="font-size: 1rem; margin-bottom: 15px;">📅 Daily Spending</h3>
-            <canvas id="barChart"></canvas>
-        </div>
-        <div class="chart-box">
-            <h3 style="font-size: 1rem; margin-bottom: 15px;">🍰 Top Categories</h3>
-            <canvas id="pieChart"></canvas>
-        </div>
+        <!-- হ্যামবার্গার বাটন (এখন ডান দিকে) -->
+        <button id="menuToggle" class="hamburger-btn">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+        
     </div>
+</header>
+        <!-- ড্যাশবোর্ড বডি -->
+        <div class="content-body">
+            
+            <!-- ওয়েলকাম সেকশন -->
+            <div class="user-welcome">
+                <div class="welcome-text">
+                    <h1 id="welcomeTitle">Hello, <span id="userName">User</span>!</h1>
+                    <p>Overview for <span id="currentMonthName" class="highlight-text">this month</span>.</p>
+                </div>
+            </div>
 
-    <!-- ৩. রিসেন্ট ট্রানজেকশন -->
-    <div class="recent-list">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h3 style="font-size: 1.1rem; margin:0;">📝 Recent Transactions</h3>
-            <a href="list.html" style="color: #3b82f6; text-decoration: none; font-size: 0.9rem;">View All →</a>
-        </div>
-        <table style="width: 100%; border-collapse: collapse;">
-            <tbody id="recentTableBody">
-                <tr><td style="text-align:center; padding: 20px; color:#999;">Loading...</td></tr>
-            </tbody>
-        </table>
-    </div>
+            <!-- স্ট্যাটাস কার্ড -->
+            <div class="dashboard-grid">
+                <div class="stat-card blue">
+                    <div class="icon-box"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+                    <div>
+                        <div class="stat-title">Total Spent (Month)</div>
+                        <div class="stat-value">₹<span id="totalMonth">0</span></div>
+                    </div>
+                </div>
+                <div class="stat-card green">
+                    <div class="icon-box"><i class="fa-solid fa-calendar-day"></i></div>
+                    <div>
+                        <div class="stat-title">Spent Today</div>
+                        <div class="stat-value">₹<span id="totalToday">0</span></div>
+                    </div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="icon-box"><i class="fa-solid fa-receipt"></i></div>
+                    <div>
+                        <div class="stat-title">Transactions</div>
+                        <div class="stat-value" id="txCount">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- চার্ট সেকশন -->
+            <div class="charts-container">
+                <div class="chart-box">
+                    <h3>📅 Daily Spending</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-box">
+                    <h3>🍰 Top Categories</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- রিসেন্ট ট্রানজেকশন -->
+            <div class="recent-section">
+                <div class="section-header">
+                    <h3>📝 Recent Transactions</h3>
+                    <a href="list.html" class="view-all">View All <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+                <div class="table-responsive">
+                    <table class="recent-table">
+                        <tbody id="recentTableBody">
+                            <tr><td colspan="3" class="loading-text">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div> <!-- End content-body -->
+    </div> <!-- End main-content -->
 </div>
 
+<!-- স্ক্রিপ্টস -->
 <script src="assets/js/config.js"></script>
 <script src="assets/js/auth.js"></script>
 <script src="assets/js/index.js"></script>
+<script src="assets/js/sidebar.js"></script>
 
 </body>
 </html>
