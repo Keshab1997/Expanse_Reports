@@ -30,45 +30,72 @@ document.addEventListener('DOMContentLoaded', function() {
     loadHeaderAvatar();
 });
 
-// ৩. ছবি লোড করার ফাংশন (window.db ব্যবহার করে)
+// ৩. ছবি লোড করার ফাংশন (উন্নত ডিবাগিং সহ)
 async function loadHeaderAvatar() {
     const avatarImg = document.getElementById('headerAvatar');
     
-    // চেক করা হচ্ছে db লোড হয়েছে কিনা এবং ইমেজ ট্যাগ আছে কিনা
+    // ডিফল্ট ছবি যদি লোড না হয়, তবে একটি আইকন বা সলিড কালার দেখানোর জন্য
+    if(avatarImg) {
+        avatarImg.onerror = function() {
+            this.src = 'https://cdn-icons-png.flaticon.com/512/149/149071.png'; // একটি নির্ভরযোগ্য ডিফল্ট আইকন
+        };
+    }
+
     if (!avatarImg || typeof window.db === 'undefined') {
-        // যদি db না পায়, কনসোলে ওয়ার্নিং দেখাবে (ডিবাগিংয়ের জন্য)
-        if(typeof window.db === 'undefined') console.warn("window.db not found via sidebar.js");
+        console.warn("⚠️ loadHeaderAvatar: Image tag missing or DB not connected.");
         return;
     }
 
     try {
-        // ১. বর্তমান ইউজার চেক করা (window.db ব্যবহার করে)
+        console.log("🔹 1. Checking Auth User...");
         const { data: { user } } = await window.db.auth.getUser();
         
-        if (user) {
-            // ২. 'profiles' টেবিল থেকে ছবির নাম (path) আনা
-            const { data, error } = await window.db
-                .from('profiles')
-                .select('avatar_url')
-                .eq('id', user.id)
-                .single();
+        if (!user) {
+            console.log("❌ No user logged in.");
+            return;
+        }
+        console.log("✅ User found:", user.id);
 
-            if (data && data.avatar_url) {
-                
-                // ৩. স্টোরেজ থেকে পাবলিক লিংক তৈরি করা
+        console.log("🔹 2. Fetching Profile Data...");
+        const { data, error } = await window.db
+            .from('profiles')
+            .select('avatar_url')
+            .eq('id', user.id)
+            .single();
+
+        if (error) {
+            console.error("❌ Profile Fetch Error:", error.message);
+            return;
+        }
+
+        console.log("✅ Profile Data:", data);
+
+        if (data && data.avatar_url) {
+            let finalUrl = "";
+
+            // চেক করা হচ্ছে এটা কি পূর্ণ লিংক নাকি শুধু পাথ
+            if (data.avatar_url.startsWith('http')) {
+                finalUrl = data.avatar_url;
+                console.log("🔹 Direct Link Found");
+            } else {
+                // স্টোরেজ থেকে পাবলিক লিংক তৈরি
                 const { data: publicData } = window.db
                     .storage
                     .from('avatars') // আপনার বাকেটের নাম
                     .getPublicUrl(data.avatar_url);
-
-                // ৪. ইমেজ সোর্স সেট করা
-                if (publicData.publicUrl) {
-                    // ক্যাশ এড়ানোর জন্য টাইমস্ট্যাম্প যোগ করা হলো
-                    avatarImg.src = publicData.publicUrl + '?t=' + new Date().getTime();
-                }
+                
+                finalUrl = publicData.publicUrl;
+                console.log("🔹 Generated Public URL:", finalUrl);
             }
+
+            // সোর্স সেট করা
+            avatarImg.src = finalUrl + '?t=' + new Date().getTime(); // ক্যাশ এড়াতে
+            console.log("✅ Image Source Updated!");
+        } else {
+            console.warn("⚠️ No avatar_url found in database for this user.");
         }
+
     } catch (err) {
-        console.error("Header Avatar Error:", err);
+        console.error("❌ Unexpected Error in loadHeaderAvatar:", err);
     }
 }
