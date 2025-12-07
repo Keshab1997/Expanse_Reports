@@ -4,117 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Expense Manager</title>
-    <link rel="stylesheet" href="assets/css/style.css">
     
-    <!-- ১. লাইব্রেরি লোড -->
+    <!-- গ্লোবাল স্টাইল -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- এই পেজের স্পেসিফিক স্টাইল -->
+    <link rel="stylesheet" href="assets/css/index.css">
+    
+    <!-- লাইব্রেরি -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
     <nav class="navbar">
-    <a href="index.html" class="nav-link">Dashboard</a>
-    <a href="entry.html" class="nav-link">Add Entry</a>
-    <a href="list.html" class="nav-link">Reports</a>
-    <!-- লগআউট বাটন -->
-    <a href="#" onclick="logout()" class="nav-link" style="color:red;">🚪 Logout</a>
-</nav>
+        <a href="index.html" class="nav-link">Dashboard</a>
+        <a href="entry.html" class="nav-link">Add Entry</a>
+        <a href="list.html" class="nav-link">Reports</a>
+        <a href="#" onclick="logout()" class="nav-link" style="color:red;">🚪 Logout</a>
+    </nav>
 
-    <div class="container" style="max-width: 800px;">
+    <div class="container dashboard-container">
         <h2>📊 Expense Dashboard</h2>
 
-        <div style="display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap;">
-            <div style="flex: 1; background: #2563eb; color: white; padding: 20px; border-radius: 12px; text-align: center;">
+        <!-- স্ট্যাটাস কার্ডস -->
+        <div class="stats-row">
+            <div class="stat-card total-card">
                 <h3>Total Spent</h3>
-                <h1 style="font-size: 2.5rem; margin: 10px 0;">₹<span id="totalAmount">...</span></h1>
+                <h1>₹<span id="totalAmount">...</span></h1>
             </div>
             
-            <div style="flex: 1; background: white; padding: 20px; border-radius: 12px; border: 1px solid #ddd; text-align: center;">
+            <div class="stat-card last-entry-card">
                 <h3>Last Entry</h3>
-                <p id="lastEntry" style="font-size: 1.2rem; color: #555;">Loading...</p>
+                <p id="lastEntry">Loading...</p>
             </div>
         </div>
 
-        <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #ddd;">
-            <h3 style="text-align: center; margin-bottom: 20px;">Expense by Payee</h3>
-            <canvas id="expenseChart" style="max-height: 400px;"></canvas>
+        <!-- চার্ট সেকশন -->
+        <div class="chart-box">
+            <h3>Expense by Payee</h3>
+            <canvas id="expenseChart"></canvas>
         </div>
 
-        <div style="text-align: center; margin-top: 30px;">
-            <a href="entry.html" class="btn-submit" style="text-decoration: none; display: inline-block; width: auto; padding: 12px 30px;">+ Add New Expense</a>
+        <div class="action-area">
+            <a href="entry.html" class="btn-submit btn-dashboard">+ Add New Expense</a>
         </div>
     </div>
 
-    <!-- ২. কনফিগারেশন ফাইল লোড -->
+    <!-- স্ক্রিপ্ট ফাইল -->
     <script src="assets/js/config.js"></script>
     <script src="assets/js/auth.js"></script>
-
-    <!-- ৩. লজিক -->
-    <script>
-        async function loadDashboard() {
-            // window.db ব্যবহার করছি
-            let { data, error } = await window.db
-                .from('expenses')
-                .select('*');
-
-            if (error) {
-                console.error(error);
-                document.getElementById('totalAmount').innerText = "Error";
-                return;
-            }
-
-            let total = 0;
-            let payeeMap = {};
-            
-            data.forEach(item => {
-                total += item.amount;
-                
-                // Payee অনুযায়ী যোগ করা (Logic)
-                if (payeeMap[item.payee]) {
-                    payeeMap[item.payee] += item.amount;
-                } else {
-                    payeeMap[item.payee] = item.amount;
-                }
-            });
-
-            document.getElementById('totalAmount').innerText = total.toLocaleString();
-
-            // লাস্ট এন্ট্রি
-            if (data.length > 0) {
-                const last = data[data.length - 1];
-                document.getElementById('lastEntry').innerText = `${last.payee} - ₹${last.amount}`;
-            } else {
-                document.getElementById('lastEntry').innerText = "No Data";
-            }
-
-            createChart(payeeMap);
-        }
-
-        function createChart(dataObj) {
-            const ctx = document.getElementById('expenseChart');
-            
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(dataObj),
-                    datasets: [{
-                        label: 'Amount Spent (₹)',
-                        data: Object.values(dataObj),
-                        backgroundColor: '#2563eb',
-                        borderRadius: 5
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
-            });
-        }
-
-        loadDashboard();
-    </script>
+    <!-- এই পেজের লজিক -->
+    <script src="assets/js/index.js"></script>
 
 </body>
 </html>

@@ -1,0 +1,47 @@
+/* assets/css/login.css */
+
+/* লগইন পেজের বডি একটু ভিন্ন, তাই এখানে আলাদা করা হলো */
+body { 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    height: 100vh; 
+    background: #f3f4f6; 
+}
+
+.login-box { 
+    background: white; 
+    padding: 40px; 
+    border-radius: 15px; 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+    width: 100%; 
+    max-width: 400px; 
+    text-align: center; 
+}
+
+.logo { 
+    font-size: 3rem; 
+    margin-bottom: 10px; 
+}
+
+/* ইনপুট ফিল্ডের মার্জিন */
+input { 
+    margin-bottom: 15px; 
+    background: #f9fafb; 
+}
+
+.subtitle {
+    color: #666; 
+    margin-bottom: 20px;
+}
+
+.toggle-text { 
+    margin-top: 15px; 
+    font-size: 0.9rem; 
+    color: #666; 
+    cursor: pointer; 
+    text-decoration: underline; 
+}
+.toggle-text:hover { 
+    color: #2563eb; 
+}

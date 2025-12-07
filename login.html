@@ -4,23 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Expense Manager</title>
+    
+    <!-- গ্লোবাল স্টাইল -->
     <link rel="stylesheet" href="assets/css/style.css">
+    <!-- এই পেজের স্পেসিফিক স্টাইল -->
+    <link rel="stylesheet" href="assets/css/login.css">
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        body { display: flex; justify-content: center; align-items: center; height: 100vh; background: #f3f4f6; }
-        .login-box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        .logo { font-size: 3rem; margin-bottom: 10px; }
-        input { margin-bottom: 15px; background: #f9fafb; }
-        .toggle-text { margin-top: 15px; font-size: 0.9rem; color: #666; cursor: pointer; text-decoration: underline; }
-        .toggle-text:hover { color: #2563eb; }
-    </style>
 </head>
 <body>
 
     <div class="login-box">
         <div class="logo">🔐</div>
         <h2 id="pageTitle">Welcome Back</h2>
-        <p style="color:#666; margin-bottom:20px;">Please login to continue</p>
+        <p class="subtitle">Please login to continue</p>
 
         <form id="authForm">
             <input type="email" id="email" placeholder="Enter Email" required>
@@ -35,78 +32,8 @@
 
     <!-- কনফিগারেশন লোড -->
     <script src="assets/js/config.js"></script>
-
-    <script>
-        let isLogin = true; // ডিফল্ট মোড লগইন
-
-        const form = document.getElementById('authForm');
-        const msg = document.getElementById('msg');
-        const btn = document.getElementById('submitBtn');
-        const title = document.getElementById('pageTitle');
-        const toggleBtn = document.querySelector('.toggle-text');
-
-        // ১. টগল ফাংশন (Login <-> Sign Up)
-        function toggleMode() {
-            isLogin = !isLogin;
-            if (isLogin) {
-                title.innerText = "Welcome Back";
-                btn.innerText = "Login";
-                toggleBtn.innerText = "Don't have an account? Sign Up";
-            } else {
-                title.innerText = "Create Account";
-                btn.innerText = "Sign Up";
-                toggleBtn.innerText = "Already have an account? Login";
-            }
-            msg.style.display = 'none';
-        }
-
-        // ২. ফর্ম সাবমিট লজিক
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            btn.disabled = true;
-            btn.innerText = "Please wait...";
-            msg.style.display = 'none';
-
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-
-            let data, error;
-
-            if (isLogin) {
-                // লগইন করা
-                ({ data, error } = await window.db.auth.signInWithPassword({ email, password }));
-            } else {
-                // সাইন আপ করা
-                ({ data, error } = await window.db.auth.signUp({ email, password }));
-            }
-
-            if (error) {
-                msg.style.display = 'block';
-                msg.innerText = "❌ " + error.message;
-                msg.className = "status error";
-                btn.disabled = false;
-                btn.innerText = isLogin ? "Login" : "Sign Up";
-            } else {
-                msg.style.display = 'block';
-                msg.innerText = "✅ Success! Redirecting...";
-                msg.className = "status success";
-                
-                // ১ সেকেন্ড পর ড্যাশবোর্ডে নিয়ে যাবে
-                setTimeout(() => {
-                    window.location.href = "index.html";
-                }, 1000);
-            }
-        });
-
-        // ৩. কেউ যদি অলরেডি লগইন থাকে, তাকে সরাসরি ড্যাশবোর্ডে পাঠানো
-        async function checkLogin() {
-            const { data } = await window.db.auth.getSession();
-            if (data.session) {
-                window.location.href = "index.html";
-            }
-        }
-        checkLogin();
-    </script>
+    <!-- লগইন লজিক -->
+    <script src="assets/js/login.js"></script>
 
 </body>
 </html>

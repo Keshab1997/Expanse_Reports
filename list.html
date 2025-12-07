@@ -4,62 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Reports</title>
+    
+    <!-- গ্লোবাল স্টাইল -->
     <link rel="stylesheet" href="assets/css/style.css">
+    <!-- এই পেজের স্পেসিফিক স্টাইল -->
+    <link rel="stylesheet" href="assets/css/list.css">
     
     <!-- লাইব্রেরি লোড -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
-    
-    <style>
-        .container { max-width: 1000px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; background: white; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
-        th { background: #f8fafc; color: #334155; font-weight: 700; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; }
-        tr:hover { background: #f1f5f9; }
-        
-        /* ফিল্টার বক্স ডিজাইন */
-        .filter-box {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 15px;
-            align-items: end;
-            margin-bottom: 20px;
-        }
-        .filter-group label { display: block; font-size: 0.8rem; color: #64748b; margin-bottom: 6px; font-weight: 600; }
-        .filter-input { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem; background: #fff; }
-        .filter-input:focus { border-color: #2563eb; outline: none; }
-        
-        /* বাটন এরিয়া */
-        .btn-area { display: flex; gap: 10px; }
-        .btn-reset { background: #94a3b8; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; flex: 1; transition: 0.2s; }
-        .btn-reset:hover { background: #64748b; }
-        .btn-pdf { background: #ef4444; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; flex: 1; font-weight: 600; transition: 0.2s; }
-        .btn-pdf:hover { background: #dc2626; }
-        
-        /* সামারি বার */
-        .summary-bar { 
-            display: flex; justify-content: space-between; align-items: center; 
-            background: linear-gradient(135deg, #2563eb, #1d4ed8); 
-            color: white; padding: 15px 20px; border-radius: 10px; 
-            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
-        }
-        .cat-badge { background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
-    </style>
 </head>
 <body>
 
    <nav class="navbar">
-    <a href="index.html" class="nav-link">Dashboard</a>
-    <a href="entry.html" class="nav-link">Add Entry</a>
-    <a href="list.html" class="nav-link">Reports</a>
-    <!-- লগআউট বাটন -->
-    <a href="#" onclick="logout()" class="nav-link" style="color:red;">🚪 Logout</a>
-</nav>
+        <a href="index.html" class="nav-link">Dashboard</a>
+        <a href="entry.html" class="nav-link">Add Entry</a>
+        <a href="list.html" class="nav-link">Reports</a>
+        <a href="#" onclick="logout()" class="nav-link" style="color:red;">🚪 Logout</a>
+    </nav>
 
     <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -109,14 +72,15 @@
         <div style="overflow-x: auto; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
             <table id="expenseTable">
                 <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Category</th>
-                        <th>Payee</th>
-                        <th>Purpose</th>
-                        <th style="text-align: right;">Amount (₹)</th>
-                    </tr>
-                </thead>
+    <tr>
+        <th>Date</th>
+        <th>Category</th>
+        <th>Payee</th>
+        <th>Purpose</th>
+        <th style="text-align: right;">Amount (₹)</th>
+        <th style="text-align: center; width: 50px;">Action</th> <!-- এই লাইন যোগ করা হয়েছে -->
+    </tr>
+</thead>
                 <tbody id="tableBody">
                     <tr><td colspan="5" style="text-align:center; padding:30px; color:#64748b;">Loading data...</td></tr>
                 </tbody>
@@ -124,164 +88,11 @@
         </div>
     </div>
 
-    <!-- কনফিগারেশন লোড -->
+    <!-- স্ক্রিপ্ট লোড -->
     <script src="assets/js/config.js"></script>
     <script src="assets/js/auth.js"></script>
-
-    <script>
-        let allExpenses = [];
-
-        // ১. ক্যাটাগরি এবং এক্সপেন্স ডাটা লোড করা
-        async function loadInitialData() {
-            // ক্যাটাগরি লোড
-            const catSelect = document.getElementById('catFilter');
-            let { data: categories } = await window.db.from('categories').select('*').order('name');
-            if (categories) {
-                categories.forEach(cat => {
-                    const opt = document.createElement('option');
-                    opt.value = cat.name;
-                    opt.textContent = cat.name;
-                    catSelect.appendChild(opt);
-                });
-            }
-
-            // এক্সপেন্স ডাটা লোড
-            let { data, error } = await window.db
-                .from('expenses')
-                .select('*')
-                .order('date', { ascending: false });
-
-            if (error) {
-                console.error(error);
-                alert("Error loading data. Check console.");
-            } else {
-                allExpenses = data;
-                populatePayee(data); // নাম ড্রপডাউনে ঢোকানো
-                renderTable(data);   // টেবিলে দেখানো
-            }
-        }
-
-        // ২. Payee ড্রপডাউন তৈরি
-        function populatePayee(data) {
-            const unique = [...new Set(data.map(i => i.payee))];
-            const sel = document.getElementById('payeeFilter');
-            unique.sort().forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p;
-                opt.textContent = p;
-                sel.appendChild(opt);
-            });
-        }
-
-        // ৩. ফিল্টার লজিক
-        function applyFilters() {
-            const from = document.getElementById('fromDate').value;
-            const to = document.getElementById('toDate').value;
-            const cat = document.getElementById('catFilter').value;
-            const payee = document.getElementById('payeeFilter').value;
-
-            const filtered = allExpenses.filter(item => {
-                const matchFrom = from ? item.date >= from : true;
-                const matchTo = to ? item.date <= to : true;
-                const matchCat = cat ? item.category === cat : true;
-                const matchPayee = payee ? item.payee === payee : true;
-                
-                return matchFrom && matchTo && matchCat && matchPayee;
-            });
-
-            renderTable(filtered);
-        }
-
-        // ইভেন্ট লিসেনার
-        ['fromDate', 'toDate', 'catFilter', 'payeeFilter'].forEach(id => {
-            document.getElementById(id).addEventListener('change', applyFilters);
-        });
-
-        // ৪. টেবিল রেন্ডার করা
-        function renderTable(data) {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = "";
-            let total = 0;
-
-            if(data.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:30px; color:#ef4444;'>No records found matching your filters!</td></tr>";
-                document.getElementById('totalAmount').innerText = "0";
-                return;
-            }
-
-            data.forEach(item => {
-                total += item.amount;
-                const catDisplay = item.category ? item.category : "General";
-                
-                let row = `<tr>
-                    <td>${item.date}</td>
-                    <td><span class="cat-badge">${catDisplay}</span></td>
-                    <td>${item.payee}</td>
-                    <td>${item.purpose}</td>
-                    <td style="text-align: right; font-weight: 700;">₹${item.amount.toLocaleString()}</td>
-                </tr>`;
-                tbody.innerHTML += row;
-            });
-
-            document.getElementById('totalAmount').innerText = total.toLocaleString();
-        }
-
-        // ৫. রিসেট বাটন
-        function resetFilters() {
-            document.getElementById('fromDate').value = "";
-            document.getElementById('toDate').value = "";
-            document.getElementById('catFilter').value = "";
-            document.getElementById('payeeFilter').value = "";
-            renderTable(allExpenses);
-        }
-
-        // ৬. পিডিএফ ডাউনলোড (ফিক্সড ফন্ট সমস্যা)
-        window.downloadPDF = function() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // হেডার
-            doc.setFontSize(18);
-            doc.text("Expense Report", 14, 15);
-            doc.setFontSize(10);
-            doc.setTextColor(100);
-            doc.text("Generated: " + new Date().toLocaleDateString(), 14, 22);
-            
-            doc.autoTable({
-                html: '#expenseTable',
-                startY: 30,
-                theme: 'grid',
-                headStyles: { fillColor: [37, 99, 235], halign: 'center' },
-                columnStyles: { 4: { halign: 'right' } }, // এমাউন্ট ডানদিকে
-                
-                // এই অংশটা ফন্ট সমস্যা ঠিক করে
-                didParseCell: function (data) {
-                    // হেডার ফিক্স
-                    if (data.section === 'head' && data.column.index === 4) {
-                        data.cell.text = "Amount (Rs)";
-                    }
-                    // বডি ফিক্স (₹ মুছে ফেলা)
-                    if (data.section === 'body' && data.column.index === 4) {
-                        let text = data.cell.text[0];
-                        data.cell.text = text.replace('₹', '').trim();
-                    }
-                }
-            });
-            
-            // টোটাল ফিক্স
-            let finalY = doc.lastAutoTable.finalY + 10;
-            let totalText = document.getElementById('totalAmount').innerText.replace(/,/g, ''); 
-            
-            doc.setFontSize(12);
-            doc.setTextColor(220, 38, 38);
-            doc.text(`Total Amount: Rs. ${parseInt(totalText).toLocaleString()}`, 14, finalY);
-
-            doc.save('Expense_Report.pdf');
-        }
-
-        // শুরু
-        loadInitialData();
-    </script>
+    <!-- এই পেজের লজিক -->
+    <script src="assets/js/list.js"></script>
 
 </body>
 </html>
