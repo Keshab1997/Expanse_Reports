@@ -10,9 +10,18 @@
     <!-- এই পেজের স্পেসিফিক স্টাইল -->
     <link rel="stylesheet" href="assets/css/login.css">
     
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- লাইব্রেরি (DEFER যোগ করা হয়েছে ফাস্ট লোডিংয়ের জন্য) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 </head>
 <body>
+
+    <!-- ==========================
+         GLOBAL LOADER (ADDED)
+    ========================== -->
+    <div id="globalLoader">
+        <div class="spinner"></div>
+        <div class="loader-text">Authenticating...</div>
+    </div>
 
     <div class="login-box">
         <div class="logo">🔐</div>
@@ -30,10 +39,9 @@
         <p class="toggle-text" onclick="toggleMode()">Don't have an account? Sign Up</p>
     </div>
 
-    <!-- কনফিগারেশন লোড -->
-    <script src="assets/js/config.js"></script>
-    <!-- লগইন লজিক -->
-    <script src="assets/js/login.js"></script>
+    <!-- কনফিগারেশন এবং লজিক (DEFER সহ) -->
+    <script src="assets/js/config.js" defer></script>
+    <script src="assets/js/login.js" defer></script>
 
 </body>
 </html>

@@ -1,87 +1,155 @@
-document.addEventListener('DOMContentLoaded', async () => {
-    // ইউজার ইনফো লোড
-    const { data: { user } } = await window.db.auth.getUser();
-    if (!user) return window.location.href = 'login.html';
+document.addEventListener('DOMContentLoaded', loadProfileData);
 
-    document.getElementById('email').value = user.email;
+async function loadProfileData() {
+    const emailInput = document.getElementById('email');
+    const nameInput = document.getElementById('fullName');
+    const avatarPreview = document.getElementById('avatarPreview');
+
+    // ১. স্মার্ট ক্যাশিং: যদি লোকাল স্টোরেজে ছবি থাকে, সার্ভারের অপেক্ষা না করে আগে সেটা দেখাও
+    const cachedAvatar = localStorage.getItem('cached_avatar_url');
+    const cachedName = localStorage.getItem('cached_user_name');
     
-    // ডাটাবেস থেকে বর্তমান প্রোফাইল লোড
-    const { data: profile } = await window.db
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+    if (cachedAvatar) avatarPreview.src = cachedAvatar;
+    if (cachedName) nameInput.value = cachedName;
 
-    if (profile) {
-        if (profile.full_name) document.getElementById('fullName').value = profile.full_name;
-        if (profile.avatar_url) document.getElementById('avatarPreview').src = profile.avatar_url;
-    }
-});
+    // ২. সার্ভার থেকে লেটেস্ট ডাটা আনা
+    try {
+        const { data: { user } } = await window.db.auth.getUser();
+        if (!user) return window.location.href = 'login.html';
 
-// ছবি আপলোড ফাংশন
-async function uploadAvatar() {
-    const file = document.getElementById('fileInput').files[0];
-    if (!file) return;
+        emailInput.value = user.email;
 
-    const { data: { user } } = await window.db.auth.getUser();
-    
-    // ফাইলের নাম ইউনিক করা (timestamp দিয়ে)
-    const fileName = `${user.id}/${Date.now()}_${file.name}`;
-    
-    // বাটন লোডিং স্ট্যাটাস
-    document.querySelector('.upload-btn').innerText = "⏳";
+        // প্রোফাইল টেবিল থেকে ডাটা আনা
+        const { data, error } = await window.db
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', user.id)
+            .single();
 
-    // 1. Storage এ আপলোড
-    const { data, error } = await window.db.storage
-        .from('avatars')
-        .upload(fileName, file);
+        if (error && error.code !== 'PGRST116') throw error;
 
-    if (error) {
-        alert("Upload failed: " + error.message);
-        document.querySelector('.upload-btn').innerText = "📷";
-    } else {
-        // 2. পাবলিক URL পাওয়া
-        const { data: { publicUrl } } = window.db.storage.from('avatars').getPublicUrl(fileName);
-        
-        // প্রিভিউ দেখানো
-        document.getElementById('avatarPreview').src = publicUrl;
-        document.querySelector('.upload-btn').innerText = "✅";
-        
-        // 3. ডাটাবেস আপডেট (অটোমেটিক)
-        await updateProfile(publicUrl);
+        if (data) {
+            // নাম আপডেট এবং ক্যাশ করা
+            if (data.full_name) {
+                nameInput.value = data.full_name;
+                localStorage.setItem('cached_user_name', data.full_name);
+            }
+
+            // ছবি হ্যান্ডলিং
+            if (data.avatar_url) {
+                let finalUrl = data.avatar_url;
+
+                // যদি ফুল লিংক না হয়, তাহলে স্টোরেজ থেকে লিংক জেনারেট করো
+                if (!finalUrl.startsWith('http')) {
+                    const { data: publicData } = window.db.storage.from('avatars').getPublicUrl(finalUrl);
+                    finalUrl = publicData.publicUrl;
+                }
+
+                // ৩. যদি সার্ভারের ছবি আর ক্যাশ করা ছবি আলাদা হয়, বা ক্যাশ না থাকে -> আপডেট করো
+                // আমরা এখানে '?t=' ব্যবহার করছি না রিড করার সময়, যাতে ব্রাউজার ক্যাশ কাজ করে
+                if (finalUrl !== cachedAvatar) {
+                    avatarPreview.src = finalUrl;
+                    localStorage.setItem('cached_avatar_url', finalUrl); // নতুন লিংক সেভ
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error loading profile:', error.message);
+    } finally {
+        // লোডার বন্ধ (globalLoader যদি HTML এ থাকে)
+        const loader = document.getElementById('globalLoader');
+        if (loader) loader.style.display = 'none';
     }
 }
 
-// প্রোফাইল সেভ ফাংশন
-async function updateProfile(avatarUrl = null) {
-    const btn = document.getElementById('saveBtn');
-    if(btn) btn.innerText = "Saving...";
-
-    const { data: { user } } = await window.db.auth.getUser();
+// ৪. প্রোফাইল আপডেট ফাংশন
+async function updateProfile() {
     const fullName = document.getElementById('fullName').value;
+    const saveBtn = document.getElementById('saveBtn');
     
-    // আপডেট অবজেক্ট তৈরি
-    const updates = {
-        id: user.id,
-        full_name: fullName,
-        updated_at: new Date()
-    };
-    
-    // যদি ছবি আপলোড হয়ে থাকে, তবে URL আপডেট হবে
-    if (avatarUrl && typeof avatarUrl === 'string') {
-        updates.avatar_url = avatarUrl;
+    saveBtn.innerText = "Saving...";
+    saveBtn.disabled = true;
+
+    try {
+        const { data: { user } } = await window.db.auth.getUser();
+
+        const updates = {
+            id: user.id,
+            full_name: fullName,
+            updated_at: new Date()
+        };
+
+        const { error } = await window.db.from('profiles').upsert(updates);
+        if (error) throw error;
+
+        // আপডেট সফল হলে ক্যাশ আপডেট করো
+        localStorage.setItem('cached_user_name', fullName);
+        alert('Profile updated successfully!');
+        
+    } catch (error) {
+        alert(error.message);
+    } finally {
+        saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
+        saveBtn.disabled = false;
     }
+}
 
-    // Upsert (Insert or Update)
-    const { error } = await window.db
-        .from('profiles')
-        .upsert(updates);
+// ৫. ছবি আপলোড ফাংশন
+async function uploadAvatar() {
+    const fileInput = document.getElementById('fileInput');
+    const file = fileInput.files[0];
+    if (!file) return;
 
-    if (error) {
-        alert("Error: " + error.message);
-    } else {
-        if(!avatarUrl) alert("Profile updated successfully!"); // ছবি আপলোডের সময় অ্যালার্ট দরকার নেই
+    // লোডার বা ইন্ডিকেটর
+    const avatarPreview = document.getElementById('avatarPreview');
+    const originalSrc = avatarPreview.src;
+    avatarPreview.style.opacity = '0.5'; // আপলোড হচ্ছে বোঝাতে
+
+    try {
+        const { data: { user } } = await window.db.auth.getUser();
+        
+        // ফাইলের নাম ইউনিক করা (যাতে ক্যাশ সমস্যা না করে)
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        // ১. ছবি আপলোড
+        const { error: uploadError } = await window.db.storage
+            .from('avatars')
+            .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        // ২. ডাটাবেসে লিংক আপডেট
+        const { error: updateError } = await window.db
+            .from('profiles')
+            .upsert({ 
+                id: user.id, 
+                avatar_url: filePath,
+                updated_at: new Date() 
+            });
+
+        if (updateError) throw updateError;
+
+        // ৩. নতুন পাবলিক লিংক তৈরি
+        const { data: publicData } = window.db.storage.from('avatars').getPublicUrl(filePath);
+        const newUrl = publicData.publicUrl;
+
+        // ৪. UI এবং ক্যাশ আপডেট (তাৎক্ষণিক পরিবর্তনের জন্য)
+        avatarPreview.src = newUrl;
+        localStorage.setItem('cached_avatar_url', newUrl); // নতুন ছবি ক্যাশে সেট
+        
+        // হেডারের ছবিও পাল্টে দেওয়া
+        const headerAvatar = document.getElementById('headerAvatar');
+        if(headerAvatar) headerAvatar.src = newUrl;
+
+        alert("Profile photo updated!");
+
+    } catch (error) {
+        alert('Error uploading avatar: ' + error.message);
+        avatarPreview.src = originalSrc; // ফেইল হলে আগের ছবি ফেরত
+    } finally {
+        avatarPreview.style.opacity = '1';
+        fileInput.value = ''; // ইনপুট রিসেট
     }
-
-    if(btn) btn.innerText = "Save Changes";
 }

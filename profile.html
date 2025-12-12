@@ -11,8 +11,6 @@
     
     <!-- মেইন স্টাইল -->
     <link rel="stylesheet" href="assets/css/style.css">
-    <!-- প্রোফাইল পেজ স্পেসিফিক স্টাইল (যদি আলাদা ফাইল থাকে, নতুবা নিচের ইনলাইন স্টাইল কাজ করবে) -->
-    <!-- <link rel="stylesheet" href="assets/css/profile.css"> -->
     
     <style>
         /* প্রোফাইল কার্ড ডিজাইন */
@@ -25,195 +23,136 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.05);
             text-align: center;
         }
-        .profile-header h3 {
-            margin-bottom: 25px;
-            color: #1e293b;
-            font-size: 1.5rem;
-        }
+        .profile-header h3 { margin-bottom: 25px; color: #1e293b; font-size: 1.5rem; }
         .avatar-container {
             position: relative;
-            width: 130px;
-            height: 130px;
-            margin: 0 auto 30px;
+            width: 130px; height: 130px; margin: 0 auto 30px;
         }
         .avatar-img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 4px solid #e2e8f0;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
+            border: 4px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
         .upload-btn {
-            position: absolute;
-            bottom: 5px;
-            right: 5px;
-            background: #2563eb;
-            color: white;
-            border: 3px solid white;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            transition: transform 0.2s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            position: absolute; bottom: 5px; right: 5px; background: #2563eb; color: white;
+            border: 3px solid white; width: 40px; height: 40px; border-radius: 50%;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; transition: transform 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
-        .upload-btn:hover {
-            transform: scale(1.1);
-            background: #1d4ed8;
-        }
+        .upload-btn:hover { transform: scale(1.1); background: #1d4ed8; }
         .form-group { margin-bottom: 20px; text-align: left; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #64748b; font-size: 0.9rem; }
         .form-group input { 
-            width: 100%; 
-            padding: 12px; 
-            border: 1px solid #cbd5e1; 
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
+            width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px;
+            font-size: 1rem; transition: border-color 0.3s;
         }
-        .form-group input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
+        .form-group input:focus { outline: none; border-color: #3b82f6; }
         .btn-primary {
-            width: 100%;
-            padding: 12px;
-            background: #2563eb;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .btn-primary:hover {
-            background: #1d4ed8;
+            width: 100%; padding: 12px; background: #2563eb; color: white; border: none;
+            border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
         }
     </style>
 
-    <!-- Supabase লাইব্রেরি -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Supabase লাইব্রেরি (DEFER সহ) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 </head>
 <body>
 
-<div class="dashboard-wrapper">
-    
-    <!-- ১. সাইডবার -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-            <i class="fa-solid fa-wallet"></i> 
-            <span>ExpensePro</span>
-            <button class="close-btn" id="closeSidebar"><i class="fa-solid fa-xmark"></i></button>
-        </div>
+    <!-- ==========================
+         GLOBAL LOADER (ADDED)
+    ========================== -->
+    <div id="globalLoader">
+        <div class="spinner"></div>
+        <div class="loader-text">Loading Profile...</div>
+    </div>
 
-        <ul class="sidebar-menu">
-            <li>
-                <a href="index.html">
-                    <i class="fa-solid fa-house"></i> <span>Dashboard</span>
-                </a>
-            </li>
-            <li>
-                <a href="entry.html">
-                    <i class="fa-solid fa-pen"></i> <span>Add Entry</span>
-                </a>
-            </li>
-            <li>
-                <a href="list.html">
-                    <i class="fa-solid fa-chart-pie"></i> <span>Reports</span>
-                </a>
-            </li>
-            <li>
-                <!-- Profile Active Class -->
-                <a href="profile.html" class="active">
-                    <i class="fa-solid fa-user"></i> <span>Profile</span>
-                </a>
-            </li>
-        </ul>
-
-        <div class="sidebar-footer">
-            <a href="#" onclick="logout()" class="logout-btn">
-                <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
-            </a>
-        </div>
-    </aside>
-
-    <!-- ২. মেইন কন্টেন্ট এরিয়া -->
-    <div class="main-content">
+    <div class="dashboard-wrapper">
         
-        <!-- টপ হেডার -->
-        <header class="topbar">
-            <div class="header-left">
-                <h2 class="page-title">My Profile</h2>
+        <!-- ১. সাইডবার -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-wallet"></i> 
+                <span>ExpensePro</span>
+                <button class="close-btn" id="closeSidebar"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="header-right" style="display: flex; align-items: center; gap: 15px;">
-                <div class="top-profile">
-                    <!-- টপবারের ছোট ছবি -->
-                    <img src="https://via.placeholder.com/40" id="headerAvatar" class="header-avatar" alt="User">
-                </div>
-                <button id="menuToggle" class="hamburger-btn">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
-            </div>
-        </header>
 
-        <!-- কন্টেন্ট বডি -->
-        <div class="content-body">
+            <ul class="sidebar-menu">
+                <li><a href="index.html"><i class="fa-solid fa-house"></i> <span>Dashboard</span></a></li>
+                <li><a href="entry.html"><i class="fa-solid fa-pen"></i> <span>Add Entry</span></a></li>
+                <li><a href="list.html"><i class="fa-solid fa-chart-pie"></i> <span>Reports</span></a></li>
+                <li><a href="profile.html" class="active"><i class="fa-solid fa-user"></i> <span>Profile</span></a></li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <a href="#" onclick="logout()" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ২. মেইন কন্টেন্ট এরিয়া -->
+        <div class="main-content">
             
-            <div class="profile-card">
-                <div class="profile-header">
-                    <h3>Edit Profile Details</h3>
+            <!-- টপ হেডার -->
+            <header class="topbar">
+                <div class="header-left">
+                    <h2 class="page-title">My Profile</h2>
                 </div>
+                <div class="header-right" style="display: flex; align-items: center; gap: 15px;">
+                    <div class="top-profile">
+                        <img src="https://via.placeholder.com/40" id="headerAvatar" class="header-avatar" alt="User">
+                    </div>
+                    <button id="menuToggle" class="hamburger-btn">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- কন্টেন্ট বডি -->
+            <div class="content-body">
                 
-                <div class="avatar-container">
-                    <!-- মেইন বড় ছবি -->
-                    <img src="https://via.placeholder.com/150" id="avatarPreview" class="avatar-img" alt="Avatar">
+                <div class="profile-card">
+                    <div class="profile-header">
+                        <h3>Edit Profile Details</h3>
+                    </div>
                     
-                    <!-- Hidden File Input -->
-                    <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="uploadAvatar()">
-                    
-                    <!-- Upload Button -->
-                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()" title="Change Photo">
-                        <i class="fa-solid fa-camera"></i>
+                    <div class="avatar-container">
+                        <!-- মেইন বড় ছবি -->
+                        <img src="https://via.placeholder.com/150" id="avatarPreview" class="avatar-img" alt="Avatar">
+                        
+                        <!-- Hidden File Input -->
+                        <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="uploadAvatar()">
+                        
+                        <!-- Upload Button -->
+                        <button class="upload-btn" onclick="document.getElementById('fileInput').click()" title="Change Photo">
+                            <i class="fa-solid fa-camera"></i>
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-envelope"></i> Email Address</label>
+                        <input type="text" id="email" disabled style="background: #f1f5f9; color: #64748b; cursor: not-allowed;" value="Loading...">
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-signature"></i> Full Name</label>
+                        <input type="text" id="fullName" placeholder="e.g. John Doe">
+                    </div>
+
+                    <button onclick="updateProfile()" id="saveBtn" class="btn-primary">
+                        <i class="fa-solid fa-floppy-disk"></i> Save Changes
                     </button>
                 </div>
 
-                <div class="form-group">
-                    <label><i class="fa-solid fa-envelope"></i> Email Address</label>
-                    <input type="text" id="email" disabled style="background: #f1f5f9; color: #64748b; cursor: not-allowed;" value="Loading...">
-                </div>
-
-                <div class="form-group">
-                    <label><i class="fa-solid fa-signature"></i> Full Name</label>
-                    <input type="text" id="fullName" placeholder="e.g. John Doe">
-                </div>
-
-                <button onclick="updateProfile()" id="saveBtn" class="btn-primary">
-                    <i class="fa-solid fa-floppy-disk"></i> Save Changes
-                </button>
             </div>
+        </div>
+    </div>
 
-        </div> <!-- End content-body -->
-    </div> <!-- End main-content -->
-</div>
-
-<!-- স্ক্রিপ্টস -->
-<script src="assets/js/config.js"></script>
-<script src="assets/js/auth.js"></script>
-<!-- সাইডবার লজিক -->
-<script src="assets/js/sidebar.js"></script>
-<!-- প্রোফাইল পেজ লজিক -->
-<script src="assets/js/profile.js"></script>
+    <!-- স্ক্রিপ্টস (DEFER সহ) -->
+    <script src="assets/js/config.js" defer></script>
+    <script src="assets/js/auth.js" defer></script>
+    <script src="assets/js/sidebar.js" defer></script>
+    <script src="assets/js/profile.js" defer></script>
 
 </body>
 </html>

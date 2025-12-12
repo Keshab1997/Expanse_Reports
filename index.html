@@ -12,156 +12,164 @@
     
     <link rel="stylesheet" href="assets/css/style.css">
 
-    <!-- স্ক্রিপ্টস -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- স্ক্রিপ্টস (DEFER যোগ করা হয়েছে ফাস্ট লোডিংয়ের জন্য) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 </head>
 <body>
 
-<div class="dashboard-wrapper">
-    
-    <!-- ১. সাইডবার (ডেস্কটপে ফিক্সড, মোবাইলে লুকানো) -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-            <i class="fa-solid fa-wallet"></i> 
-            <span>ExpensePro</span>
-            <!-- ক্লোজ বাটন (শুধু মোবাইলে দেখাবে) -->
-            <button class="close-btn" id="closeSidebar"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-
-        <ul class="sidebar-menu">
-            <li>
-                <a href="index.html" class="active">
-                    <i class="fa-solid fa-house"></i> <span>Dashboard</span>
-                </a>
-            </li>
-            <li>
-                <a href="entry.html">
-                    <i class="fa-solid fa-pen"></i> <span>Add Entry</span>
-                </a>
-            </li>
-            <li>
-                <a href="list.html">
-                    <i class="fa-solid fa-chart-pie"></i> <span>Reports</span>
-                </a>
-            </li>
-            <li>
-                <a href="profile.html">
-                    <i class="fa-solid fa-user"></i> <span>Profile</span>
-                </a>
-            </li>
-        </ul>
-
-        <div class="sidebar-footer">
-            <a href="#" onclick="logout()" class="logout-btn">
-                <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
-            </a>
-        </div>
-    </aside>
-
-    <!-- ২. মেইন কন্টেন্ট এরিয়া -->
-    <div class="main-content">
-        
-        <!-- টপ হেডার (হ্যামবার্গার বাটন এখানে) -->
-        <!-- টপ হেডার -->
-<header class="topbar">
-    
-    <!-- বাম পাশ: শুধু পেজের নাম থাকবে -->
-    <div class="header-left">
-        <h2 class="page-title">Dashboard</h2>
+    <!-- ==========================
+         GLOBAL LOADER (ADDED)
+    ========================== -->
+    <div id="globalLoader">
+        <div class="spinner"></div>
+        <div class="loader-text">Processing...</div>
     </div>
 
-    <!-- ডান পাশ: প্রোফাইল এবং হ্যামবার্গার বাটন একসাথে -->
-    <div class="header-right" style="display: flex; align-items: center; gap: 15px;">
+    <div class="dashboard-wrapper">
         
-        <!-- প্রোফাইল ছবি -->
-        <div class="top-profile">
-            <img src="https://via.placeholder.com/40" id="headerAvatar" class="header-avatar" alt="User">
-        </div>
+        <!-- ১. সাইডবার (ডেস্কটপে ফিক্সড, মোবাইলে লুকানো) -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-wallet"></i> 
+                <span>ExpensePro</span>
+                <!-- ক্লোজ বাটন (শুধু মোবাইলে দেখাবে) -->
+                <button class="close-btn" id="closeSidebar"><i class="fa-solid fa-xmark"></i></button>
+            </div>
 
-        <!-- হ্যামবার্গার বাটন (এখন ডান দিকে) -->
-        <button id="menuToggle" class="hamburger-btn">
-            <i class="fa-solid fa-bars"></i>
-        </button>
-        
-    </div>
-</header>
-        <!-- ড্যাশবোর্ড বডি -->
-        <div class="content-body">
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="index.html" class="active">
+                        <i class="fa-solid fa-house"></i> <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="entry.html">
+                        <i class="fa-solid fa-pen"></i> <span>Add Entry</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="list.html">
+                        <i class="fa-solid fa-chart-pie"></i> <span>Reports</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="profile.html">
+                        <i class="fa-solid fa-user"></i> <span>Profile</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <a href="#" onclick="logout()" class="logout-btn">
+                    <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- ২. মেইন কন্টেন্ট এরিয়া -->
+        <div class="main-content">
             
-            <!-- ওয়েলকাম সেকশন -->
-            <div class="user-welcome">
-                <div class="welcome-text">
-                    <h1 id="welcomeTitle">Hello, <span id="userName">User</span>!</h1>
-                    <p>Overview for <span id="currentMonthName" class="highlight-text">this month</span>.</p>
+            <!-- টপ হেডার -->
+            <header class="topbar">
+                
+                <!-- বাম পাশ: শুধু পেজের নাম থাকবে -->
+                <div class="header-left">
+                    <h2 class="page-title">Dashboard</h2>
                 </div>
-            </div>
 
-            <!-- স্ট্যাটাস কার্ড -->
-            <div class="dashboard-grid">
-                <div class="stat-card blue">
-                    <div class="icon-box"><i class="fa-solid fa-indian-rupee-sign"></i></div>
-                    <div>
-                        <div class="stat-title">Total Spent (Month)</div>
-                        <div class="stat-value">₹<span id="totalMonth">0</span></div>
+                <!-- ডান পাশ: প্রোফাইল এবং হ্যামবার্গার বাটন একসাথে -->
+                <div class="header-right" style="display: flex; align-items: center; gap: 15px;">
+                    
+                    <!-- প্রোফাইল ছবি -->
+                    <div class="top-profile">
+                        <img src="https://via.placeholder.com/40" id="headerAvatar" class="header-avatar" alt="User">
+                    </div>
+
+                    <!-- হ্যামবার্গার বাটন (এখন ডান দিকে) -->
+                    <button id="menuToggle" class="hamburger-btn">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    
+                </div>
+            </header>
+            
+            <!-- ড্যাশবোর্ড বডি -->
+            <div class="content-body">
+                
+                <!-- ওয়েলকাম সেকশন -->
+                <div class="user-welcome">
+                    <div class="welcome-text">
+                        <h1 id="welcomeTitle">Hello, <span id="userName">User</span>!</h1>
+                        <p>Overview for <span id="currentMonthName" class="highlight-text">this month</span>.</p>
                     </div>
                 </div>
-                <div class="stat-card green">
-                    <div class="icon-box"><i class="fa-solid fa-calendar-day"></i></div>
-                    <div>
-                        <div class="stat-title">Spent Today</div>
-                        <div class="stat-value">₹<span id="totalToday">0</span></div>
+
+                <!-- স্ট্যাটাস কার্ড -->
+                <div class="dashboard-grid">
+                    <div class="stat-card blue">
+                        <div class="icon-box"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+                        <div>
+                            <div class="stat-title">Total Spent (Month)</div>
+                            <div class="stat-value">₹<span id="totalMonth">0</span></div>
+                        </div>
+                    </div>
+                    <div class="stat-card green">
+                        <div class="icon-box"><i class="fa-solid fa-calendar-day"></i></div>
+                        <div>
+                            <div class="stat-title">Spent Today</div>
+                            <div class="stat-value">₹<span id="totalToday">0</span></div>
+                        </div>
+                    </div>
+                    <div class="stat-card orange">
+                        <div class="icon-box"><i class="fa-solid fa-receipt"></i></div>
+                        <div>
+                            <div class="stat-title">Transactions</div>
+                            <div class="stat-value" id="txCount">0</div>
+                        </div>
                     </div>
                 </div>
-                <div class="stat-card orange">
-                    <div class="icon-box"><i class="fa-solid fa-receipt"></i></div>
-                    <div>
-                        <div class="stat-title">Transactions</div>
-                        <div class="stat-value" id="txCount">0</div>
+
+                <!-- চার্ট সেকশন -->
+                <div class="charts-container">
+                    <div class="chart-box">
+                        <h3>📅 Daily Spending</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="barChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-box">
+                        <h3>🍰 Top Categories</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="pieChart"></canvas>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- চার্ট সেকশন -->
-            <div class="charts-container">
-                <div class="chart-box">
-                    <h3>📅 Daily Spending</h3>
-                    <div class="chart-wrapper">
-                        <canvas id="barChart"></canvas>
+                <!-- রিসেন্ট ট্রানজেকশন -->
+                <div class="recent-section">
+                    <div class="section-header">
+                        <h3>📝 Recent Transactions</h3>
+                        <a href="list.html" class="view-all">View All <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="recent-table">
+                            <tbody id="recentTableBody">
+                                <tr><td colspan="3" class="loading-text">Loading...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-                <div class="chart-box">
-                    <h3>🍰 Top Categories</h3>
-                    <div class="chart-wrapper">
-                        <canvas id="pieChart"></canvas>
-                    </div>
-                </div>
-            </div>
 
-            <!-- রিসেন্ট ট্রানজেকশন -->
-            <div class="recent-section">
-                <div class="section-header">
-                    <h3>📝 Recent Transactions</h3>
-                    <a href="list.html" class="view-all">View All <i class="fa-solid fa-arrow-right"></i></a>
-                </div>
-                <div class="table-responsive">
-                    <table class="recent-table">
-                        <tbody id="recentTableBody">
-                            <tr><td colspan="3" class="loading-text">Loading...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            </div> <!-- End content-body -->
+        </div> <!-- End main-content -->
+    </div>
 
-        </div> <!-- End content-body -->
-    </div> <!-- End main-content -->
-</div>
-
-<!-- স্ক্রিপ্টস -->
-<script src="assets/js/config.js"></script>
-<script src="assets/js/auth.js"></script>
-<script src="assets/js/index.js"></script>
-<script src="assets/js/sidebar.js"></script>
+    <!-- স্ক্রিপ্টস (DEFER দিয়ে লোড করা) -->
+    <script src="assets/js/config.js" defer></script>
+    <script src="assets/js/auth.js" defer></script>
+    <script src="assets/js/index.js" defer></script>
+    <script src="assets/js/sidebar.js" defer></script>
 
 </body>
 </html>

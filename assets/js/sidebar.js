@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('sidebar');
     const menuToggle = document.getElementById('menuToggle');
     const closeSidebar = document.getElementById('closeSidebar');
+    const globalLoader = document.getElementById('globalLoader'); // লোডার ধরা হলো
 
     if (sidebar && menuToggle) {
         // মেনু খোলা
@@ -31,6 +32,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ২. হেডার প্রোফাইল ছবি লোড কল
     loadHeaderAvatar();
+
+    // ============================================================
+    // ৩. পেজ চেঞ্জ হওয়ার সময় লোডার দেখানো (নতুন লজিক)
+    // ============================================================
+    const allLinks = document.querySelectorAll('a');
+
+    allLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            const href = this.getAttribute('href');
+
+            // যদি লিংক না থাকে, অথবা '#' হয়, অথবা জাভাস্ক্রিপ্ট কল হয় -> তাহলে লোডার দেখাবো না
+            if (!href || href === '#' || href.startsWith('javascript:')) return;
+
+            // সাধারণ ক্লিক বন্ধ করে আগে লোডার দেখাবো
+            e.preventDefault();
+
+            if (globalLoader) {
+                globalLoader.style.display = 'flex'; // লোডার চালু
+            }
+
+            // সামান্য সময় দিয়ে পেজ চেঞ্জ করবো (যাতে লোডার রেন্ডার হতে পারে)
+            setTimeout(() => {
+                window.location.href = href;
+            }, 50);
+        });
+    });
 });
 
 // ৩. ছবি লোড করার ফাংশন
@@ -70,5 +97,19 @@ async function loadHeaderAvatar() {
         }
     } catch (err) {
         console.error("Avatar Load Error:", err);
+    }
+}
+
+// ৪. গ্লোবাল লগআউট ফাংশন (উইন্ডো অবজেক্টে সেট করা যাতে HTML থেকে কল করা যায়)
+window.logout = async function() {
+    const globalLoader = document.getElementById('globalLoader');
+    if(globalLoader) globalLoader.style.display = 'flex'; // লগআউটের সময়ও লোডার দেখাবে
+    
+    try {
+        await window.db.auth.signOut();
+        window.location.href = 'login.html';
+    } catch (error) {
+        console.error("Logout failed:", error);
+        window.location.href = 'login.html'; // এরর হলেও লগইন পেজে পাঠাবে
     }
 }

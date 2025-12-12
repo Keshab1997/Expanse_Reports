@@ -17,17 +17,19 @@
     <!-- এই পেজের স্পেসিফিক স্টাইল -->
     <link rel="stylesheet" href="assets/css/list.css">
 
-    <!-- লাইব্রেরি লোড -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <!-- লাইব্রেরি লোড (DEFER যোগ করা হয়েছে যাতে পেজ লোড ফাস্ট হয়) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js" defer></script>
     <!-- Excel Reader Library -->
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js" defer></script>
+    <!-- Tom Select JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js" defer></script>
 </head>
 <body>
 
     <!-- ==========================
-         GLOBAL LOADER (Added)
+         GLOBAL LOADER
     ========================== -->
     <div id="globalLoader">
         <div class="spinner"></div>
@@ -56,7 +58,6 @@
                     </a>
                 </li>
                 <li>
-                    <!-- আমরা ধরে নিচ্ছি list.html ই হলো Reports পেজ -->
                     <a href="list.html" class="active">
                         <i class="fa-solid fa-chart-pie"></i> <span>Reports</span>
                     </a>
@@ -124,19 +125,16 @@
                         <label>Category</label>
                         <select id="catFilter" class="filter-input">
                             <option value="">All Categories</option>
-                            <!-- Categories will be loaded dynamically -->
                         </select>
                     </div>
 
                     <div class="filter-group" style="min-width: 200px;">
                         <label>Payee / Name</label>
-                        <!-- multiple attribute এবং placeholder খুব জরুরি TomSelect এর জন্য -->
                         <select id="payeeFilter" multiple placeholder="Search Payees..." autocomplete="off">
                             <!-- Options will be loaded by JS -->
                         </select>
                     </div>
 
-                    <!-- Purpose Filter -->
                     <div class="filter-group">
                         <label>Purpose</label>
                         <input type="text" id="purposeFilter" class="filter-input" placeholder="Search purpose...">
@@ -224,16 +222,11 @@
     </div>
     <!-- Edit Modal End -->
 
-    <!-- স্ক্রিপ্টস -->
-    <!-- Tom Select JS Library -->
-    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
-
-    <script src="assets/js/config.js"></script>
-    <script src="assets/js/auth.js"></script>
-    <!-- সাইডবার কন্ট্রোল করার জন্য -->
-    <script src="assets/js/sidebar.js"></script> 
-    <!-- এই পেজের লজিক -->
-    <script src="assets/js/list.js"></script>
+    <!-- স্ক্রিপ্টস (DEFER দিয়ে লোড করা যাতে রেন্ডার না আটকায়) -->
+    <script src="assets/js/config.js" defer></script>
+    <script src="assets/js/auth.js" defer></script>
+    <script src="assets/js/sidebar.js" defer></script> 
+    <script src="assets/js/list.js" defer></script>
 
 </body>
 </html>
