@@ -14,7 +14,7 @@ function hideLoader() {
     if (loader) loader.style.display = 'none';
 }
 
-// ১. পেজ লোড এবং ইনিশিয়াল সেটআপ
+// ১. পেজ লোড এবং ইনিশিয়াল সেটআপ (Optimized)
 document.addEventListener('DOMContentLoaded', loadInitialData);
 
 async function loadInitialData() {
@@ -31,14 +31,19 @@ async function loadInitialData() {
             document.getElementById('toDate').value = formatDate(today);
         }
 
-        await loadFilterOptions();
-        await applyFilters(); 
+        // --- SPEED OPTIMIZATION ---
+        // ফিল্টার এবং টেবিল ডাটা একসাথে লোড হবে (Parallel Execution)
+        // applyFilters(true) পাঠানো হচ্ছে যাতে সে নিজে লোডার বন্ধ না করে দেয়
+        await Promise.all([
+            loadFilterOptions(), 
+            applyFilters(true) 
+        ]);
 
     } catch (error) {
         console.error("Init Error:", error);
         alert("Something went wrong loading data.");
     } finally {
-        hideLoader(); // সব শেষে লোডার বন্ধ
+        hideLoader(); // দুটি কাজ শেষ হওয়ার পর লোডার বন্ধ হবে
     }
 }
 
@@ -104,13 +109,17 @@ async function loadFilterOptions() {
     }
 }
 
-// ৩. মেইন ফিল্টার লজিক
-async function applyFilters() {
-    showLoader(); // ফিল্টার করার সময় লোডার দেখাবে
+// ৩. মেইন ফিল্টার লজিক (Updated for Speed)
+async function applyFilters(isInitialLoad = false) {
+    // ইনিশিয়াল লোড হলে লোডার এখানে অন করব না, loadInitialData সেটা হ্যান্ডেল করবে
+    if (!isInitialLoad) showLoader(); 
 
     const tbody = document.getElementById('tableBody');
-    // টেবিলের ভেতরেও ছোট লোডিং টেক্সট রাখা হলো
-    tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; padding:20px; color:#64748b;'>⏳ Updating...</td></tr>";
+    
+    // লোডিং টেক্সট দেখান (শুধু ম্যানুয়াল ফিল্টারের সময়)
+    if (!isInitialLoad) {
+        tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; padding:20px; color:#64748b;'>⏳ Updating...</td></tr>";
+    }
 
     const from = document.getElementById('fromDate').value;
     const to = document.getElementById('toDate').value;
@@ -128,7 +137,8 @@ async function applyFilters() {
 
     const { data, error } = await query;
 
-    hideLoader(); // ডাটা আসার পর লোডার বন্ধ
+    // ইনিশিয়াল লোড না হলে লোডার বন্ধ করুন
+    if (!isInitialLoad) hideLoader();
 
     if (error) {
         console.error(error);
@@ -238,14 +248,15 @@ function formatDateDisplay(dateStr) {
 }
 
 // ইভেন্ট লিসেনার
-document.getElementById('fromDate').addEventListener('change', applyFilters);
-document.getElementById('toDate').addEventListener('change', applyFilters);
-document.getElementById('catFilter').addEventListener('change', applyFilters);
+document.getElementById('fromDate').addEventListener('change', () => applyFilters());
+document.getElementById('toDate').addEventListener('change', () => applyFilters());
+document.getElementById('catFilter').addEventListener('change', () => applyFilters());
+
 // টাইপ করার সময় একটু ডিলে দিয়ে ফিল্টার কল হবে (Performance)
 let debounceTimer;
 document.getElementById('purposeFilter').addEventListener('input', function() {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(applyFilters, 500);
+    debounceTimer = setTimeout(() => applyFilters(), 500);
 });
 
 // রিসেট
