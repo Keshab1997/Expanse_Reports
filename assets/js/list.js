@@ -278,6 +278,7 @@ window.downloadPDF = function() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
+    // ডাটা ক্যালকুলেশন
     const totalAmount = currentData.reduce((sum, item) => sum + item.amount, 0);
     const fromDate = document.getElementById('fromDate').value;
     const toDate = document.getElementById('toDate').value;
@@ -285,6 +286,7 @@ window.downloadPDF = function() {
     const fmt = (d) => d ? d.split('-').reverse().join('/') : '';
     const dateRangeText = (fromDate && toDate) ? `${fmt(fromDate)} to ${fmt(toDate)}` : `Generated: ${new Date().toLocaleDateString('en-IN')}`;
 
+    // পিডিএফ ডিজাইন
     doc.setFontSize(20); doc.setTextColor(41, 128, 185); doc.text("Expense Report", 14, 20);
     doc.setFontSize(10); doc.setTextColor(100); doc.text(`Period: ${dateRangeText}`, 14, 27);
 
@@ -318,8 +320,20 @@ window.downloadPDF = function() {
         styles: { fontSize: 9, cellPadding: 3, valign: 'middle' }
     });
 
-    doc.save(`Expense_Report.pdf`);
+    // ==========================================
+    // 👇 প্রধান পরিবর্তন এখানে (Web vs App Logic)
+    // ==========================================
+    
+    if (window.ReactNativeWebView) {
+        // ১. যদি অ্যাপ হয়: ডাটা অ্যাপে পাঠাবে
+        const pdfData = doc.output('datauristring');
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'downloadPDF',
+            data: pdfData, 
+            filename: 'Expense_Report.pdf'
+        }));
+    } else {
+        // ২. যদি সাধারণ ওয়েবসাইট হয়: সরাসরি ডাউনলোড হবে
+        doc.save('Expense_Report.pdf');
+    }
 }
-
-// Start
-loadInitialData();
