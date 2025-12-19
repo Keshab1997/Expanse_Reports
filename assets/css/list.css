@@ -1,4 +1,7 @@
-/* assets/css/list.css */
+/* =========================================
+   FILE: assets/css/list.css
+   DESCRIPTION: Reports Page Styling (Responsive)
+========================================= */
 
 /* --- লেআউট এবং কন্টেইনার --- */
 .container {
@@ -17,21 +20,30 @@
     gap: 15px;
 }
 
+.page-title {
+    font-size: 1.5rem;
+    color: #1e293b;
+    font-weight: 700;
+}
+
 /* এক্সেল আপলোড বাটন স্টাইল */
 .btn-excel {
     background: #10b981;
     color: white;
-    padding: 10px 20px;
+    padding: 0 20px;
+    height: 42px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
-    display: flex;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     font-size: 0.95rem;
     box-shadow: 0 2px 5px rgba(16, 185, 129, 0.2);
     transition: all 0.3s ease;
+    text-decoration: none;
 }
 
 .btn-excel:hover {
@@ -39,34 +51,33 @@
     transform: translateY(-1px);
 }
 
-/* --- ফিল্টার বক্স ডিজাইন (Purpose Filter সহ) --- */
+/* --- ফিল্টার বক্স ডিজাইন --- */
 .filter-box {
     background: white;
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     margin-bottom: 25px;
+    border: 1px solid #f1f5f9;
     
-    /* ফ্লেক্সবক্স লেআউট */
-    display: flex;
-    flex-wrap: wrap; /* জায়গা না হলে নিচে নামবে */
-    gap: 15px;       /* মাঝখানে ফাঁকা জায়গা */
-    align-items: flex-end; /* ইনপুট এবং বাটন নিচ বরাবর সমান হবে */
+    /* গ্রিড লেআউট (Desktop First) */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    align-items: end;
 }
 
-/* প্রতিটি ফিল্টার গ্রুপ (Purpose সহ সব ইনপুট) */
+/* Payee এবং Purpose একটু বড় জায়গা নেবে */
+.filter-box .filter-group:has(#payeeFilter),
+.filter-box .filter-group:has(#purposeFilter) {
+    grid-column: span 1; /* ডিফল্ট */
+}
+
+/* ফিল্টার গ্রুপ */
 .filter-group {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    flex: 1;            /* সব ইনপুট সমান জায়গা নেওয়ার চেষ্টা করবে */
-    min-width: 160px;   /* খুব ছোট হয়ে চ্যাপ্টা হবে না */
-}
-
-/* Payee গ্রুপটিকে একটু বড় জায়গা দেওয়া (Tom Select) */
-.filter-group:has(#payeeFilter) {
-    min-width: 220px;
-    flex: 1.5; /* অন্যগুলোর চেয়ে একটু বেশি চওড়া হবে */
 }
 
 label {
@@ -76,31 +87,32 @@ label {
     margin-left: 2px;
 }
 
-/* সাধারণ ইনপুট ফিল্ড (Date, Category, Purpose) */
+/* সাধারণ ইনপুট ফিল্ড */
 .filter-input {
     padding: 0 12px;
     border: 1px solid #e2e8f0;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 0.9rem;
     outline: none;
-    height: 42px; /* সব ইনপুট ফিক্সড হাইট */
+    height: 42px;
     background-color: #fff;
     width: 100%;
     color: #334155;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .filter-input:focus {
-    border-color: #2563eb;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* --- Tom Select (Payee Search) ডিজাইন ফিক্স --- */
+/* --- Tom Select (Payee Search) Fix --- */
 .ts-control {
     border: 1px solid #e2e8f0 !important;
-    border-radius: 6px !important;
+    border-radius: 8px !important;
     padding: 0 12px !important;
     font-size: 0.9rem;
-    min-height: 42px !important; /* অন্য ইনপুটের সমান হাইট */
+    min-height: 42px !important;
     display: flex;
     align-items: center;
     box-shadow: none !important;
@@ -108,228 +120,186 @@ label {
 }
 
 .ts-wrapper.focus .ts-control {
-    border-color: #2563eb !important;
-}
-
-.ts-dropdown {
-    border-radius: 6px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    border: 1px solid #e2e8f0;
-    z-index: 100;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
 }
 
 /* --- বাটন এরিয়া (Reset & PDF) --- */
 .btn-area {
     display: flex;
     gap: 10px;
-    /* বাটনগুলো যাতে ইনপুটের হাইটের সাথে মিলে যায় */
-    height: 42px; 
+    height: 42px;
 }
 
-/* বাটন ডিজাইন */
 .btn-reset, .btn-pdf {
-    padding: 0 20px;
+    flex: 1; /* বাটনগুলো সমান জায়গা নেবে */
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
     font-size: 0.9rem;
-    height: 100%; /* প্যারেন্টের হাইট নেবে (42px) */
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    transition: background 0.2s;
+    transition: all 0.2s;
+    white-space: nowrap;
 }
 
 .btn-reset {
-    background: #94a3b8;
-    color: white;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
 }
 
 .btn-pdf {
     background: #ef4444;
     color: white;
+    box-shadow: 0 2px 5px rgba(239, 68, 68, 0.2);
 }
 
-.btn-reset:hover { background: #64748b; }
-.btn-pdf:hover { background: #dc2626; }
+.btn-reset:hover { background: #e2e8f0; color: #1e293b; }
+.btn-pdf:hover { background: #dc2626; transform: translateY(-1px); }
 
 /* --- টোটাল সামারি বার --- */
 .summary-bar {
     background: linear-gradient(135deg, #2563eb, #1d4ed8);
     color: white;
-    padding: 15px 25px;
-    border-radius: 10px;
+    padding: 20px 25px;
+    border-radius: 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2);
 }
 
-.summary-label {
-    font-size: 0.9rem; 
+.summary-bar span:first-child {
+    font-size: 0.95rem; 
     opacity: 0.9;
+    font-weight: 500;
 }
 
-.summary-value {
-    font-size: 1.4rem; 
+.summary-bar span:last-child {
+    font-size: 1.6rem; 
     font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
 /* --- টেবিল ডিজাইন --- */
 .table-responsive {
     background: white; 
     border-radius: 12px; 
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
-    padding: 10px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); 
+    padding: 0;
     overflow-x: auto; /* মোবাইলে টেবিল স্ক্রল হবে */
+    border: 1px solid #f1f5f9;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.95rem;
-    min-width: 600px; /* টেবিল যেন একদম ছোট না হয়ে যায় */
+    min-width: 800px; /* টেবিল খুব ছোট হলে স্ক্রল হবে */
+}
+
+thead {
+    background: #f8fafc;
 }
 
 th {
-    background: #f8fafc;
-    padding: 15px;
+    padding: 16px 20px;
     text-align: left;
     font-weight: 600;
     color: #475569;
     border-bottom: 2px solid #e2e8f0;
     white-space: nowrap;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
 }
 
 td {
-    padding: 15px;
+    padding: 16px 20px;
     border-bottom: 1px solid #f1f5f9;
     color: #334155;
     vertical-align: middle;
 }
 
-tr:last-child td {
-    border-bottom: none;
-}
-
-tr:hover {
-    background-color: #f8fafc;
-}
+tr:last-child td { border-bottom: none; }
+tr:hover { background-color: #f8fafc; }
 
 /* ব্যাজ ডিজাইন */
-.cat-badge {
-    background: #e0f2fe;
-    color: #0284c7;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 0.8rem;
+.badge {
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
     font-weight: 600;
-    display: inline-block;
+    text-transform: uppercase;
 }
 
-/* ডিলিট বাটন */
-.delete-btn {
-    background: #fee2e2;
+.badge-cat {
+    background: #eff6ff;
+    color: #3b82f6;
+    border: 1px solid #dbeafe;
+}
+
+/* অ্যাকশন বাটন (Edit & Delete) */
+.btn-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
     border: none;
-    color: #dc2626;
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 6px;
-    transition: background 0.2s;
-    width: 32px;
-    height: 32px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-}
-
-.delete-btn:hover {
-    background: #fecaca;
-}
-
-/* --- রেসপন্সিভ ডিজাইন (মোবাইল) --- */
-@media (max-width: 768px) {
-    .filter-box {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .filter-group {
-        min-width: 100%;
-    }
-
-    .btn-area {
-        margin-top: 10px;
-        width: 100%;
-    }
-
-    .btn-reset, .btn-pdf {
-        flex: 1; /* বাটনগুলো সমান ভাগ নেবে */
-    }
-    
-    .action-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .action-header div {
-        width: 100%;
-    }
-    
-    .btn-excel {
-        width: 100%;
-        justify-content: center;
-    }
-}
-/* --- Edit Button --- */
-.edit-btn {
-    background: #e0f2fe;
-    border: none;
-    color: #0284c7;
     cursor: pointer;
-    padding: 8px;
-    border-radius: 6px;
-    transition: background 0.2s;
-    width: 32px;
-    height: 32px;
-    margin-right: 5px; /* ডিলিট বাটন থেকে একটু দূরে */
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    transition: all 0.2s;
+    margin: 0 3px;
+    font-size: 0.9rem;
 }
 
-.edit-btn:hover {
-    background: #bae6fd;
+.btn-icon.edit {
+    background: #eff6ff;
+    color: #3b82f6;
 }
+.btn-icon.edit:hover { background: #3b82f6; color: white; }
+
+.btn-icon.delete {
+    background: #fef2f2;
+    color: #ef4444;
+}
+.btn-icon.delete:hover { background: #ef4444; color: white; }
 
 /* --- Modal Styles --- */
 .modal-overlay {
-    display: none; /* ডিফল্টভাবে লুকানো থাকবে */
+    display: none;
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(15, 23, 42, 0.6);
     z-index: 1000;
     justify-content: center;
     align-items: center;
-    backdrop-filter: blur(3px);
+    backdrop-filter: blur(4px);
+    padding: 20px;
 }
 
 .modal-box {
     background: white;
     padding: 25px;
-    width: 90%;
+    width: 100%;
     max-width: 450px;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    animation: slideIn 0.3s ease;
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    animation: modalSlideUp 0.3s ease-out;
+    max-height: 90vh; /* ছোট স্ক্রিনে স্ক্রল হবে */
+    overflow-y: auto;
 }
 
-@keyframes slideIn {
-    from { transform: translateY(-20px); opacity: 0; }
+@keyframes modalSlideUp {
+    from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
 
@@ -338,25 +308,34 @@ tr:hover {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    padding-bottom: 15px;
     border-bottom: 1px solid #f1f5f9;
-    padding-bottom: 10px;
 }
+
+.modal-header h3 { margin: 0; color: #1e293b; font-size: 1.25rem; }
 
 .close-modal-btn {
-    background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #64748b;
+    background: #f1f5f9; border: none; 
+    width: 30px; height: 30px; border-radius: 50%;
+    cursor: pointer; color: #64748b;
+    display: flex; align-items: center; justify-content: center;
+    transition: 0.2s;
 }
+.close-modal-btn:hover { background: #e2e8f0; color: #ef4444; }
 
 .form-group { margin-bottom: 15px; }
-
-.form-group label { display: block; margin-bottom: 5px; color: #334155; }
+.form-group label { display: block; margin-bottom: 6px; color: #475569; font-weight: 500; font-size: 0.9rem; }
 
 .modal-input {
     width: 100%;
-    padding: 10px;
+    padding: 10px 14px;
     border: 1px solid #cbd5e1;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 1rem;
+    outline: none;
+    transition: 0.2s;
 }
+.modal-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
 
 .save-btn {
     width: 100%;
@@ -364,11 +343,86 @@ tr:hover {
     color: white;
     padding: 12px;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     margin-top: 10px;
+    transition: 0.2s;
+}
+.save-btn:hover { background: #1d4ed8; }
+
+/* =========================================
+   RESPONSIVE DESIGN (MOBILE & TABLET)
+========================================= */
+
+@media (max-width: 992px) {
+    /* Tablet View */
+    .filter-box {
+        grid-template-columns: 1fr 1fr; /* দুই কলামে ভাগ হবে */
+    }
+    
+    .filter-box .filter-group:has(#payeeFilter),
+    .filter-box .filter-group:has(#purposeFilter) {
+        grid-column: span 2; /* বড় ইনপুটগুলো পুরো লাইন নেবে */
+    }
 }
 
-.save-btn:hover { background: #1d4ed8; }
+@media (max-width: 600px) {
+    /* Mobile View */
+    .container {
+        padding: 0 15px;
+        margin: 20px auto;
+    }
+
+    .action-header {
+        flex-direction: column;
+        align-items: stretch; /* পুরো চওড়া */
+        gap: 15px;
+    }
+
+    .btn-excel {
+        width: 100%; /* বাটন ফুল উইডথ */
+    }
+
+    .filter-box {
+        grid-template-columns: 1fr; /* সব এক লাইনে */
+        padding: 15px;
+        gap: 12px;
+    }
+
+    .filter-box .filter-group:has(#payeeFilter),
+    .filter-box .filter-group:has(#purposeFilter) {
+        grid-column: span 1;
+    }
+
+    /* বাটনগুলো মোবাইলে একটু বড় দেখাবে যাতে ট্যাপ করতে সুবিধা হয় */
+    .btn-area {
+        height: 48px;
+        margin-top: 5px;
+    }
+
+    /* সামারি বার মোবাইলে ভেঙে নিচে নামবে */
+    .summary-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+        padding: 15px;
+    }
+    
+    .summary-bar span:last-child {
+        font-size: 1.8rem; /* অ্যামাউন্ট বড় দেখাবে */
+    }
+
+    /* টেবিল ফন্ট সাইজ */
+    th, td {
+        padding: 12px 15px;
+        font-size: 0.9rem;
+    }
+    
+    /* অ্যাকশন বাটন সাইজ */
+    .btn-icon {
+        width: 38px;
+        height: 38px;
+    }
+}
