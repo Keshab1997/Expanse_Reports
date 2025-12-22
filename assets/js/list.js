@@ -353,29 +353,18 @@ function downloadPDF() {
             styles: { fontSize: 9, cellPadding: 3 }
         });
 
-        // 4. Save/Download Logic (Updated for Expo)
-        const fileName = `Expenses_${fromDate}_to_${toDate}.pdf`;
-
-        // চেক করা হচ্ছে অ্যাপটি Expo বা WebView তে চলছে কি না
-        if (window.ReactNativeWebView) {
-            // === মোবাইল অ্যাপের জন্য ===
-            // PDF কে সরাসরি সেভ না করে Base64 স্ট্রিং এ কনভার্ট করা হচ্ছে
-            const pdfBase64 = doc.output('datauristring');
-            
-            // Expo অ্যাপের কাছে মেসেজ পাঠানো হচ্ছে
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-                type: 'DOWNLOAD_PDF',
-                payload: pdfBase64,
-                fileName: fileName
-            }));
-        } else {
-            // === সাধারণ ওয়েব ব্রাউজারের জন্য ===
-            doc.save(fileName);
-        }
-
-    } catch (err) {
-        console.error("PDF Gen Error:", err);
-        alert("Error generating PDF. Please try again.");
+        // 4. ডাউনলোড লজিক (Web vs App)
+    if (window.ReactNativeWebView) {
+        // অ্যাপের জন্য
+        const pdfData = doc.output('datauristring');
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'downloadPDF',
+            data: pdfData, 
+            filename: 'Expense_Report.pdf'
+        }));
+    } else {
+        // ওয়েবসাইটের জন্য
+        doc.save('Expense_Report.pdf');
     }
 }
 
