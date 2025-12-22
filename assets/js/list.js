@@ -353,9 +353,25 @@ function downloadPDF() {
             styles: { fontSize: 9, cellPadding: 3 }
         });
 
-        // 4. Save/Download (Mobile Friendly)
+        // 4. Save/Download Logic (Updated for Expo)
         const fileName = `Expenses_${fromDate}_to_${toDate}.pdf`;
-        doc.save(fileName);
+
+        // চেক করা হচ্ছে অ্যাপটি Expo বা WebView তে চলছে কি না
+        if (window.ReactNativeWebView) {
+            // === মোবাইল অ্যাপের জন্য ===
+            // PDF কে সরাসরি সেভ না করে Base64 স্ট্রিং এ কনভার্ট করা হচ্ছে
+            const pdfBase64 = doc.output('datauristring');
+            
+            // Expo অ্যাপের কাছে মেসেজ পাঠানো হচ্ছে
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'DOWNLOAD_PDF',
+                payload: pdfBase64,
+                fileName: fileName
+            }));
+        } else {
+            // === সাধারণ ওয়েব ব্রাউজারের জন্য ===
+            doc.save(fileName);
+        }
 
     } catch (err) {
         console.error("PDF Gen Error:", err);
