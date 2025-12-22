@@ -331,13 +331,13 @@ function downloadPDF() {
         doc.text(`Total Expense: INR ${totalAmount}`, 14, 29);
 
         // 2. Table Data Formatting
-        // টেবিলের ডাটা ম্যাপ করা (Action কলাম বাদ দেওয়া)
+        // টেবিলের ডাটা ম্যাপ করা (Action কলাম বাদ দেওয়া)
         const tableData = currentFilteredData.map(item => [
             item.date,
             item.category,
             item.payee,
             item.purpose || '-',
-            Number(item.amount).toFixed(2) // টাকার সিম্বল ছাড়া শুধু সংখ্যা
+            Number(item.amount).toFixed(2) // টাকার সিম্বল ছাড়া শুধু সংখ্যা
         ]);
 
         // 3. Generate Table
@@ -354,19 +354,23 @@ function downloadPDF() {
         });
 
         // 4. ডাউনলোড লজিক (Web vs App)
-    if (window.ReactNativeWebView) {
-        // অ্যাপের জন্য
-        const pdfData = doc.output('datauristring');
-        window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'downloadPDF',
-            data: pdfData, 
-            filename: 'Expense_Report.pdf'
-        }));
-    } else {
-        // ওয়েবসাইটের জন্য
-        doc.save('Expense_Report.pdf');
+        if (window.ReactNativeWebView) {
+            // অ্যাপের জন্য
+            const pdfData = doc.output('datauristring');
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'downloadPDF',
+                data: pdfData, 
+                filename: 'Expense_Report.pdf'
+            }));
+        } else {
+            // ওয়েবসাইটের জন্য
+            doc.save('Expense_Report.pdf');
+        }
+    } catch (error) {
+        console.error("PDF Generation Error:", error);
+        alert("Failed to generate PDF");
     }
-// =========================================
+}// =========================================
 // 8. EVENT LISTENERS
 // =========================================
 function setupEventListeners() {
