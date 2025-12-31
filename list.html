@@ -9,28 +9,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Tom Select CSS (সার্চ এবং মাল্টি-সিলেক্টের জন্য) -->
+    <!-- Tom Select CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
 
     <!-- মেইন স্টাইল -->
     <link rel="stylesheet" href="assets/css/style.css">
-    <!-- এই পেজের স্পেসিফিক স্টাইল -->
     <link rel="stylesheet" href="assets/css/list.css">
 
-    <!-- লাইব্রেরি লোড (DEFER যোগ করা হয়েছে যাতে পেজ লোড ফাস্ট হয়) -->
+    <!-- লাইব্রেরি -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js" defer></script>
-    <!-- Excel Reader Library -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js" defer></script>
-    <!-- Tom Select JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js" defer></script>
 </head>
 <body>
 
-    <!-- ==========================
-         GLOBAL LOADER
-    ========================== -->
     <div id="globalLoader">
         <div class="spinner"></div>
         <div class="loader-text">Processing...</div>
@@ -38,87 +32,58 @@
 
     <div class="dashboard-wrapper">
         
-        <!-- ১. সাইডবার -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-brand">
-                <i class="fa-solid fa-wallet"></i> 
-                <span>ExpensePro</span>
+                <i class="fa-solid fa-wallet"></i> <span>ExpensePro</span>
                 <button class="close-btn" id="closeSidebar"><i class="fa-solid fa-xmark"></i></button>
             </div>
-
             <ul class="sidebar-menu">
-                <li>
-                    <a href="index.html">
-                        <i class="fa-solid fa-house"></i> <span>Dashboard</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="entry.html">
-                        <i class="fa-solid fa-pen"></i> <span>Add Entry</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="list.html" class="active">
-                        <i class="fa-solid fa-chart-pie"></i> <span>Reports</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="profile.html">
-                        <i class="fa-solid fa-user"></i> <span>Profile</span>
-                    </a>
-                </li>
+                <li><a href="index.html"><i class="fa-solid fa-house"></i> <span>Dashboard</span></a></li>
+                <li><a href="entry.html"><i class="fa-solid fa-pen"></i> <span>Add Entry</span></a></li>
+                <li><a href="list.html" class="active"><i class="fa-solid fa-chart-pie"></i> <span>Reports</span></a></li>
+                <li><a href="profile.html"><i class="fa-solid fa-user"></i> <span>Profile</span></a></li>
             </ul>
-
             <div class="sidebar-footer">
-                <a href="#" onclick="logout()" class="logout-btn">
-                    <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
-                </a>
+                <a href="#" onclick="logout()" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span></a>
             </div>
         </aside>
 
-        <!-- ২. মেইন কন্টেন্ট এরিয়া -->
         <div class="main-content">
-            
-            <!-- টপ হেডার -->
             <header class="topbar">
-                <div class="header-left">
-                    <h2 class="page-title">Transactions Report</h2>
-                </div>
+                <div class="header-left"><h2 class="page-title">Transactions Report</h2></div>
                 <div class="header-right" style="display: flex; align-items: center; gap: 15px;">
-                    <div class="top-profile">
-                        <img src="https://via.placeholder.com/40" id="headerAvatar" class="header-avatar" alt="User">
-                    </div>
-                    <button id="menuToggle" class="hamburger-btn">
-                        <i class="fa-solid fa-bars"></i>
-                    </button>
+                    <div class="top-profile"><img src="https://via.placeholder.com/40" id="headerAvatar" class="header-avatar" alt="User"></div>
+                    <button id="menuToggle" class="hamburger-btn"><i class="fa-solid fa-bars"></i></button>
                 </div>
             </header>
 
-            <!-- কন্টেন্ট বডি -->
             <div class="content-body">
-
-                <!-- পেজ হেডার এবং এক্সেল আপলোড বাটন -->
-                <div class="action-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-                    <!-- Excel Upload Button -->
-                    <div style="margin-left: auto;">
-                        <input type="file" id="excelInput" accept=".xlsx, .xls" style="display: none;" onchange="handleFileUpload(this)">
-                        <button onclick="document.getElementById('excelInput').click()" 
-                                style="background: #10b981; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; box-shadow: 0 2px 5px rgba(16, 185, 129, 0.2); transition: all 0.3s;">
-                           <i class="fa-solid fa-file-excel"></i> Upload Excel
-                        </button>
-                    </div>
+                <div class="action-header" style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+                    <input type="file" id="excelInput" accept=".xlsx, .xls" style="display: none;" onchange="handleFileUpload(this)">
+                    <button onclick="document.getElementById('excelInput').click()" 
+                            style="background: #10b981; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                       <i class="fa-solid fa-file-excel"></i> Upload Excel
+                    </button>
                 </div>
 
-                <!-- Filter Section -->
+                <!-- ফিল্টার সেকশন -->
                 <div class="filter-box">
                     <div class="filter-group">
                         <label>From Date</label>
                         <input type="date" id="fromDate" class="filter-input">
                     </div>
-                    
                     <div class="filter-group">
                         <label>To Date</label>
                         <input type="date" id="toDate" class="filter-input">
+                    </div>
+                    
+                    <!-- ১. [নতুন] সোর্স ফিল্টার -->
+                    <div class="filter-group">
+                        <label>Source (Paid By)</label>
+                        <select id="sourceFilter" class="filter-input">
+                            <option value="">All Sources</option>
+                            <!-- JS দিয়ে লোড হবে -->
+                        </select>
                     </div>
 
                     <div class="filter-group">
@@ -130,39 +95,28 @@
 
                     <div class="filter-group" style="min-width: 200px;">
                         <label>Payee / Name</label>
-                        <select id="payeeFilter" multiple placeholder="Search Payees..." autocomplete="off">
-                            <!-- Options will be loaded by JS -->
-                        </select>
-                    </div>
-
-                    <div class="filter-group">
-                        <label>Purpose</label>
-                        <input type="text" id="purposeFilter" class="filter-input" placeholder="Search purpose...">
+                        <select id="payeeFilter" multiple placeholder="Search Payees..." autocomplete="off"></select>
                     </div>
 
                     <div class="btn-area">
-                        <button onclick="resetFilters()" class="btn-reset" title="Clear Filters">
-                            <i class="fa-solid fa-rotate-right"></i> Reset
-                        </button>
-                        <button onclick="downloadPDF()" class="btn-pdf" title="Download Report">
-                            <i class="fa-solid fa-file-pdf"></i> PDF
-                        </button>
+                        <button onclick="resetFilters()" class="btn-reset" title="Clear Filters"><i class="fa-solid fa-rotate-right"></i> Reset</button>
+                        <button onclick="downloadPDF()" class="btn-pdf" title="Download Report"><i class="fa-solid fa-file-pdf"></i> PDF</button>
                     </div>
                 </div>
 
-                <!-- টোটাল বার -->
                 <div class="summary-bar">
                     <span style="font-size: 0.9rem; opacity: 0.9;">Filtered Result</span>
                     <span style="font-size: 1.4rem; font-weight: 700; color: #fff;">Total: ₹<span id="totalAmount">0</span></span>
                 </div>
                 
-                <!-- টেবিল -->
                 <div class="table-responsive" style="background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 10px;">
                     <table id="expenseTable" class="recent-table">
                         <thead>
                             <tr>
                                 <th>Date</th>
                                 <th>Category</th>
+                                <!-- ২. [নতুন] টেবিল হেডার -->
+                                <th style="color: #4f46e5;">Paid By</th> 
                                 <th>Payee</th>
                                 <th>Purpose</th>
                                 <th style="text-align: right;">Amount (₹)</th>
@@ -170,16 +124,15 @@
                             </tr>
                         </thead>
                         <tbody id="tableBody">
-                            <tr><td colspan="6" style="text-align:center; padding:30px; color:#64748b;">Loading data...</td></tr>
+                            <tr><td colspan="7" style="text-align:center; padding:30px; color:#64748b;">Loading data...</td></tr>
                         </tbody>
                     </table>
                 </div>
-
-            </div> <!-- End content-body -->
-        </div> <!-- End main-content -->
+            </div>
+        </div>
     </div>
 
-    <!-- Edit Modal Start -->
+    <!-- Edit Modal -->
     <div id="editModal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
@@ -189,44 +142,28 @@
             <div class="modal-body">
                 <input type="hidden" id="editId">
                 
+                <div class="form-group"><label>Date</label><input type="date" id="editDate" class="modal-input"></div>
+                <div class="form-group"><label>Category</label><select id="editCategory" class="modal-input"></select></div>
+                
+                <!-- ৩. [নতুন] এডিট সোর্স -->
                 <div class="form-group">
-                    <label>Date</label>
-                    <input type="date" id="editDate" class="modal-input">
+                    <label>Source (Paid By)</label>
+                    <input type="text" id="editPaidBy" class="modal-input" placeholder="e.g. Malik A">
                 </div>
 
-                <div class="form-group">
-                    <label>Category</label>
-                    <select id="editCategory" class="modal-input">
-                        <!-- Options will be loaded by JS -->
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Payee</label>
-                    <input type="text" id="editPayee" class="modal-input">
-                </div>
-
-                <div class="form-group">
-                    <label>Purpose</label>
-                    <input type="text" id="editPurpose" class="modal-input">
-                </div>
-
-                <div class="form-group">
-                    <label>Amount (₹)</label>
-                    <input type="number" id="editAmount" class="modal-input">
-                </div>
+                <div class="form-group"><label>Payee</label><input type="text" id="editPayee" class="modal-input"></div>
+                <div class="form-group"><label>Purpose</label><input type="text" id="editPurpose" class="modal-input"></div>
+                <div class="form-group"><label>Amount (₹)</label><input type="number" id="editAmount" class="modal-input"></div>
 
                 <button onclick="saveUpdate()" class="save-btn">Update Change</button>
+                <button onclick="deleteExpense()" class="delete-btn" style="margin-top:10px; background:#ef4444; color:white; border:none; width:100%; padding:10px; border-radius:6px; cursor:pointer;">Delete Entry</button>
             </div>
         </div>
     </div>
-    <!-- Edit Modal End -->
 
-    <!-- স্ক্রিপ্টস (DEFER দিয়ে লোড করা যাতে রেন্ডার না আটকায়) -->
     <script src="assets/js/config.js" defer></script>
     <script src="assets/js/auth.js" defer></script>
     <script src="assets/js/sidebar.js" defer></script> 
     <script src="assets/js/list.js" defer></script>
-
 </body>
 </html>

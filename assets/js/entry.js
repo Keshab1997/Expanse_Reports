@@ -1,72 +1,88 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log("🚀 Page Loaded");
+    console.log("🚀 Entry Page Loaded");
 
+    // এলিমেন্টগুলো ধরা
     const form = document.getElementById('expenseForm');
     const catSelect = document.getElementById('category');
+    const fundSelect = document.getElementById('fundSource'); // এইটা নিশ্চিত করো
     const submitBtn = document.querySelector('.btn-primary');
     const btnText = document.getElementById('btnText');
-    const toast = document.getElementById('toast');
     const dateInput = document.getElementById('date');
 
-    // ফর্ম এলিমেন্ট আছে কি না চেক করা
-    if (!form || !catSelect || !submitBtn) {
-        console.error("❌ Critical Error: HTML elements not found!");
+    // ফর্ম এলিমেন্ট না পেলে এরর
+    if (!form || !catSelect || !fundSelect || !submitBtn) {
+        console.error("❌ Critical Error: HTML elements not found! Check IDs in HTML.");
         return;
     }
 
     // আজকের তারিখ সেট করা
     if (dateInput) dateInput.valueAsDate = new Date();
 
-    // ক্যাটাগরি লোড ফাংশন কল
+    // ক্যাটাগরি এবং সোর্স লোড করা
     await loadCategories(catSelect);
+    await loadFundSources(fundSelect); 
 
     // ============================
-    // ফর্ম সাবমিট হ্যান্ডলার
+    // ফর্ম সাবমিট (MAIN LOGIC)
     // ============================
     form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+        e.preventDefault(); // পেজ রিলোড বন্ধ করা
 
+        // বাটন ডিজেবল করা যাতে ডাবল ক্লিক না হয়
         const originalText = btnText.innerText;
         btnText.innerText = "Saving...";
         submitBtn.disabled = true;
         submitBtn.style.opacity = "0.7";
 
+        // ১. ভ্যালুগুলো নেওয়া
         const date = dateInput.value;
         const category = catSelect.value;
+        const paid_by = fundSelect.value; // <--- এই ভ্যালুটা আগে মিসিং ছিল বা যাচ্ছিল না
         const payee = document.getElementById('payee').value.trim();
         const purpose = document.getElementById('purpose').value.trim();
         const amount = parseFloat(document.getElementById('amount').value);
 
+        // ভ্যালিডেশন
         if (!category) {
-            showToast("⚠️ Please select a category!", "error");
+            alert("Please select a category!");
+            resetBtn(originalText, submitBtn, btnText);
+            return;
+        }
+
+        if (!paid_by) {
+            alert("Please select 'Source of Fund' (Paid By)!");
             resetBtn(originalText, submitBtn, btnText);
             return;
         }
 
         try {
+            // ইউজারের আইডি নেওয়া
             const { data: { user } } = await window.db.auth.getUser();
             if (!user) return window.location.href = 'index.html';
 
+            // ২. সুপাবেসে ডাটা পাঠানো
             const { error } = await window.db
                 .from('expenses')
                 .insert([{
-                    date,
-                    category,
-                    payee,
-                    purpose,
-                    amount,
+                    date: date,
+                    category: category,
+                    paid_by: paid_by, // <--- মেইন ফিক্স: এই লাইনটা থাকতেই হবে
+                    payee: payee,
+                    purpose: purpose,
+                    amount: amount,
                     user_id: user.id
                 }]);
 
             if (error) throw error;
 
-            showToast("✅ Expense Added Successfully!");
-            form.reset();
-            dateInput.valueAsDate = new Date(); // আবার তারিখ সেট করা
+            // সফল হলে
+            showToast("✅ Expense Saved Successfully!");
+            form.reset(); // ফর্ম খালি করা
+            dateInput.valueAsDate = new Date(); // তারিখ আবার সেট করা
             
         } catch (err) {
-            console.error(err);
-            showToast("❌ Error: " + err.message, "error");
+            console.error("Save Error:", err);
+            alert("❌ Error: " + err.message);
         } finally {
             resetBtn(originalText, submitBtn, btnText);
         }
@@ -74,156 +90,129 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ============================
-// হেল্পার ফাংশনসমূহ (Fixed)
+// হেল্পার ফাংশনস
 // ============================
 
-async function loadCategories(selectElement) {
-    if (!window.db) return console.error("Database not connected!");
-
-    selectElement.innerHTML = '<option value="" disabled selected>Loading...</option>';
-
-    const { data: { user } } = await window.db.auth.getUser();
-    if (!user) return;
-
-    // ১. সেভ করা ক্যাটাগরি (categories টেবিল থেকে)
-    const { data: savedCats } = await window.db
-        .from('categories')
-        .select('name')
-        .order('name');
-
-    // ২. ব্যবহৃত ক্যাটাগরি (expenses টেবিল থেকে) - লাস্ট ৫০০ এন্ট্রি
-    const { data: usedCats } = await window.db
-        .from('expenses')
-        .select('category')
-        .not('category', 'is', null)
-        .order('date', { ascending: false })
-        .limit(500);
-
-    // ৩. ডাটা মার্জ করা
-    let allCategories = [];
-
-    if (savedCats) {
-        allCategories.push(...savedCats.map(c => c.name));
-    }
-    if (usedCats) {
-        allCategories.push(...usedCats.map(c => c.category));
-    }
-
-    // ইউনিক করা এবং সর্ট করা
-    const uniqueCategories = [...new Set(allCategories)].filter(Boolean).sort();
-
-    // ৪. ড্রপডাউনে অপশন যোগ করা
-    selectElement.innerHTML = '<option value="" disabled selected>Select Category</option>';
-
-    if (uniqueCategories.length > 0) {
-        uniqueCategories.forEach(name => {
-            const opt = document.createElement('option');
-            opt.value = name;
-            opt.textContent = name;
-            selectElement.appendChild(opt);
-        });
-    } else {
-        const opt = document.createElement('option');
-        opt.disabled = true;
-        opt.textContent = "No categories found";
-        selectElement.appendChild(opt);
-    }
-}
-
+// বাটন রিসেট
 function resetBtn(text, btn, btnTxt) {
     btnTxt.innerText = text;
     btn.disabled = false;
     btn.style.opacity = "1";
 }
 
-function showToast(message, type = "success") {
+// টোস্ট মেসেজ
+function showToast(message) {
     const toast = document.getElementById('toast');
     if (!toast) return;
-    toast.innerText = message;
+    toast.innerHTML = `<i class="fa-solid fa-check-circle"></i> ${message}`;
     toast.className = "toast show";
-    if (type === "error") toast.classList.add("error");
-    setTimeout(() => {
-        toast.className = toast.className.replace("show", "");
-        toast.classList.remove("error");
-    }, 3000);
+    setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+}
+
+// ক্যাটাগরি লোড
+async function loadCategories(selectElement) {
+    if (!window.db) return;
+    selectElement.innerHTML = '<option value="" disabled selected>Loading...</option>';
+    
+    const { data: { user } } = await window.db.auth.getUser();
+    if (!user) return;
+
+    // ক্যাটাগরি টেবিল থেকে ডাটা আনা
+    const { data: list } = await window.db.from('categories').select('name').order('name');
+    
+    // খরচের টেবিল থেকে ইউনিক ক্যাটাগরি আনা
+    const { data: used } = await window.db.from('expenses').select('category').order('date', {ascending:false}).limit(100);
+
+    let all = [];
+    if (list) all.push(...list.map(c => c.name));
+    if (used) all.push(...used.map(c => c.category));
+    
+    const unique = [...new Set(all)].filter(Boolean).sort();
+
+    selectElement.innerHTML = '<option value="" disabled selected>Select Category</option>';
+    unique.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name; opt.innerText = name;
+        selectElement.appendChild(opt);
+    });
+}
+
+// ফান্ড সোর্স লোড (Anup Dada বা অন্য নামগুলো লোড হবে)
+async function loadFundSources(selectElement) {
+    if (!window.db) return;
+    selectElement.innerHTML = '<option value="" disabled selected>Loading...</option>';
+
+    const { data: { user } } = await window.db.auth.getUser();
+    
+    // fund_sources টেবিল থেকে নাম আনা
+    const { data: list } = await window.db.from('fund_sources').select('name').order('name');
+    
+    // expenses টেবিল থেকে নাম আনা (যদি আগে ম্যানুয়ালি কিছু দিয়ে থাকো)
+    const { data: used } = await window.db.from('expenses').select('paid_by').limit(100);
+
+    let all = [];
+    if (list) all.push(...list.map(i => i.name));
+    if (used) all.push(...used.map(i => i.paid_by));
+
+    const unique = [...new Set(all)].filter(Boolean).sort();
+
+    selectElement.innerHTML = '<option value="" disabled selected>Select Source...</option>';
+    unique.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name; opt.innerText = name;
+        selectElement.appendChild(opt);
+    });
 }
 
 // ============================
-// মোডাল এবং ক্যাটাগরি সেভ
+// মোডাল হ্যান্ডলিং
 // ============================
-window.openModal = function () {
-    document.getElementById('catModal').style.display = 'flex';
-    document.getElementById('newCatName').focus();
-}
 
-window.closeModal = function () {
-    document.getElementById('catModal').style.display = 'none';
-}
+// ১. ক্যাটাগরি মোডাল
+window.openModal = function() { document.getElementById('catModal').style.display = 'flex'; }
+window.closeModal = function() { document.getElementById('catModal').style.display = 'none'; }
 
-window.saveCategory = async function () {
-    const nameInput = document.getElementById('newCatName');
-    const name = nameInput.value.trim();
-    if (!name) return alert("Enter category name");
+// ২. ফান্ড সোর্স মোডাল
+window.openFundModal = function() { document.getElementById('fundModal').style.display = 'flex'; }
+window.closeFundModal = function() { document.getElementById('fundModal').style.display = 'none'; }
+
+// নতুন ফান্ড সোর্স সেভ (Anup Dada অ্যাড করার জন্য)
+window.saveFundSource = async function() {
+    const input = document.getElementById('newFundName');
+    const name = input.value.trim();
+    if(!name) return alert("Enter name");
 
     const { data: { user } } = await window.db.auth.getUser();
 
-    // নতুন ক্যাটাগরি 'categories' টেবিলে সেভ হবে
-    const { error } = await window.db.from('categories').insert([{ name, user_id: user.id }]);
+    // fund_sources টেবিলে সেভ
+    const { error } = await window.db.from('fund_sources').insert([{ name, user_id: user.id }]);
 
-    if (error) {
-        // যদি ডুপ্লিকেট এরর দেয়
-        if (error.code === '23505') alert("Category already exists!");
-        else alert("Error: " + error.message);
+    if(error) {
+        alert("Error: " + error.message);
     } else {
-        closeModal();
-        nameInput.value = "";
-        showToast("Category Created!");
-        // পেজ রিফ্রেশ না করে ড্রপডাউন আপডেট করা
-        const catSelect = document.getElementById('category');
-        await loadCategories(catSelect);
+        closeFundModal();
+        input.value = '';
+        showToast("Source Added!");
+        // ড্রপডাউন রিফ্রেশ
+        await loadFundSources(document.getElementById('fundSource'));
     }
 }
 
-// ============================
-// এক্সেল আপলোড ফাংশন
-// ============================
-window.handleFileUpload = async function (input) {
-    const file = input.files[0];
-    if (!file) return;
+// নতুন ক্যাটাগরি সেভ
+window.saveCategory = async function() {
+    const input = document.getElementById('newCatName');
+    const name = input.value.trim();
+    if(!name) return alert("Enter name");
 
     const { data: { user } } = await window.db.auth.getUser();
+    const { error } = await window.db.from('categories').insert([{ name, user_id: user.id }]);
 
-    const reader = new FileReader();
-    reader.onload = async function (e) {
-        try {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { raw: false, dateNF: 'yyyy-mm-dd' });
-
-            const formattedData = jsonData.map(row => ({
-                date: row['Date'] || new Date().toISOString().split('T')[0],
-                category: row['Category'] || 'General',
-                payee: row['Payee'] || 'Unknown',
-                purpose: row['Purpose'] || '',
-                amount: parseFloat(row['Amount']) || 0,
-                user_id: user.id
-            })).filter(d => d.amount > 0);
-
-            if (formattedData.length > 0 && confirm(`Upload ${formattedData.length} items?`)) {
-                const { error } = await window.db.from('expenses').insert(formattedData);
-                if (error) alert("Failed: " + error.message);
-                else {
-                    alert("✅ Uploaded!");
-                    input.value = '';
-                    // এক্সেল আপলোডের পর নতুন ক্যাটাগরিগুলো ড্রপডাউনে দেখাতে রিলোড করা হচ্ছে
-                    const catSelect = document.getElementById('category');
-                    await loadCategories(catSelect);
-                }
-            }
-        } catch (err) {
-            console.error(err);
-            alert("Invalid File");
-        }
-    };
-    reader.readAsArrayBuffer(file);
+    if(error) {
+        alert("Error: " + error.message);
+    } else {
+        closeModal();
+        input.value = '';
+        showToast("Category Added!");
+        await loadCategories(document.getElementById('category'));
+    }
 }
