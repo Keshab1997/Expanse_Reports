@@ -5,21 +5,19 @@ async function loadProfileData() {
     const nameInput = document.getElementById('fullName');
     const avatarPreview = document.getElementById('avatarPreview');
 
-    // ১. স্মার্ট ক্যাশিং: যদি লোকাল স্টোরেজে ছবি থাকে, সার্ভারের অপেক্ষা না করে আগে সেটা দেখাও
-    const cachedAvatar = localStorage.getItem('cached_avatar_url');
-    const cachedName = localStorage.getItem('cached_user_name');
-    
-    if (cachedAvatar) avatarPreview.src = cachedAvatar;
-    if (cachedName) nameInput.value = cachedName;
-
-    // ২. সার্ভার থেকে লেটেস্ট ডাটা আনা
     try {
         const { data: { user } } = await window.db.auth.getUser();
         if (!user) return window.location.href = 'login.html';
 
         emailInput.value = user.email;
 
-        // প্রোফাইল টেবিল থেকে ডাটা আনা
+        // স্মার্ট ক্যাশিং: প্রথমে লোকাল ক্যাশ চেক করা
+        const cachedUrl = localStorage.getItem(`avatar_${user.id}`);
+        if (cachedUrl) {
+            avatarPreview.src = cachedUrl;
+        }
+
+        // সার্ভার থেকে লেটেস্ট ডাটা আনা
         const { data, error } = await window.db
             .from('profiles')
             .select('full_name, avatar_url')
@@ -29,40 +27,29 @@ async function loadProfileData() {
         if (error && error.code !== 'PGRST116') throw error;
 
         if (data) {
-            // নাম আপডেট এবং ক্যাশ করা
             if (data.full_name) {
                 nameInput.value = data.full_name;
-                localStorage.setItem('cached_user_name', data.full_name);
             }
 
-            // ছবি হ্যান্ডলিং
             if (data.avatar_url) {
                 let finalUrl = data.avatar_url;
-
-                // যদি ফুল লিংক না হয়, তাহলে স্টোরেজ থেকে লিংক জেনারেট করো
                 if (!finalUrl.startsWith('http')) {
                     const { data: publicData } = window.db.storage.from('avatars').getPublicUrl(finalUrl);
                     finalUrl = publicData.publicUrl;
                 }
-
-                // ৩. যদি সার্ভারের ছবি আর ক্যাশ করা ছবি আলাদা হয়, বা ক্যাশ না থাকে -> আপডেট করো
-                // আমরা এখানে '?t=' ব্যবহার করছি না রিড করার সময়, যাতে ব্রাউজার ক্যাশ কাজ করে
-                if (finalUrl !== cachedAvatar) {
-                    avatarPreview.src = finalUrl;
-                    localStorage.setItem('cached_avatar_url', finalUrl); // নতুন লিংক সেভ
-                }
+                
+                avatarPreview.src = finalUrl;
+                localStorage.setItem(`avatar_${user.id}`, finalUrl);
             }
         }
     } catch (error) {
         console.error('Error loading profile:', error.message);
     } finally {
-        // লোডার বন্ধ (globalLoader যদি HTML এ থাকে)
         const loader = document.getElementById('globalLoader');
         if (loader) loader.style.display = 'none';
     }
 }
 
-// ৪. প্রোফাইল আপডেট ফাংশন
 async function updateProfile() {
     const fullName = document.getElementById('fullName').value;
     const saveBtn = document.getElementById('saveBtn');
@@ -82,8 +69,6 @@ async function updateProfile() {
         const { error } = await window.db.from('profiles').upsert(updates);
         if (error) throw error;
 
-        // আপডেট সফল হলে ক্যাশ আপডেট করো
-        localStorage.setItem('cached_user_name', fullName);
         alert('Profile updated successfully!');
         
     } catch (error) {
@@ -94,62 +79,75 @@ async function updateProfile() {
     }
 }
 
-// ৫. ছবি আপলোড ফাংশন
+// ছবি আপলোড এবং কমপ্রেশন ফাংশন
 async function uploadAvatar() {
     const fileInput = document.getElementById('fileInput');
     const file = fileInput.files[0];
     if (!file) return;
 
-    // লোডার বা ইন্ডিকেটর
     const avatarPreview = document.getElementById('avatarPreview');
-    const originalSrc = avatarPreview.src;
     avatarPreview.style.opacity = '0.5'; // আপলোড হচ্ছে বোঝাতে
 
     try {
-        const { data: { user } } = await window.db.auth.getUser();
-        
-        // ফাইলের নাম ইউনিক করা (যাতে ক্যাশ সমস্যা না করে)
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-        const filePath = `${fileName}`;
+        // ইমেজ কমপ্রেশন (Canvas ব্যবহার করে)
+        const compressedBlob = await compressImage(file, 300, 300); // ৩০০x৩০০ সাইজে ছোট করা হবে
 
-        // ১. ছবি আপলোড
+        const { data: { user } } = await window.db.auth.getUser();
+        const fileName = `${user.id}-${Date.now()}.jpg`; // ইউনিক নাম
+
+        // সুপাবেসে আপলোড
         const { error: uploadError } = await window.db.storage
             .from('avatars')
-            .upload(filePath, file);
+            .upload(fileName, compressedBlob, { contentType: 'image/jpeg', upsert: true });
 
         if (uploadError) throw uploadError;
 
-        // ২. ডাটাবেসে লিংক আপডেট
-        const { error: updateError } = await window.db
-            .from('profiles')
-            .upsert({ 
-                id: user.id, 
-                avatar_url: filePath,
-                updated_at: new Date() 
-            });
-
-        if (updateError) throw updateError;
-
-        // ৩. নতুন পাবলিক লিংক তৈরি
-        const { data: publicData } = window.db.storage.from('avatars').getPublicUrl(filePath);
+        // ডাটাবেসে পাথ আপডেট
+        const { data: publicData } = window.db.storage.from('avatars').getPublicUrl(fileName);
         const newUrl = publicData.publicUrl;
 
-        // ৪. UI এবং ক্যাশ আপডেট (তাৎক্ষণিক পরিবর্তনের জন্য)
-        avatarPreview.src = newUrl;
-        localStorage.setItem('cached_avatar_url', newUrl); // নতুন ছবি ক্যাশে সেট
+        await window.db.from('profiles').upsert({ id: user.id, avatar_url: newUrl });
+
+        // লোকাল ক্যাশ আপডেট (যাতে বারবার লোড না হয়)
+        localStorage.setItem(`avatar_${user.id}`, newUrl);
         
-        // হেডারের ছবিও পাল্টে দেওয়া
+        avatarPreview.src = newUrl;
         const headerAvatar = document.getElementById('headerAvatar');
         if(headerAvatar) headerAvatar.src = newUrl;
 
-        alert("Profile photo updated!");
+        alert("Profile photo updated & optimized!");
 
     } catch (error) {
-        alert('Error uploading avatar: ' + error.message);
-        avatarPreview.src = originalSrc; // ফেইল হলে আগের ছবি ফেরত
+        alert('Error: ' + error.message);
     } finally {
         avatarPreview.style.opacity = '1';
-        fileInput.value = ''; // ইনপুট রিসেট
     }
+}
+
+// ইমেজ কমপ্রেশন হেল্পার ফাংশন
+function compressImage(file, maxWidth, maxHeight) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+                } else {
+                    if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.7); // ৭০% কোয়ালিটিতে সেভ হবে
+            };
+        };
+    });
 }

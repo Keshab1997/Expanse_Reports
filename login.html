@@ -10,10 +10,20 @@
     <!-- এই পেজের স্পেসিফিক স্টাইল -->
     <link rel="stylesheet" href="assets/css/login.css">
     
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2344/2344132.png">
+    
     <!-- লাইব্রেরি (DEFER যোগ করা হয়েছে ফাস্ট লোডিংয়ের জন্য) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 </head>
 <body>
+
+    <!-- অ্যানিমেটেড ব্যাকগ্রাউন্ড কন্টেইনার -->
+    <div id="falling-bg" class="falling-container"></div>
 
     <!-- ==========================
          GLOBAL LOADER (ADDED)

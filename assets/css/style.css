@@ -315,3 +315,53 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary); backgr
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+/* --- Global Footer Style --- */
+.global-footer {
+    padding: 25px 0;
+    margin-top: auto; /* কন্টেন্ট কম থাকলেও নিচে থাকবে */
+    border-top: 1px solid #e2e8f0;
+    background: transparent;
+    width: 100%;
+}
+
+.footer-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.highlight-name {
+    color: #4f46e5;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.footer-tagline {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.footer-tagline i {
+    color: #ef4444;
+    animation: heartbeat 1.5s infinite;
+}
+
+@keyframes heartbeat {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* মোবাইলের জন্য অ্যাডজাস্টমেন্ট */
+@media (max-width: 768px) {
+    .global-footer {
+        padding: 20px 10px;
+        text-align: center;
+    }
+}

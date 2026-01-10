@@ -113,3 +113,34 @@ window.logout = async function() {
         window.location.href = 'login.html'; // এরর হলেও লগইন পেজে পাঠাবে
     }
 }
+// Smart Caching for Header Avatar
+async function loadHeaderAvatarWithCache() {
+    const avatarImg = document.getElementById('headerAvatar');
+    if (!avatarImg) return;
+
+    try {
+        const { data: { user } } = await window.db.auth.getUser();
+        if (!user) return;
+
+        // প্রথমে লোকাল ক্যাশ চেক করা (Instant Load)
+        const cachedUrl = localStorage.getItem(`avatar_${user.id}`);
+        if (cachedUrl) {
+            avatarImg.src = cachedUrl;
+            return; // ক্যাশ থাকলে আর সার্ভারে যাওয়ার দরকার নেই
+        }
+
+        // ক্যাশ না থাকলে ডাটাবেস থেকে আনা
+        const { data } = await window.db.from('profiles').select('avatar_url').eq('id', user.id).single();
+        if (data && data.avatar_url) {
+            avatarImg.src = data.avatar_url;
+            localStorage.setItem(`avatar_${user.id}`, data.avatar_url); // ক্যাশে সেভ করা
+        }
+    } catch (err) {
+        console.log("Avatar load skipped");
+    }
+}
+
+// Replace the original loadHeaderAvatar call
+document.addEventListener('DOMContentLoaded', function() {
+    loadHeaderAvatarWithCache();
+});

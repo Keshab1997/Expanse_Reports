@@ -97,3 +97,29 @@ async function checkLogin() {
     }
 }
 checkLogin();
+// ব্যাকগ্রাউন্ড অ্যানিমেশন লজিক
+function initBackgroundAnimation() {
+    const container = document.getElementById('falling-bg');
+    if (!container) return;
+
+    const name = "KESHAB";
+    const letters = name.split('');
+
+    letters.forEach((char, i) => {
+        const span = document.createElement('span');
+        span.innerText = char;
+        span.className = 'falling-letter';
+        
+        // অক্ষরগুলোকে স্ক্রিনের চওড়া অনুযায়ী সাজানো
+        const spacing = 100 / (letters.length + 1);
+        span.style.left = `${(i + 1) * spacing}%`;
+        
+        // একটির পর একটি পড়ার জন্য ডিলে (Delay) সেট করা
+        span.style.animationDelay = `${i * 1.5}s`;
+        
+        container.appendChild(span);
+    });
+}
+
+// পেজ লোড হলে অ্যানিমেশন শুরু হবে
+document.addEventListener('DOMContentLoaded', initBackgroundAnimation);
