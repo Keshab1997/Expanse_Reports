@@ -249,6 +249,23 @@ datalist {
     background: white; 
 }
 
+/* টেবিল যেন স্ক্রিনের বাইরে না যায় এবং স্ক্রল করা যায় */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.excel-table {
+    min-width: 900px; /* সব কলাম দেখানোর জন্য মিনিমাম উইডথ */
+}
+
+.excel-input {
+    min-width: 100px; /* ইনপুটগুলো যেন খুব ছোট না হয়ে যায় */
+}
+
 /* Mobile Responsive for Excel Mode */
 @media (max-width: 768px) {
     .excel-table {
