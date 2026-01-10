@@ -1,11 +1,9 @@
+let recentExpenses = []; // আগের ডাটা সেভ রাখার জন্য
+
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("🚀 Entry Page Loaded");
-
-    const dateInput = document.getElementById('date');
-    if (dateInput) dateInput.valueAsDate = new Date();
-
-    // সাজেশন লোড করা
-    loadAllSuggestions();
+    await loadAllSuggestions();
+    addNewRow(); // শুরুতে একটি রো থাকবে
 });
 
 async function loadAllSuggestions() {
@@ -17,9 +15,12 @@ async function loadAllSuggestions() {
             .from('expenses')
             .select('category, paid_by, payee, purpose')
             .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
             .limit(500);
 
         if (expenses) {
+            recentExpenses = expenses; // ডাটা ক্যাশ করা হলো
+            
             const updateList = (id, key) => {
                 const list = [...new Set(expenses.map(i => i[key]))].filter(Boolean);
                 const dl = document.getElementById(id);
@@ -34,50 +35,105 @@ async function loadAllSuggestions() {
     } catch (err) { console.error("Suggestion Error:", err); }
 }
 
-async function saveExcelEntry() {
-    const btn = document.getElementById('saveBtn');
-    
-    // ডাটা সংগ্রহ
-    const data = {
-        date: document.getElementById('date').value,
-        category: document.getElementById('category').value.trim(),
-        paid_by: document.getElementById('fundSource').value.trim(),
-        payee: document.getElementById('payee').value.trim(),
-        purpose: document.getElementById('purpose').value.trim(),
-        amount: parseFloat(document.getElementById('amount').value),
-        status: document.getElementById('status').value
-    };
+// ১. নতুন রো যোগ করার ফাংশন
+function addNewRow() {
+    const tbody = document.getElementById('excelTableBody');
+    const row = document.createElement('tr');
+    const today = new Date().toISOString().split('T')[0];
 
-    // ভ্যালিডেশন
-    if (!data.category || !data.amount || !data.payee) {
-        alert("Please fill Category, Payee and Amount!");
-        return;
+    row.innerHTML = `
+        <td><input type="date" class="excel-input row-date" value="${today}"></td>
+        <td><input type="text" class="excel-input row-category" list="catList" placeholder="Category..."></td>
+        <td><input type="text" class="excel-input row-source" list="sourceList" placeholder="Paid by..."></td>
+        <td><input type="text" class="excel-input row-payee" list="payeeList" placeholder="Payee..."></td>
+        <td><input type="text" class="excel-input row-purpose" list="purposeList" placeholder="Purpose..." oninput="handleAutoFill(this)"></td>
+        <td><input type="number" class="excel-input row-amount" placeholder="0.00"></td>
+        <td>
+            <select class="excel-input row-status">
+                <option value="Paid">Paid</option>
+                <option value="Unpaid">Unpaid</option>
+            </select>
+        </td>
+        <td style="text-align: center; vertical-align: middle;">
+            <button onclick="this.closest('tr').remove()" class="btn-del-row" title="Remove Row">
+                <i class="fa-solid fa-trash-can"></i>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(row);
+}
+
+// ২. অটো-ফিল লজিক (স্পেসিফিক রো এর জন্য)
+function handleAutoFill(input) {
+    const purpose = input.value.trim();
+    if (!purpose) return;
+
+    const match = recentExpenses.find(item => item.purpose === purpose);
+    if (match) {
+        const row = input.closest('tr');
+        row.querySelector('.row-category').value = match.category || '';
+        row.querySelector('.row-source').value = match.paid_by || '';
+        row.querySelector('.row-payee').value = match.payee || '';
+        
+        // ভিজ্যুয়াল ফিডব্যাক
+        row.style.backgroundColor = "#f0f9ff";
+        setTimeout(() => row.style.backgroundColor = "transparent", 1000);
     }
+}
 
-    btn.disabled = true;
-    btn.innerText = "Saving...";
+// ৩. সব রো একসাথে সেভ করা
+async function saveAllEntries() {
+    const btn = document.getElementById('saveAllBtn');
+    const rows = document.querySelectorAll('#excelTableBody tr');
+    const dataToInsert = [];
 
     try {
         const { data: { user } } = await window.db.auth.getUser();
-        const { error } = await window.db.from('expenses').insert([{
-            ...data,
-            user_id: user.id
-        }]);
+        
+        rows.forEach(row => {
+            const amount = parseFloat(row.querySelector('.row-amount').value);
+            const category = row.querySelector('.row-category').value.trim();
+            const payee = row.querySelector('.row-payee').value.trim();
 
+            // শুধু ভ্যালিড ডাটা নেওয়া হচ্ছে
+            if (category && payee && !isNaN(amount)) {
+                dataToInsert.push({
+                    date: row.querySelector('.row-date').value,
+                    category: category,
+                    paid_by: row.querySelector('.row-source').value.trim(),
+                    payee: payee,
+                    purpose: row.querySelector('.row-purpose').value.trim(),
+                    amount: amount,
+                    status: row.querySelector('.row-status').value,
+                    user_id: user.id
+                });
+            }
+        });
+
+        if (dataToInsert.length === 0) {
+            alert("Please fill at least one complete row!");
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = "Saving All...";
+
+        const { error } = await window.db.from('expenses').insert(dataToInsert);
         if (error) throw error;
 
-        // ক্লিয়ার ইনপুট
-        ['category', 'payee', 'purpose', 'amount'].forEach(id => document.getElementById(id).value = '');
-        alert("✅ Entry Saved!");
+        alert(`✅ Successfully saved ${dataToInsert.length} entries!`);
+        document.getElementById('excelTableBody').innerHTML = '';
+        addNewRow(); // ক্লিয়ার করে নতুন রো দেওয়া
         loadAllSuggestions(); // সাজেশন আপডেট
 
     } catch (err) {
         alert("Error: " + err.message);
     } finally {
         btn.disabled = false;
-        btn.innerText = "Add";
+        btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Save All Entries';
     }
 }
-
-// Make function globally available
-window.saveExcelEntry = saveExcelEntry;
+// Make functions globally available
+window.addNewRow = addNewRow;
+window.handleAutoFill = handleAutoFill;
+window.saveAllEntries = saveAllEntries;

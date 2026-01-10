@@ -267,10 +267,16 @@ tr:hover { background-color: #f8fafc; }
 .btn-icon.edit:hover { background: #3b82f6; color: white; }
 
 .btn-icon.delete {
-    background: #fef2f2;
+    background: #fee2e2;
     color: #ef4444;
+    border: 1px solid #fecaca;
 }
-.btn-icon.delete:hover { background: #ef4444; color: white; }
+
+.btn-icon.delete:hover {
+    background: #ef4444;
+    color: white;
+    transform: scale(1.1);
+}
 
 /* Status Badge Styles */
 .status-paid { 
@@ -296,16 +302,24 @@ tr:hover { background-color: #f8fafc; }
 }
 
 /* Inline Editing Style */
-.editable-cell:hover { 
-    background: #f1f5f9; 
-    outline: 1px dashed #3b82f6; 
-    cursor: text; 
+.editable-cell {
+    transition: all 0.2s;
+    cursor: pointer;
 }
 
-.editable-cell:focus { 
-    background: #fff; 
-    outline: 2px solid #3b82f6; 
-    padding: 4px; 
+.editable-cell:hover { 
+    background-color: #f8fafc;
+}
+
+/* ডাবল ক্লিক করার পর যখন এডিট হবে */
+.editable-cell.is-editing {
+    background: #fff !important;
+    outline: 2px solid #3b82f6 !important;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+    z-index: 10;
+    position: relative;
+    padding: 4px;
+    border-radius: 4px;
 }
 
 /* Fast Loading Skeleton */

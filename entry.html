@@ -66,8 +66,8 @@
             <div class="content-body">
                 <div class="entry-card excel-mode">
                     <div class="card-header">
-                        <h2><i class="fa-solid fa-file-invoice-dollar"></i> Quick Entry (Excel Mode)</h2>
-                        <p>Type and select suggestions from previous records</p>
+                        <h2><i class="fa-solid fa-file-invoice-dollar"></i> Bulk Entry Mode</h2>
+                        <p>Add multiple rows and save all at once</p>
                     </div>
 
                     <div class="table-responsive">
@@ -76,57 +76,27 @@
                                 <tr>
                                     <th>Date</th>
                                     <th>Category</th>
-                                    <th>Paid By (Source)</th>
-                                    <th>Payee / Shop</th>
-                                    <th>Purpose / Description</th>
-                                    <th>Amount (₹)</th>
+                                    <th>Paid By</th>
+                                    <th>Payee</th>
+                                    <th>Purpose</th>
+                                    <th>Amount</th>
                                     <th>Status</th>
-                                    <th>Action</th>
+                                    <th style="width: 50px;"></th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td><input type="date" id="date" class="excel-input"></td>
-                                    <td>
-                                        <input type="text" id="category" class="excel-input" list="catList" placeholder="Category...">
-                                        <datalist id="catList"></datalist>
-                                    </td>
-                                    <td>
-                                        <input type="text" id="fundSource" class="excel-input" list="sourceList" placeholder="Paid by...">
-                                        <datalist id="sourceList"></datalist>
-                                    </td>
-                                    <td>
-                                        <input type="text" id="payee" class="excel-input" list="payeeList" placeholder="Payee name...">
-                                        <datalist id="payeeList"></datalist>
-                                    </td>
-                                    <td>
-                                        <input type="text" id="purpose" class="excel-input" list="purposeList" placeholder="Purpose...">
-                                        <datalist id="purposeList"></datalist>
-                                    </td>
-                                    <td><input type="number" id="amount" class="excel-input" placeholder="0.00" step="0.01"></td>
-                                    <td>
-                                        <select id="status" class="excel-input">
-                                            <option value="Paid">Paid</option>
-                                            <option value="Unpaid">Unpaid</option>
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <button onclick="saveExcelEntry()" class="btn-save-row" id="saveBtn">
-                                            <i class="fa-solid fa-plus"></i> Add
-                                        </button>
-                                    </td>
-                                </tr>
+                            <tbody id="excelTableBody">
+                                <!-- জাভাস্ক্রিপ্ট দিয়ে এখানে রো যোগ হবে -->
                             </tbody>
                         </table>
                     </div>
 
-                    <!-- Excel Upload Section -->
-                    <div class="upload-section">
-                        <input type="file" id="excelInput" accept=".xlsx, .xls" style="display: none;" onchange="handleFileUpload(this)">
-                        <button type="button" class="btn-upload" onclick="document.getElementById('excelInput').click()">
-                            <i class="fa-solid fa-file-excel"></i> Upload Bulk from Excel
+                    <div class="excel-actions" style="margin-top: 20px; display: flex; gap: 15px;">
+                        <button onclick="addNewRow()" class="btn-secondary" style="background: #f3f4f6; border: 1px solid #d1d5db; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            <i class="fa-solid fa-plus"></i> Add New Row
                         </button>
-                        <small>Supports .xlsx files with columns: Date, Category, Paid By, Payee, Purpose, Amount, Status</small>
+                        <button onclick="saveAllEntries()" id="saveAllBtn" class="btn-primary" style="flex: 1; background: #4f46e5; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem;">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Save All Entries
+                        </button>
                     </div>
                     
                     <!-- Suggestions Datalists -->

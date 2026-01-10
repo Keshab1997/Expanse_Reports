@@ -231,19 +231,19 @@ function renderTable(data) {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><span class="${dateHighlightClass}">${dateStr}</span></td>
-            <td class="editable-cell" contenteditable="true" onblur="updateInline('${item.id}', 'category', this.innerText)">
+            <td class="editable-cell" ondblclick="makeEditable(this)" onblur="saveInline(this, '${item.id}', 'category')">
                 <span class="badge badge-cat">${item.category}</span>
             </td>
-            <td class="editable-cell" contenteditable="true" onblur="updateInline('${item.id}', 'paid_by', this.innerText)" style="font-weight:600; color:#555;">
+            <td class="editable-cell" ondblclick="makeEditable(this)" onblur="saveInline(this, '${item.id}', 'paid_by')" style="font-weight:600; color:#555;">
                 ${item.paid_by || '-'}
             </td>
-            <td class="editable-cell" contenteditable="true" onblur="updateInline('${item.id}', 'payee', this.innerText)">
+            <td class="editable-cell" ondblclick="makeEditable(this)" onblur="saveInline(this, '${item.id}', 'payee')">
                 ${item.payee}
             </td>
-            <td class="editable-cell" contenteditable="true" onblur="updateInline('${item.id}', 'purpose', this.innerText)" style="font-size: 0.9rem; color:#666;">
+            <td class="editable-cell" ondblclick="makeEditable(this)" onblur="saveInline(this, '${item.id}', 'purpose')" style="font-size: 0.9rem; color:#666;">
                 ${item.purpose || '-'}
             </td>
-            <td class="editable-cell" contenteditable="true" onblur="updateInline('${item.id}', 'amount', this.innerText)" style="text-align: right; font-weight: 600;">
+            <td class="editable-cell" ondblclick="makeEditable(this)" onblur="saveInline(this, '${item.id}', 'amount')" style="text-align: right; font-weight: 600;">
                 ₹${Number(item.amount).toFixed(2)}
             </td>
             <td style="text-align: center;">
@@ -253,7 +253,10 @@ function renderTable(data) {
                 </span>
             </td>
             <td style="text-align: center;">
-                <button onclick="openEditModal('${item.id}')" class="btn-icon edit"><i class="fa-solid fa-pen"></i></button>
+                <!-- এডিট বাটন সরিয়ে ডিলিট বাটন যোগ করা হলো -->
+                <button onclick="confirmDelete('${item.id}')" class="btn-icon delete" title="Delete Entry">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
             </td>
         `;
         tableBody.appendChild(row);
@@ -263,8 +266,63 @@ function renderTable(data) {
 }
 
 // =========================================
-// 6. INLINE EDITING FUNCTIONS
+// 6. DOUBLE-CLICK INLINE EDITING FUNCTIONS
 // =========================================
+
+// ডাবল ক্লিক করলে এডিট মোড অন হবে
+function makeEditable(el) {
+    el.contentEditable = "true";
+    el.classList.add('is-editing');
+    el.focus();
+    
+    // Select all text for easy editing
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+}
+
+// ফোকাস চলে গেলে সেভ হবে এবং এডিট মোড অফ হবে
+async function saveInline(el, id, field) {
+    el.contentEditable = "false";
+    el.classList.remove('is-editing');
+    const newValue = el.innerText.trim();
+    
+    // যদি অ্যামাউন্ট ফিল্ড এডিট করা হয়, তবে লাইভ টোটাল আপডেট করো
+    if (field === 'amount') {
+        recalculateTotal();
+    }
+    
+    // ডাটাবেস আপডেট ফাংশন কল
+    await updateInline(id, field, newValue);
+}
+
+// নতুন ফাংশন: টেবিল থেকে লাইভ টোটাল ক্যালকুলেট করা
+function recalculateTotal() {
+    const tableBody = document.getElementById('tableBody');
+    const rows = tableBody.querySelectorAll('tr');
+    let newTotal = 0;
+
+    rows.forEach(row => {
+        // অ্যামাউন্ট কলামটি সাধারণত ৬ নম্বর ইনডেক্সে (৫ নম্বর পজিশন) থাকে
+        const amountCell = row.cells[5]; 
+        if (amountCell) {
+            // কারেন্সি সিম্বল বা কমা থাকলে তা সরিয়ে নাম্বার এ রূপান্তর
+            const val = parseFloat(amountCell.innerText.replace(/[^\d.-]/g, ''));
+            if (!isNaN(val)) {
+                newTotal += val;
+            }
+        }
+    });
+
+    // UI তে টোটাল আপডেট
+    const totalEl = document.getElementById('totalAmount');
+    if (totalEl) {
+        totalEl.innerText = newTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    }
+}
+
 async function updateInline(id, field, value) {
     try {
         // ভ্যালিডেশন
@@ -305,6 +363,32 @@ async function toggleStatus(id, currentStatus) {
     const newStatus = currentStatus === 'Paid' ? 'Unpaid' : 'Paid';
     await updateInline(id, 'status', newStatus);
     applyFilters(); // রিফ্রেশ
+}
+
+// ডিলিট করার আগে ওয়ার্নিং এবং ডিলিট লজিক
+async function confirmDelete(id) {
+    // ওয়ার্নিং মেসেজ
+    const isConfirmed = confirm("Are you sure? This entry will be permanently deleted!");
+    
+    if (isConfirmed) {
+        showLoader();
+        try {
+            const { error } = await window.db
+                .from('expenses')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+
+            // ডিলিট সফল হলে লিস্ট রিফ্রেশ করো
+            await applyFilters();
+            
+        } catch (err) {
+            alert("Error deleting record: " + err.message);
+        } finally {
+            hideLoader();
+        }
+    }
 }
 
 // =========================================
@@ -498,6 +582,10 @@ function setupEventListeners() {
 // =========================================
 // 11. UTILITY FUNCTIONS
 // =========================================
+// Make functions globally available
+window.makeEditable = makeEditable;
+window.saveInline = saveInline;
+window.confirmDelete = confirmDelete;
 window.resetFilters = function() {
     // Clear all TomSelect filters
     if (catTom) catTom.clear();

@@ -283,3 +283,34 @@ datalist {
         font-size: 0.8rem;
     }
 }
+/* ডিলিট বাটন ডিজাইন */
+.btn-del-row {
+    width: 32px;
+    height: 32px;
+    background-color: #fee2e2; /* হালকা লাল ব্যাকগ্রাউন্ড */
+    color: #ef4444;            /* লাল আইকন */
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    margin: 0 auto;
+}
+
+.btn-del-row:hover {
+    background-color: #ef4444; /* মাউস নিলে গাঢ় লাল */
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+}
+
+.btn-del-row i {
+    font-size: 0.9rem;
+}
+
+/* টেবিলের শেষ কলামের প্যাডিং ঠিক করা */
+.excel-table td:last-child {
+    padding: 5px !important;
+}
