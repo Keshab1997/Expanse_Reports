@@ -1,5 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
     
+    // সেফটি টাইমআউট: ২ সেকেন্ডের বেশি লোডার ঘুরলে জোর করে বন্ধ করে দাও
+    setTimeout(() => {
+        const loader = document.getElementById('globalLoader');
+        if (loader && loader.style.display !== 'none') {
+            loader.style.display = 'none';
+            console.log("Loader forced to close for speed.");
+        }
+    }, 2000);
+    
     // ১. সাইডবার টগল লজিক
     const sidebar = document.getElementById('sidebar');
     const menuToggle = document.getElementById('menuToggle');

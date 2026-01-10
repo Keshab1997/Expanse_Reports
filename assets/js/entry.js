@@ -7,32 +7,53 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadAllSuggestions() {
+    const cacheKey = 'global_suggestions';
+    
+    // ক্যাশ থেকে সাজেশন দেখানো (Instant Load)
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+        renderDatalists(JSON.parse(cached));
+        hideLoader(); // ক্যাশ পেলেই লোডার বন্ধ
+    }
+
+    // ব্যাকগ্রাউন্ডে লেটেস্ট সাজেশন আপডেট করা
     try {
         const { data: { user } } = await window.db.auth.getUser();
-        if (!user) return;
-
         const { data: expenses } = await window.db
             .from('expenses')
             .select('category, paid_by, payee, purpose')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
-            .limit(500);
+            .limit(300);
 
         if (expenses) {
-            recentExpenses = expenses; // ডাটা ক্যাশ করা হলো
-            
-            const updateList = (id, key) => {
-                const list = [...new Set(expenses.map(i => i[key]))].filter(Boolean);
-                const dl = document.getElementById(id);
-                if (dl) dl.innerHTML = list.map(v => `<option value="${v}">`).join('');
-            };
-
-            updateList('catList', 'category');
-            updateList('sourceList', 'paid_by');
-            updateList('payeeList', 'payee');
-            updateList('purposeList', 'purpose');
+            recentExpenses = expenses;
+            localStorage.setItem(cacheKey, JSON.stringify(expenses));
+            renderDatalists(expenses);
         }
-    } catch (err) { console.error("Suggestion Error:", err); }
+    } catch (err) { 
+        console.error("Suggestion Error:", err); 
+    } finally { 
+        hideLoader(); 
+    }
+}
+
+function renderDatalists(expenses) {
+    const updateList = (id, key) => {
+        const list = [...new Set(expenses.map(i => i[key]))].filter(Boolean);
+        const dl = document.getElementById(id);
+        if (dl) dl.innerHTML = list.map(v => `<option value="${v}">`).join('');
+    };
+
+    updateList('catList', 'category');
+    updateList('sourceList', 'paid_by');
+    updateList('payeeList', 'payee');
+    updateList('purposeList', 'purpose');
+}
+
+function hideLoader() {
+    const loader = document.getElementById('globalLoader');
+    if (loader) loader.style.display = 'none';
 }
 
 // ১. নতুন রো যোগ করার ফাংশন

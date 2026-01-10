@@ -1,20 +1,18 @@
 // assets/js/auth.js
 
 async function protectPage() {
-    // চেক করা হচ্ছে ইউজার লগইন আছে কিনা
-    const { data } = await window.db.auth.getSession();
+    // ১. যদি আগে থেকেই সেশন ক্যাশ থাকে, তবে সাথে সাথে লোডার বন্ধ করার সিগন্যাল দাও
+    if (localStorage.getItem('supabase_session_exists')) {
+        const loader = document.getElementById('globalLoader');
+        if (loader) loader.style.display = 'none';
+    }
 
+    const { data } = await window.db.auth.getSession();
     if (!data.session) {
-        // যদি লগইন না থাকে, ঘাড় ধাক্কা দিয়ে লগইন পেজে পাঠাও
+        localStorage.removeItem('supabase_session_exists');
         window.location.href = "login.html";
+    } else {
+        localStorage.setItem('supabase_session_exists', 'true');
     }
 }
-
-// লগআউট ফাংশন (সব পেজের জন্য)
-window.logout = async function() {
-    await window.db.auth.signOut();
-    window.location.href = "login.html";
-}
-
-// পেজ লোড হলেই চেক করবে
 protectPage();

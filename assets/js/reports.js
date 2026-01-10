@@ -31,11 +31,16 @@ function hideLoader() {
 // 2. INITIAL SETUP WITH FAST LOADING
 // =========================================
 async function loadInitialData() {
-    showLoader();
+    const cacheKey = 'last_report_data';
     
-    // ক্যাশ থেকে ডাটা দেখানো (যদি থাকে)
-    if (expenseCache.length > 0) renderTable(expenseCache);
-    
+    // ক্যাশ ডাটা থাকলে সাথে সাথে টেবিল দেখানো
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+        currentFilteredData = JSON.parse(cached);
+        renderTable(currentFilteredData);
+        hideLoader();
+    }
+
     try {
         if (!window.db) {
             console.error("Supabase client not found!");
@@ -46,21 +51,16 @@ async function loadInitialData() {
         const fromInput = document.getElementById('fromDate');
         const toInput = document.getElementById('toDate');
 
-        // ১. From Date: চলতি মাসের ১ তারিখ (Timezone সমস্যা এড়াতে ম্যানুয়াল ফরম্যাট)
         const y = today.getFullYear();
         const m = today.getMonth();
         const firstDay = new Date(y, m, 1);
         
-        // YYYY-MM-DD ফরম্যাটে লোকাল তারিখ তৈরি
         const fromDateStr = `${firstDay.getFullYear()}-${String(firstDay.getMonth() + 1).padStart(2, '0')}-01`;
-        
-        // ২. To Date: আজকের তারিখ
         const toDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
         if (fromInput) fromInput.value = fromDateStr;
         if (toInput) toInput.value = toDateStr;
 
-        // ৩. ডাটাবেস থেকে সর্বপ্রথম হিসাবের তারিখটি খুঁজে বের করা
         const { data: { user } } = await window.db.auth.getUser();
         if (user) {
             const { data: oldestRecord } = await window.db
@@ -191,6 +191,10 @@ async function applyFilters() {
         });
 
         expenseCache = currentFilteredData; // ক্যাশ আপডেট
+        
+        // লোকাল স্টোরেজে সেভ করা (পরের বার দ্রুত লোডের জন্য)
+        localStorage.setItem('last_report_data', JSON.stringify(currentFilteredData));
+        
         renderTable(currentFilteredData);
 
     } catch (error) {
