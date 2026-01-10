@@ -40,116 +40,89 @@ async function loadUserName(userId) {
     }
 }
 
-// স্ট্যাটাস এবং চার্ট লোড ফাংশন (UPDATED LOGIC: Lifetime Range)
+// স্ট্যাটাস এবং চার্ট লোড ফাংশন (Local Storage Caching)
 async function loadDashboardStats(userId) {
+    const cacheKey = `dashboard_data_${userId}`;
+    
+    // ১. ক্যাশ থেকে ডাটা চেক করা (Instant Load)
+    const cachedData = localStorage.getItem(cacheKey);
+    if (cachedData) {
+        const expenses = JSON.parse(cachedData);
+        processAndRender(expenses); // ক্যাশ ডাটা দিয়ে সাথে সাথে রেন্ডার
+        console.log("⚡ Dashboard loaded instantly from Cache");
+    }
+
+    // ২. ব্যাকগ্রাউন্ডে সুপাবেস থেকে লেটেস্ট ডাটা আনা
     try {
-        const today = new Date();
-        const formatDate = (d) => d.toISOString().split('T')[0];
-
-        // ১. শেষের তারিখ: বর্তমান মাসের শেষ দিন (Last Day of Current Month)
-        const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-        const endDate = formatDate(lastDayOfMonth);
-
-        // ২. শুরুর তারিখ: ডাটাবেস থেকে সবচেয়ে পুরনো খরচের তারিখ বের করা
-        let startDate;
-        
-        const { data: oldestExpense, error: dateError } = await window.db
-            .from('expenses')
-            .select('date')
-            .order('date', { ascending: true }) // সবচেয়ে পুরনো তারিখ
-            .limit(1)
-            .maybeSingle();
-
-        if (oldestExpense && oldestExpense.date) {
-            startDate = oldestExpense.date;
-        } else {
-            // ডাটা না থাকলে বর্তমান মাসের ১ তারিখ
-            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-            startDate = formatDate(firstDayOfMonth);
-        }
-
-        // ৩. তারিখের রেঞ্জ UI তে দেখানো (অপশনাল, যাতে বোঝা যায় কোন সময়ের হিসাব)
-        const monthEl = document.getElementById('currentMonthName');
-        if(monthEl) {
-            // তারিখ সুন্দরভাবে ফরম্যাট করা (e.g. 01 Jan 2023 - 31 Oct 2023)
-            const formatUI = (d) => {
-                const dt = new Date(d);
-                return dt.toLocaleDateString('default', { day: '2-digit', month: 'short', year: 'numeric' });
-            };
-            monthEl.innerText = `${formatUI(startDate)} - ${formatUI(endDate)}`;
-        }
-
-        // ৪. মেইন ডাটা আনা (Start Date থেকে End Date পর্যন্ত)
         const { data: expenses, error } = await window.db
             .from('expenses')
             .select('*')
-            .gte('date', startDate)
-            .lte('date', endDate)
             .eq('user_id', userId)
             .order('date', { ascending: false });
 
-        if (error || !expenses) {
-            console.error("Error loading expenses:", error);
-            return;
-        }
+        if (error) throw error;
 
-        // ৫. ক্যালকুলেশন
-        let totalAmount = 0; // টোটাল খরচ (Total Lifetime/Range)
-        let totalToday = 0;
-        let categoryMap = {};
-        let dailyMap = {};
-        const todayStr = formatDate(today);
-
-        expenses.forEach(item => {
-            totalAmount += item.amount;
+        if (expenses) {
+            // ৩. নতুন ডাটা ক্যাশে সেভ করা
+            localStorage.setItem(cacheKey, JSON.stringify(expenses));
             
-            // আজকের খরচ
-            if (item.date === todayStr) totalToday += item.amount;
-
-            // ক্যাটাগরি চার্টের জন্য
-            const cat = item.category || 'General';
-            categoryMap[cat] = (categoryMap[cat] || 0) + item.amount;
-
-            // বারের চার্টের জন্য (তারিখ অনুযায়ী)
-            // নোট: ডাটা অনেক বেশি হলে বার চার্ট দেখতে হিজিবিজি হতে পারে
-            const dayKey = item.date; // পুরো তারিখ নেওয়া হলো ইউনিক করার জন্য
-            dailyMap[dayKey] = (dailyMap[dayKey] || 0) + item.amount;
-        });
-
-        // UI আপডেট
-        const totalMonthEl = document.getElementById('totalMonth'); // এখানে এখন টোটাল রেঞ্জের খরচ দেখাবে
-        const totalTodayEl = document.getElementById('totalToday');
-        const txCountEl = document.getElementById('txCount');
-
-        if(totalMonthEl) totalMonthEl.innerText = totalAmount.toLocaleString('en-IN');
-        if(totalTodayEl) totalTodayEl.innerText = totalToday.toLocaleString('en-IN');
-        if(txCountEl) txCountEl.innerText = expenses.length;
-
-        // রিসেন্ট টেবিল (Top 5)
-        const recentTable = document.getElementById('recentTableBody');
-        if (recentTable) {
-            if (expenses.length === 0) {
-                recentTable.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:15px;">No transactions found</td></tr>`;
-            } else {
-                let html = "";
-                expenses.slice(0, 5).forEach(item => {
-                    html += `
-                        <tr>
-                            <td>${item.date}</td>
-                            <td>${item.payee}</td>
-                            <td class="text-right">₹${item.amount.toLocaleString('en-IN')}</td>
-                        </tr>`;
-                });
-                recentTable.innerHTML = html;
-            }
+            // ৪. যদি ক্যাশ ডাটা আর নতুন ডাটা আলাদা হয়, তবে UI আপডেট করা
+            processAndRender(expenses);
+            console.log("🔄 Dashboard updated from Server in background");
         }
-
-        // চার্ট রেন্ডার
-        renderCharts(categoryMap, dailyMap);
-
     } catch (err) {
-        console.error("Dashboard Load Error:", err);
+        console.error("Background Load Error:", err);
+    } finally {
+        // লোডার বন্ধ করা
+        const loader = document.getElementById('globalLoader');
+        if (loader) loader.style.display = 'none';
     }
+}
+
+// ৫. ডাটা প্রসেস এবং রেন্ডার করার জন্য আলাদা ফাংশন (যাতে দুইবার কল করা যায়)
+function processAndRender(expenses) {
+    let totalAmount = 0;
+    let totalToday = 0;
+    let categoryMap = {};
+    let dailyMap = {};
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    expenses.forEach(item => {
+        const amt = Number(item.amount) || 0;
+        totalAmount += amt;
+        if (item.date === todayStr) totalToday += amt;
+
+        const cat = item.category || 'General';
+        categoryMap[cat] = (categoryMap[cat] || 0) + amt;
+
+        const dayKey = item.date;
+        dailyMap[dayKey] = (dailyMap[dayKey] || 0) + amt;
+    });
+
+    // UI আপডেট (Stats)
+    document.getElementById('totalMonth').innerText = totalAmount.toLocaleString('en-IN');
+    document.getElementById('totalToday').innerText = totalToday.toLocaleString('en-IN');
+    document.getElementById('txCount').innerText = expenses.length;
+
+    // রিসেন্ট টেবিল আপডেট
+    renderRecentTable(expenses.slice(0, 5));
+
+    // চার্ট রেন্ডার
+    renderCharts(categoryMap, dailyMap);
+}
+
+function renderRecentTable(data) {
+    const recentTable = document.getElementById('recentTableBody');
+    if (!recentTable) return;
+    
+    let html = data.map(item => `
+        <tr>
+            <td>${item.date}</td>
+            <td>${item.payee}</td>
+            <td class="text-right">₹${Number(item.amount).toLocaleString('en-IN')}</td>
+        </tr>`).join('');
+    
+    recentTable.innerHTML = html || `<tr><td colspan="3" style="text-align:center;">No data</td></tr>`;
 }
 
 function renderCharts(categoryData, dailyData) {
@@ -182,7 +155,7 @@ function renderCharts(categoryData, dailyData) {
 
     // Bar Chart
     if (barCanvas) {
-        // তারিখ অনুযায়ী সর্ট করা
+        // তারিখ অনুযায়ী সর্ট করা
         const sortedDates = Object.keys(dailyData).sort();
         // লেবেলের জন্য শুধু দিন/মাস দেখানো (UX এর জন্য)
         const displayLabels = sortedDates.map(d => {

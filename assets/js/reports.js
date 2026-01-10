@@ -627,6 +627,23 @@ function downloadPDF() {
         // ৯. সেভ করা
         doc.save(`Expense_Report_Keshab_Sarkar_${today}.pdf`);
 
+        // শেয়ারিং পারমিশন চেক এবং শেয়ার লজিক (Mobile Share)
+        if (navigator.share) {
+            const pdfBlob = doc.output('blob');
+            const file = new File([pdfBlob], `Expense_Report_${today}.pdf`, { type: 'application/pdf' });
+
+            if (confirm("PDF Generated! Do you want to share it via WhatsApp/Email?")) {
+                navigator.share({
+                    files: [file],
+                    title: 'Expense Report',
+                    text: 'Here is my expense report prepared by Keshab Sarkar.'
+                }).then(() => console.log('Shared successfully'))
+                  .catch((error) => console.log('Error sharing:', error));
+            }
+        } else {
+            console.log("Web Share not supported on this browser/OS.");
+        }
+
     } catch (error) {
         console.error("PDF Error:", error);
         alert("Failed to generate PDF");

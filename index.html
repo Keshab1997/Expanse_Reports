@@ -12,6 +12,13 @@
     
     <link rel="stylesheet" href="assets/css/style.css">
 
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2344/2344132.png">
+
     <!-- স্ক্রিপ্টস (DEFER যোগ করা হয়েছে ফাস্ট লোডিংয়ের জন্য) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
@@ -170,6 +177,17 @@
     <script src="assets/js/auth.js" defer></script>
     <script src="assets/js/index.js" defer></script>
     <script src="assets/js/sidebar.js" defer></script>
+
+    <!-- PWA Service Worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('PWA Service Worker Registered'))
+            .catch(err => console.log('SW Registration Failed', err));
+        });
+      }
+    </script>
 
 </body>
 </html>

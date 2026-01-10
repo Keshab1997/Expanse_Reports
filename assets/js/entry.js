@@ -87,6 +87,12 @@ async function saveAllEntries() {
     const rows = document.querySelectorAll('#excelTableBody tr');
     const dataToInsert = [];
 
+    // Offline check
+    if (!navigator.onLine) {
+        alert("You are offline! Please connect to the internet to save entries.");
+        return;
+    }
+
     try {
         const { data: { user } } = await window.db.auth.getUser();
         
