@@ -509,23 +509,70 @@ function downloadPDF() {
 
     try {
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
+        const doc = new jsPDF('p', 'mm', 'a4'); // A4 Size
+        const today = new Date().toLocaleDateString('en-GB');
 
-        const totalAmount = document.getElementById('totalAmount')?.innerText || '0';
+        // ১. ডাটা প্রসেসিং (Summary Calculation)
+        const paidByMap = {};
+        let totalUnpaid = 0;
+        let grandTotal = 0;
+
+        currentFilteredData.forEach(item => {
+            const amt = Number(item.amount) || 0;
+            grandTotal += amt;
+            const name = item.paid_by || 'Unknown';
+            paidByMap[name] = (paidByMap[name] || 0) + amt;
+            if (item.status === 'Unpaid') totalUnpaid += amt;
+        });
+
+        // ২. স্লিম এবং মার্জিত হেডার ডিজাইন (Updated Header)
+        doc.setFillColor(40, 53, 147); // Dark Royal Blue
+        doc.rect(0, 0, 210, 25, 'F'); 
+        
+        // বাম পাশে মেইন টাইটেল
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.text("EXPENSE MANAGEMENT REPORT", 14, 16);
+
+        // ডান পাশে শুধুমাত্র অথোরাইজড টেক্সট (উপরের বড় নামটি রিমুভ করা হয়েছে)
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text("Authorized & Managed by Keshab Sarkar", 196, 16, { align: 'right' });
+
+        // ৪. তারিখ এবং রেঞ্জ (সাদা হেডারের ঠিক নিচে)
+        doc.setTextColor(80, 80, 80);
+        doc.setFontSize(9);
         const fromDate = document.getElementById('fromDate')?.value || '-';
         const toDate = document.getElementById('toDate')?.value || '-';
+        doc.text(`Statement Period: ${fromDate} to ${toDate}`, 14, 33);
+        doc.text(`Report ID: EXP-${new Date().getTime().toString().slice(-6)}`, 196, 33, { align: 'right' });
 
-        doc.setFontSize(18);
-        doc.text("Expense Report", 14, 15);
-        doc.setFontSize(10);
-        doc.setTextColor(100);
-        doc.text(`Date Range: ${fromDate} to ${toDate}`, 14, 22);
-        
+        // ৫. সামারি টেবিল (Excel Style Grid)
+        const summaryRows = Object.keys(paidByMap).map(name => [name, `INR ${paidByMap[name].toLocaleString('en-IN', {minimumFractionDigits: 2})}`]);
+        if (totalUnpaid > 0) {
+            summaryRows.push([{content: 'TOTAL UNPAID BILL', styles: {fillColor: [255, 235, 238], textColor: [211, 47, 47], fontStyle: 'bold'}}, 
+                             {content: `INR ${totalUnpaid.toLocaleString('en-IN', {minimumFractionDigits: 2})}`, styles: {fillColor: [255, 235, 238], textColor: [211, 47, 47], fontStyle: 'bold'}}]);
+        }
+
+        doc.autoTable({
+            head: [['Source of Fund (Paid By)', 'Total Amount']],
+            body: summaryRows,
+            startY: 40,
+            theme: 'grid', // Excel style lines
+            headStyles: { fillColor: [241, 245, 249], textColor: [51, 65, 85], lineWidth: 0.1 },
+            styles: { fontSize: 9, cellPadding: 2, lineColor: [200, 200, 200], lineWidth: 0.1 },
+            margin: { left: 14, right: 100 }
+        });
+
+        // ৬. গ্র্যান্ড টোটাল
+        const finalY = doc.lastAutoTable.finalY + 8;
         doc.setFontSize(12);
-        doc.setTextColor(0, 0, 0);
         doc.setFont("helvetica", "bold");
-        doc.text(`Total: INR ${totalAmount}`, 14, 29);
+        doc.setTextColor(0, 0, 0);
+        doc.text(`GRAND TOTAL: INR ${grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}`, 14, finalY);
 
+        // ৭. মেইন ট্রানজেকশন টেবিল (Full A4 Width & Excel Grid)
         const tableData = currentFilteredData.map(item => [
             new Date(item.date).toLocaleDateString('en-GB'),
             item.category,
@@ -539,19 +586,49 @@ function downloadPDF() {
         doc.autoTable({
             head: [['Date', 'Category', 'Paid By', 'Payee', 'Purpose', 'Amount', 'Status']],
             body: tableData,
-            startY: 35,
-            theme: 'grid',
-            headStyles: { fillColor: [79, 70, 229] },
+            startY: finalY + 4,
+            theme: 'grid', // Excel style grid lines
+            headStyles: { fillColor: [63, 81, 181], textColor: [255, 255, 255], fontSize: 9, halign: 'center' },
             columnStyles: {
-                5: { halign: 'right', fontStyle: 'bold' },
-                6: { halign: 'center' }
+                0: { cellWidth: 22 },
+                1: { cellWidth: 25 },
+                2: { cellWidth: 35 },
+                3: { cellWidth: 30 },
+                5: { cellWidth: 22, halign: 'right', fontStyle: 'bold' },
+                6: { cellWidth: 18, halign: 'center' }
             },
-            styles: { fontSize: 9, cellPadding: 3 }
+            styles: { 
+                fontSize: 8, 
+                cellPadding: 2, 
+                lineColor: [180, 180, 180], 
+                lineWidth: 0.1,
+                valign: 'middle'
+            },
+            didParseCell: function(data) {
+                if (data.column.index === 6 && data.cell.section === 'body') {
+                    if (data.cell.raw === 'Unpaid') {
+                        data.cell.styles.textColor = [211, 47, 47];
+                    } else {
+                        data.cell.styles.textColor = [46, 125, 50];
+                    }
+                }
+            }
         });
 
-        doc.save('Expense_Report.pdf');
+        // ৮. ফুটার (Footer)
+        const pageCount = doc.internal.getNumberOfPages();
+        for(let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(150);
+            doc.text(`Page ${i} of ${pageCount} | Prepared by Keshab Sarkar`, 105, 290, { align: 'center' });
+        }
+
+        // ৯. সেভ করা
+        doc.save(`Expense_Report_Keshab_Sarkar_${today}.pdf`);
+
     } catch (error) {
-        console.error("PDF Generation Error:", error);
+        console.error("PDF Error:", error);
         alert("Failed to generate PDF");
     }
 }
