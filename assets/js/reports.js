@@ -46,13 +46,19 @@ async function loadInitialData() {
         const fromInput = document.getElementById('fromDate');
         const toInput = document.getElementById('toDate');
 
-        // ১. From Date: চলতি মাসের ১ তারিখ
-        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+        // ১. From Date: চলতি মাসের ১ তারিখ (Timezone সমস্যা এড়াতে ম্যানুয়াল ফরম্যাট)
+        const y = today.getFullYear();
+        const m = today.getMonth();
+        const firstDay = new Date(y, m, 1);
+        
+        // YYYY-MM-DD ফরম্যাটে লোকাল তারিখ তৈরি
+        const fromDateStr = `${firstDay.getFullYear()}-${String(firstDay.getMonth() + 1).padStart(2, '0')}-01`;
+        
         // ২. To Date: আজকের তারিখ
-        const todayStr = today.toISOString().split('T')[0];
+        const toDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-        if (fromInput) fromInput.value = firstDayOfMonth;
-        if (toInput) toInput.value = todayStr;
+        if (fromInput) fromInput.value = fromDateStr;
+        if (toInput) toInput.value = toDateStr;
 
         // ৩. ডাটাবেস থেকে সর্বপ্রথম হিসাবের তারিখটি খুঁজে বের করা
         const { data: { user } } = await window.db.auth.getUser();
@@ -509,8 +515,11 @@ window.resetFilters = function() {
     
     // Reset dates to current month (same as initial load)
     const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
-    const todayStr = today.toISOString().split('T')[0];
+    const y = today.getFullYear();
+    const m = today.getMonth();
+    
+    const firstDay = `${y}-${String(m + 1).padStart(2, '0')}-01`;
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     
     setVal('fromDate', firstDay);
     setVal('toDate', todayStr);
