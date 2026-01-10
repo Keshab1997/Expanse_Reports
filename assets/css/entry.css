@@ -160,3 +160,109 @@ input:focus, select:focus {
         padding: 20px;
     }
 }
+
+/* Excel Mode Styles */
+.excel-mode { 
+    max-width: 100% !important; 
+    padding: 20px !important; 
+}
+
+.excel-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    background: #fff; 
+    margin-bottom: 20px;
+}
+
+.excel-table th { 
+    background: #f8fafc; 
+    padding: 12px; 
+    text-align: left; 
+    font-size: 0.8rem; 
+    color: #64748b; 
+    border: 1px solid #e2e8f0; 
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.excel-table td { 
+    padding: 0; 
+    border: 1px solid #e2e8f0; 
+}
+
+.excel-input {
+    width: 100%; 
+    border: none; 
+    padding: 12px; 
+    font-size: 0.9rem; 
+    outline: none; 
+    background: transparent;
+    min-height: 44px;
+}
+
+.excel-input:focus { 
+    background: #f0f7ff; 
+    box-shadow: inset 0 0 0 2px #3b82f6; 
+}
+
+.btn-save-row {
+    width: 100%; 
+    height: 100%; 
+    padding: 12px; 
+    background: #4f46e5; 
+    color: white; 
+    border: none; 
+    cursor: pointer; 
+    font-weight: 600;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.btn-save-row:hover { 
+    background: #4338ca; 
+}
+
+.btn-save-row:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+
+/* Upload Section */
+.upload-section {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.upload-section small {
+    display: block;
+    color: #6b7280;
+    margin-top: 8px;
+    font-size: 0.8rem;
+}
+
+/* Suggestions Datalist Style */
+datalist { 
+    background: white; 
+}
+
+/* Mobile Responsive for Excel Mode */
+@media (max-width: 768px) {
+    .excel-table {
+        font-size: 0.8rem;
+    }
+    
+    .excel-table th,
+    .excel-input {
+        padding: 8px;
+        font-size: 0.8rem;
+    }
+    
+    .btn-save-row {
+        padding: 8px;
+        font-size: 0.8rem;
+    }
+}

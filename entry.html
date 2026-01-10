@@ -10,18 +10,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- CSS লিঙ্ক -->
-    <link rel="stylesheet" href="assets/css/style.css"> <!-- মেইন লেআউট -->
-    <link rel="stylesheet" href="assets/css/entry.css"> <!-- ফর্ম ডিজাইন -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/entry.css">
     
-    <!-- লাইব্রেরি (DEFER যোগ করা হয়েছে) -->
+    <!-- লাইব্রেরি -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js" defer></script>
 </head>
 <body>
 
-    <!-- ==========================
-         GLOBAL LOADER (ADDED)
-    ========================== -->
     <div id="globalLoader">
         <div class="spinner"></div>
         <div class="loader-text">Processing...</div>
@@ -29,7 +26,6 @@
 
     <div class="dashboard-wrapper">
         
-        <!-- সাইডবার -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-brand">
                 <i class="fa-solid fa-wallet"></i> 
@@ -40,7 +36,7 @@
             <ul class="sidebar-menu">
                 <li><a href="index.html"><i class="fa-solid fa-house"></i> <span>Dashboard</span></a></li>
                 <li><a href="entry.html" class="active"><i class="fa-solid fa-pen"></i> <span>Add Entry</span></a></li>
-                <li><a href="list.html"><i class="fa-solid fa-chart-pie"></i> <span>Reports</span></a></li>
+                <li><a href="reports.html"><i class="fa-solid fa-chart-pie"></i> <span>Reports</span></a></li>
                 <li><a href="profile.html"><i class="fa-solid fa-user"></i> <span>Profile</span></a></li>
             </ul>
 
@@ -51,13 +47,11 @@
             </div>
         </aside>
 
-        <!-- মেইন কন্টেন্ট -->
         <div class="main-content">
             
-            <!-- হেডার -->
             <header class="topbar">
                 <div class="header-left">
-                    <h2 class="page-title">Add Entry</h2>
+                    <h2 class="page-title">Quick Entry</h2>
                 </div>
                 <div class="header-right" style="display: flex; align-items: center; gap: 15px;">
                     <div class="top-profile">
@@ -69,153 +63,85 @@
                 </div>
             </header>
 
-            <!-- ফর্ম বডি -->
             <div class="content-body">
-                
-                <!-- কার্ড শুরু -->
-                <div class="entry-card">
-                    
+                <div class="entry-card excel-mode">
                     <div class="card-header">
-                        <h2>✍️ New Expense</h2>
-                        <p>Track your daily spending easily</p>
+                        <h2><i class="fa-solid fa-file-invoice-dollar"></i> Quick Entry (Excel Mode)</h2>
+                        <p>Type and select suggestions from previous records</p>
                     </div>
 
-                    <form id="expenseForm">
-                        <!-- ১. তারিখ -->
-                        <div class="form-group">
-                            <label>Date</label>
-                            <input type="date" id="date" required>
-                        </div>
+                    <div class="table-responsive">
+                        <table class="excel-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Category</th>
+                                    <th>Paid By (Source)</th>
+                                    <th>Payee / Shop</th>
+                                    <th>Purpose / Description</th>
+                                    <th>Amount (₹)</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input type="date" id="date" class="excel-input"></td>
+                                    <td>
+                                        <input type="text" id="category" class="excel-input" list="catList" placeholder="Category...">
+                                        <datalist id="catList"></datalist>
+                                    </td>
+                                    <td>
+                                        <input type="text" id="fundSource" class="excel-input" list="sourceList" placeholder="Paid by...">
+                                        <datalist id="sourceList"></datalist>
+                                    </td>
+                                    <td>
+                                        <input type="text" id="payee" class="excel-input" list="payeeList" placeholder="Payee name...">
+                                        <datalist id="payeeList"></datalist>
+                                    </td>
+                                    <td>
+                                        <input type="text" id="purpose" class="excel-input" list="purposeList" placeholder="Purpose...">
+                                        <datalist id="purposeList"></datalist>
+                                    </td>
+                                    <td><input type="number" id="amount" class="excel-input" placeholder="0.00" step="0.01"></td>
+                                    <td>
+                                        <select id="status" class="excel-input">
+                                            <option value="Paid">Paid</option>
+                                            <option value="Unpaid">Unpaid</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <button onclick="saveExcelEntry()" class="btn-save-row" id="saveBtn">
+                                            <i class="fa-solid fa-plus"></i> Add
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-                        <!-- ২. ক্যাটাগরি -->
-                        <div class="form-group">
-                            <label>Category</label>
-                            <div class="input-with-btn">
-                                <select id="category" required>
-                                    <option value="" disabled selected>Select Category...</option>
-                                </select>
-                                <button type="button" class="btn-icon" onclick="openModal()" title="New Category">
-                                    <i class="fa-solid fa-plus"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- ৩. [নতুন] সোর্স অফ ফান্ড (Source of Fund) -->
-                        <div class="form-group full-width">
-                            <label>Source of Fund (Paid By)</label>
-                            <div class="input-with-btn">
-                                <select id="fundSource" required>
-                                    <option value="" disabled selected>Select Source...</option>
-                                    <!-- এখানে জাভাস্ক্রিপ্ট দিয়ে ডাটা লোড হবে -->
-                                </select>
-                                <button type="button" class="btn-icon" onclick="openFundModal()" title="Add New Source">
-                                    <i class="fa-solid fa-plus"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- ৪. নাম (Full Width) -->
-                        <div class="form-group full-width">
-                            <label>Payee / Shop Name</label>
-                            <input type="text" id="payee" placeholder="Ex: Starbucks, Grocery Store" required autocomplete="off">
-                        </div>
-
-                        <!-- ৫. বর্ণনা (Full Width) -->
-                        <div class="form-group full-width">
-                            <label>Description (Optional)</label>
-                            <input type="text" id="purpose" placeholder="Ex: Coffee with friends" autocomplete="off">
-                        </div>
-
-                        <!-- ৬. টাকা (Full Width) -->
-                        <div class="form-group full-width">
-                            <label>Amount (₹)</label>
-                            <input type="number" id="amount" placeholder="0.00" step="0.01" min="1" required 
-                                   style="font-size: 1.2rem; font-weight: bold; color: #4f46e5;">
-                        </div>
-
-                        <!-- ৭. সেভ বাটন -->
-                        <div class="form-actions">
-                            <button type="submit" class="btn-primary">
-                                <span id="btnText">Save Transaction</span>
-                            </button>
-                        </div>
-                        
-                        <!-- ৮. এক্সেল আপলোড -->
-                        <div class="upload-box">
-                            <input type="file" id="excelInput" accept=".xlsx, .xls" style="display: none;" onchange="handleFileUpload(this)">
-                            <button type="button" class="btn-upload" onclick="document.getElementById('excelInput').click()">
-                                <i class="fa-solid fa-file-excel"></i> Upload Bulk from Excel
-                            </button>
-                            <small style="display:block; text-align:center; color:#9ca3af; margin-top: 5px; font-size: 0.8rem;">Supports .xlsx files</small>
-                        </div>
-                    </form>
+                    <!-- Excel Upload Section -->
+                    <div class="upload-section">
+                        <input type="file" id="excelInput" accept=".xlsx, .xls" style="display: none;" onchange="handleFileUpload(this)">
+                        <button type="button" class="btn-upload" onclick="document.getElementById('excelInput').click()">
+                            <i class="fa-solid fa-file-excel"></i> Upload Bulk from Excel
+                        </button>
+                        <small>Supports .xlsx files with columns: Date, Category, Paid By, Payee, Purpose, Amount, Status</small>
+                    </div>
                 </div>
-                <!-- কার্ড শেষ -->
-
             </div>
         </div>
     </div>
 
-    <!-- মোডাল ১: ক্যাটাগরি -->
-    <div id="catModal" class="modal-overlay">
-        <div class="modal-box">
-            <h3>Add New Category</h3>
-            <p style="color:#666; margin-bottom:15px; font-size:0.9rem;">Create a category to organize expenses.</p>
-            <input type="text" id="newCatName" placeholder="Category Name (e.g. Travel)">
-            
-            <div class="modal-actions">
-                <button class="btn-text" onclick="closeModal()">Cancel</button>
-                <button class="btn-primary small" onclick="saveCategory()">Create</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- মোডাল ২: সোর্স অফ ফান্ড (নতুন) -->
-    <div id="fundModal" class="modal-overlay">
-        <div class="modal-box">
-            <h3>Add Source of Fund</h3>
-            <p style="color:#666; margin-bottom:15px; font-size:0.9rem;">Who paid for this expense?</p>
-            <input type="text" id="newFundName" placeholder="Name (e.g. Malik A, Office Cash)">
-            
-            <div class="modal-actions">
-                <button class="btn-text" onclick="closeFundModal()">Cancel</button>
-                <button class="btn-primary small" onclick="saveFundSource()">Create</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- টোস্ট -->
+    <!-- Toast -->
     <div id="toast" class="toast">
         <i class="fa-solid fa-circle-check"></i> Saved Successfully!
     </div>
 
-    <!-- স্ক্রিপ্ট (DEFER যুক্ত করা হয়েছে) -->
     <script src="assets/js/config.js" defer></script>
     <script src="assets/js/auth.js" defer></script>
-    <script src="assets/js/entry.js" defer></script>
+    <script src="assets/js/entry_excel.js" defer></script>
     <script src="assets/js/sidebar.js" defer></script>
-
-    <script>
-        // মোডাল হ্যান্ডলিং (Category)
-        const modal = document.getElementById('catModal');
-        function openModal() { modal.style.display = 'flex'; }
-        function closeModal() { modal.style.display = 'none'; }
-        
-        // মোডাল হ্যান্ডলিং (Fund Source - নতুন)
-        const fundModal = document.getElementById('fundModal');
-        function openFundModal() { fundModal.style.display = 'flex'; }
-        function closeFundModal() { fundModal.style.display = 'none'; }
-
-        // বাইরে ক্লিক করলে মোডাল বন্ধ
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                closeModal();
-            }
-            if (event.target == fundModal) {
-                closeFundModal();
-            }
-        }
-    </script>
 
 </body>
 </html>

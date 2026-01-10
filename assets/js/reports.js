@@ -1,11 +1,13 @@
 /* =========================================
-   FILE: assets/js/list.js
-   DESCRIPTION: Reports Page Logic (Fixed & Safe Mode)
+   FILE: assets/js/reports.js
+   DESCRIPTION: Advanced Reports Page with Multiple Selection & Inline Editing
 ========================================= */
 
 // গ্লোবাল ভেরিয়েবল
-let payeeTomSelect;
-let currentFilteredData = []; 
+let catTom, sourceTom, statusTom, payeeTom;
+let expenseCache = []; // Fast loading এর জন্য ক্যাশ
+let currentFilteredData = [];
+let firstEntryDate = null; // সর্বপ্রথম হিসাবের তারিখ রাখার জন্য
 
 document.addEventListener('DOMContentLoaded', () => {
     loadInitialData();
@@ -26,136 +28,138 @@ function hideLoader() {
 }
 
 // =========================================
-// 2. INITIAL SETUP
+// 2. INITIAL SETUP WITH FAST LOADING
 // =========================================
 async function loadInitialData() {
-    showLoader(); 
+    showLoader();
+    
+    // ক্যাশ থেকে ডাটা দেখানো (যদি থাকে)
+    if (expenseCache.length > 0) renderTable(expenseCache);
+    
     try {
         if (!window.db) {
             console.error("Supabase client not found!");
             return;
         }
 
-        const formatDate = (date) => date.toISOString().split('T')[0];
         const today = new Date();
         const fromInput = document.getElementById('fromDate');
         const toInput = document.getElementById('toDate');
 
-        // ডিফল্ট তারিখ সেটআপ (যদি ইনপুট থাকে)
-        if (fromInput && !fromInput.value) {
-            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-            fromInput.value = formatDate(firstDayOfMonth);
-        }
-        if (toInput && !toInput.value) {
-            const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-            toInput.value = formatDate(lastDayOfMonth);
+        // ১. From Date: চলতি মাসের ১ তারিখ
+        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+        // ২. To Date: আজকের তারিখ
+        const todayStr = today.toISOString().split('T')[0];
+
+        if (fromInput) fromInput.value = firstDayOfMonth;
+        if (toInput) toInput.value = todayStr;
+
+        // ৩. ডাটাবেস থেকে সর্বপ্রথম হিসাবের তারিখটি খুঁজে বের করা
+        const { data: { user } } = await window.db.auth.getUser();
+        if (user) {
+            const { data: oldestRecord } = await window.db
+                .from('expenses')
+                .select('date')
+                .eq('user_id', user.id)
+                .order('date', { ascending: true })
+                .limit(1)
+                .maybeSingle();
+
+            if (oldestRecord) {
+                firstEntryDate = oldestRecord.date;
+            }
         }
 
-        await loadFilterOptions(); 
-        await applyFilters(); 
+        await initTomSelects();
+        await applyFilters();
 
     } catch (error) {
         console.error("Init Error:", error);
     } finally {
-        hideLoader(); 
+        hideLoader();
     }
 }
 
 // =========================================
-// 3. LOAD FILTER OPTIONS
+// 3. TOM SELECT INITIALIZATION (Multiple Selection)
 // =========================================
-async function loadFilterOptions() {
+async function initTomSelects() {
     try {
         const { data: { user } } = await window.db.auth.getUser();
         if (!user) return;
         
         const { data: expenses } = await window.db
             .from('expenses')
-            .select('category, payee, paid_by') 
+            .select('category, paid_by, payee, status')
             .eq('user_id', user.id);
             
         if (expenses) {
-            // 1. Category Filter
-            const catSelect = document.getElementById('catFilter');
-            const editCatSelect = document.getElementById('editCategory');
-            const uniqueCats = [...new Set(expenses.map(item => item.category))].sort();
-
-            if (catSelect) {
-                catSelect.innerHTML = '<option value="">All Categories</option>';
-                uniqueCats.forEach(cat => {
-                    const opt = document.createElement('option');
-                    opt.value = cat; opt.textContent = cat;
-                    catSelect.appendChild(opt);
-                });
-            }
-
-            if (editCatSelect) {
-                editCatSelect.innerHTML = '';
-                uniqueCats.forEach(cat => {
-                    const editOpt = document.createElement('option');
-                    editOpt.value = cat; editOpt.textContent = cat;
-                    editCatSelect.appendChild(editOpt);
-                });
-            }
-
-            // 2. Source (Paid By) Filter
-            const sourceSelect = document.getElementById('sourceFilter');
-            if (sourceSelect) {
-                const uniqueSources = [...new Set(expenses.map(item => item.paid_by).filter(Boolean))].sort();
-                sourceSelect.innerHTML = '<option value="">All Sources</option>';
-                uniqueSources.forEach(src => {
-                    const opt = document.createElement('option');
-                    opt.value = src; opt.textContent = src;
-                    sourceSelect.appendChild(opt);
-                });
-            }
-
-            // 3. Payee Filter (TomSelect)
-            if (document.getElementById('payeeFilter')) {
-                const uniquePayees = [...new Set(expenses.map(item => item.payee))].sort();
-                const payeeOptions = uniquePayees.map(p => ({ value: p, text: p }));
-
-                if (!payeeTomSelect) {
-                    payeeTomSelect = new TomSelect('#payeeFilter', {
-                        options: payeeOptions,
-                        plugins: ['remove_button'],
-                        maxItems: null,
-                        valueField: 'value',
-                        labelField: 'text',
-                        searchField: 'text',
-                        placeholder: 'Select Payees...',
-                        onChange: function() { applyFilters(); }
-                    });
-                } else {
-                    payeeTomSelect.clearOptions();
-                    payeeTomSelect.addOptions(payeeOptions);
-                }
-            }
+            const settings = { 
+                plugins: ['remove_button'], 
+                maxItems: null, 
+                valueField: 'value', 
+                labelField: 'text', 
+                searchField: 'text',
+                onChange: function() { applyFilters(); }
+            };
+            
+            // 1. Category Filter (Multiple)
+            const cats = [...new Set(expenses.map(i => i.category))].map(v => ({value: v, text: v}));
+            catTom = new TomSelect('#catFilter', {
+                ...settings,
+                options: cats,
+                placeholder: 'Select Categories...'
+            });
+            
+            // 2. Source Filter (Multiple)
+            const sources = [...new Set(expenses.map(i => i.paid_by).filter(Boolean))].map(v => ({value: v, text: v}));
+            sourceTom = new TomSelect('#sourceFilter', {
+                ...settings,
+                options: sources,
+                placeholder: 'Select Sources...'
+            });
+            
+            // 3. Status Filter (Multiple)
+            statusTom = new TomSelect('#statusFilter', {
+                ...settings,
+                placeholder: 'Select Status...'
+            });
+            
+            // 4. Payee Filter (Multiple)
+            const payees = [...new Set(expenses.map(i => i.payee))].map(v => ({value: v, text: v}));
+            payeeTom = new TomSelect('#payeeFilter', {
+                ...settings,
+                options: payees,
+                placeholder: 'Select Payees...'
+            });
         }
-    } catch (err) { console.error(err); }
+    } catch (err) { 
+        console.error("TomSelect Init Error:", err); 
+    }
 }
 
 // =========================================
-// 4. APPLY FILTERS (Safe Mode)
+// 4. ADVANCED FILTER LOGIC (Multiple Selection Support)
 // =========================================
 async function applyFilters() {
     const tableBody = document.getElementById('tableBody');
     if (!tableBody) return;
 
-    tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px;">Updating...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px;">Updating...</td></tr>';
     
     try {
         const { data: { user } } = await window.db.auth.getUser();
         if (!user) return;
 
-        // সেফলি ভ্যালু নেওয়া (যদি এলিমেন্ট না থাকে, তাহলে ফাঁকা স্ট্রিং ধরবে)
+        // ফিল্টার ভ্যালু নেওয়া
         const fromDate = document.getElementById('fromDate')?.value || '';
         const toDate = document.getElementById('toDate')?.value || '';
-        const category = document.getElementById('catFilter')?.value || '';
-        const source = document.getElementById('sourceFilter')?.value || ''; 
-        const purposeSearch = document.getElementById('purposeFilter')?.value?.toLowerCase() || '';
+        const purpose = document.getElementById('purposeFilter')?.value?.toLowerCase() || '';
         
-        let selectedPayees = payeeTomSelect ? payeeTomSelect.getValue() : [];
+        const cats = catTom ? catTom.getValue() : [];
+        const sources = sourceTom ? sourceTom.getValue() : [];
+        const statuses = statusTom ? statusTom.getValue() : [];
+        const payees = payeeTom ? payeeTom.getValue() : [];
 
         // Supabase Query
         let query = window.db
@@ -166,29 +170,31 @@ async function applyFilters() {
 
         if (fromDate) query = query.gte('date', fromDate);
         if (toDate) query = query.lte('date', toDate);
-        if (category) query = query.eq('category', category);
-        if (source) query = query.eq('paid_by', source);
-        if (selectedPayees.length > 0) query = query.in('payee', selectedPayees);
+        if (cats.length) query = query.in('category', cats);
+        if (sources.length) query = query.in('paid_by', sources);
+        if (statuses.length) query = query.in('status', statuses);
+        if (payees.length) query = query.in('payee', payees);
 
         const { data: expenses, error } = await query;
         if (error) throw error;
 
         // Client side search for Purpose
         currentFilteredData = expenses.filter(item => {
-            if (!purposeSearch) return true;
-            return (item.purpose && item.purpose.toLowerCase().includes(purposeSearch));
+            if (!purpose) return true;
+            return (item.purpose && item.purpose.toLowerCase().includes(purpose));
         });
 
+        expenseCache = currentFilteredData; // ক্যাশ আপডেট
         renderTable(currentFilteredData);
 
     } catch (error) {
         console.error("Filter Error:", error);
-        tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">Error loading data</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Error loading data</td></tr>';
     }
 }
 
 // =========================================
-// 5. RENDER TABLE
+// 5. RENDER TABLE WITH INLINE EDITING & STATUS
 // =========================================
 function renderTable(data) {
     const tableBody = document.getElementById('tableBody');
@@ -200,7 +206,7 @@ function renderTable(data) {
     let total = 0;
 
     if (data.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:#64748b;">No records found</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:#64748b;">No records found</td></tr>';
         if (totalEl) totalEl.innerText = '0';
         return;
     }
@@ -210,15 +216,36 @@ function renderTable(data) {
         
         const dateObj = new Date(item.date);
         const dateStr = dateObj.toLocaleDateString('en-GB');
+        const status = item.status || 'Unpaid';
+
+        // চেক করা হচ্ছে এই তারিখটিই সর্বপ্রথম তারিখ কি না
+        const isFirstDay = item.date === firstEntryDate;
+        const dateHighlightClass = isFirstDay ? 'first-record-date' : '';
 
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${dateStr}</td>
-            <td><span class="badge badge-cat">${item.category}</span></td>
-            <td><span style="font-weight:600; color:#555;">${item.paid_by || '-'}</span></td>
-            <td>${item.payee}</td>
-            <td style="font-size: 0.9rem; color:#666;">${item.purpose || '-'}</td>
-            <td style="text-align: right; font-weight: 600;">₹${Number(item.amount).toFixed(2)}</td>
+            <td><span class="${dateHighlightClass}">${dateStr}</span></td>
+            <td class="editable-cell" contenteditable="true" onblur="updateInline('${item.id}', 'category', this.innerText)">
+                <span class="badge badge-cat">${item.category}</span>
+            </td>
+            <td class="editable-cell" contenteditable="true" onblur="updateInline('${item.id}', 'paid_by', this.innerText)" style="font-weight:600; color:#555;">
+                ${item.paid_by || '-'}
+            </td>
+            <td class="editable-cell" contenteditable="true" onblur="updateInline('${item.id}', 'payee', this.innerText)">
+                ${item.payee}
+            </td>
+            <td class="editable-cell" contenteditable="true" onblur="updateInline('${item.id}', 'purpose', this.innerText)" style="font-size: 0.9rem; color:#666;">
+                ${item.purpose || '-'}
+            </td>
+            <td class="editable-cell" contenteditable="true" onblur="updateInline('${item.id}', 'amount', this.innerText)" style="text-align: right; font-weight: 600;">
+                ₹${Number(item.amount).toFixed(2)}
+            </td>
+            <td style="text-align: center;">
+                <span class="${status === 'Paid' ? 'status-paid' : 'status-unpaid'}" 
+                      onclick="toggleStatus('${item.id}', '${status}')">
+                    ${status}
+                </span>
+            </td>
             <td style="text-align: center;">
                 <button onclick="openEditModal('${item.id}')" class="btn-icon edit"><i class="fa-solid fa-pen"></i></button>
             </td>
@@ -230,7 +257,52 @@ function renderTable(data) {
 }
 
 // =========================================
-// 6. EDIT FUNCTIONALITY
+// 6. INLINE EDITING FUNCTIONS
+// =========================================
+async function updateInline(id, field, value) {
+    try {
+        // ভ্যালিডেশন
+        if (field === 'amount' && (isNaN(value) || value <= 0)) {
+            alert("Please enter a valid amount");
+            applyFilters(); // রিফ্রেশ
+            return;
+        }
+
+        const updateData = { [field]: value };
+        if (field === 'amount') updateData[field] = parseFloat(value);
+
+        const { error } = await window.db
+            .from('expenses')
+            .update(updateData)
+            .eq('id', id);
+            
+        if (error) throw error;
+        
+        console.log(`Updated ${field}:`, value);
+        
+        // ক্যাশ আপডেট
+        const itemIndex = expenseCache.findIndex(item => item.id === id);
+        if (itemIndex !== -1) {
+            expenseCache[itemIndex][field] = field === 'amount' ? parseFloat(value) : value;
+        }
+        
+    } catch (err) {
+        alert("Update failed: " + err.message);
+        applyFilters(); // রিফ্রেশ
+    }
+}
+
+// =========================================
+// 7. STATUS TOGGLE (Paid/Unpaid)
+// =========================================
+async function toggleStatus(id, currentStatus) {
+    const newStatus = currentStatus === 'Paid' ? 'Unpaid' : 'Paid';
+    await updateInline(id, 'status', newStatus);
+    applyFilters(); // রিফ্রেশ
+}
+
+// =========================================
+// 8. EDIT MODAL (Enhanced)
 // =========================================
 async function openEditModal(id) {
     showLoader();
@@ -255,14 +327,17 @@ async function openEditModal(id) {
         setVal('editAmount', data.amount);
         setVal('editPaidBy', data.paid_by || '');
 
+        // Category dropdown
         const catSelect = document.getElementById('editCategory');
         if (catSelect) {
-            if (![...catSelect.options].some(o => o.value === data.category)) {
+            catSelect.innerHTML = '';
+            const uniqueCats = [...new Set(expenseCache.map(item => item.category))];
+            uniqueCats.forEach(cat => {
                 const opt = document.createElement('option');
-                opt.value = data.category;
-                opt.textContent = data.category;
+                opt.value = cat;
+                opt.textContent = cat;
                 catSelect.appendChild(opt);
-            }
+            });
             catSelect.value = data.category;
         }
 
@@ -302,7 +377,7 @@ async function saveUpdate() {
         if (error) throw error;
 
         closeEditModal();
-        loadInitialData(); 
+        loadInitialData();
         alert("Updated successfully!");
 
     } catch (err) {
@@ -327,14 +402,14 @@ function deleteExpense() {
                 if(error) alert("Error deleting");
                 else {
                     closeEditModal();
-                    loadInitialData(); // Reload filter data
+                    loadInitialData();
                 }
             });
     }
 }
 
 // =========================================
-// 7. PDF DOWNLOAD
+// 9. PDF DOWNLOAD (Enhanced)
 // =========================================
 function downloadPDF() {
     if (!currentFilteredData || currentFilteredData.length === 0) {
@@ -362,22 +437,24 @@ function downloadPDF() {
         doc.text(`Total: INR ${totalAmount}`, 14, 29);
 
         const tableData = currentFilteredData.map(item => [
-            new Date(item.date).toLocaleDateString('en-GB'), 
-            item.category,                                   
-            item.paid_by || '-',                             
-            item.payee,                                      
-            item.purpose || '-',                             
-            Number(item.amount).toFixed(2)                   
+            new Date(item.date).toLocaleDateString('en-GB'),
+            item.category,
+            item.paid_by || '-',
+            item.payee,
+            item.purpose || '-',
+            Number(item.amount).toFixed(2),
+            item.status || 'Unpaid'
         ]);
 
         doc.autoTable({
-            head: [['Date', 'Category', 'Paid By', 'Payee', 'Purpose', 'Amount']],
+            head: [['Date', 'Category', 'Paid By', 'Payee', 'Purpose', 'Amount', 'Status']],
             body: tableData,
             startY: 35,
             theme: 'grid',
             headStyles: { fillColor: [79, 70, 229] },
             columnStyles: {
-                5: { halign: 'right', fontStyle: 'bold' }
+                5: { halign: 'right', fontStyle: 'bold' },
+                6: { halign: 'center' }
             },
             styles: { fontSize: 9, cellPadding: 3 }
         });
@@ -390,7 +467,7 @@ function downloadPDF() {
 }
 
 // =========================================
-// 8. EVENT LISTENERS (Safe Mode)
+// 10. EVENT LISTENERS
 // =========================================
 function setupEventListeners() {
     const addListener = (id, event, fn) => {
@@ -400,9 +477,8 @@ function setupEventListeners() {
 
     addListener('fromDate', 'change', applyFilters);
     addListener('toDate', 'change', applyFilters);
-    addListener('catFilter', 'change', applyFilters);
-    addListener('sourceFilter', 'change', applyFilters);
     
+    // Purpose search with debounce
     let timeout = null;
     const purposeEl = document.getElementById('purposeFilter');
     if (purposeEl) {
@@ -413,7 +489,36 @@ function setupEventListeners() {
     }
 }
 
-// Excel Upload
+// =========================================
+// 11. UTILITY FUNCTIONS
+// =========================================
+window.resetFilters = function() {
+    // Clear all TomSelect filters
+    if (catTom) catTom.clear();
+    if (sourceTom) sourceTom.clear();
+    if (statusTom) statusTom.clear();
+    if (payeeTom) payeeTom.clear();
+    
+    // Clear other inputs
+    const setVal = (id, val) => { 
+        const el = document.getElementById(id); 
+        if(el) el.value = val; 
+    };
+    
+    setVal('purposeFilter', '');
+    
+    // Reset dates to current month (same as initial load)
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+    const todayStr = today.toISOString().split('T')[0];
+    
+    setVal('fromDate', firstDay);
+    setVal('toDate', todayStr);
+    
+    applyFilters();
+}
+
+// Excel Upload (Enhanced)
 window.handleFileUpload = async function (input) {
     const file = input.files[0];
     if (!file) return;
@@ -436,6 +541,7 @@ window.handleFileUpload = async function (input) {
                     payee: row['Payee'] || 'Unknown',
                     purpose: row['Purpose'] || '',
                     amount: parseFloat(row['Amount']) || 0,
+                    status: row['Status'] || 'Unpaid',
                     user_id: user.id
                 })).filter(d => d.amount > 0);
 
@@ -445,7 +551,7 @@ window.handleFileUpload = async function (input) {
                     
                     alert("✅ Uploaded Successfully!");
                     input.value = '';
-                    loadInitialData(); 
+                    loadInitialData();
                 }
             } catch (err) {
                 console.error(err);
@@ -458,14 +564,4 @@ window.handleFileUpload = async function (input) {
     } catch (e) {
         hideLoader();
     }
-}
-
-window.resetFilters = function() {
-    loadInitialData();
-    const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
-    
-    setVal('catFilter', '');
-    setVal('sourceFilter', '');
-    setVal('purposeFilter', '');
-    if (payeeTomSelect) payeeTomSelect.clear();
 }

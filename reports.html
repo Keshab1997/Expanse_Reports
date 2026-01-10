@@ -40,7 +40,7 @@
             <ul class="sidebar-menu">
                 <li><a href="index.html"><i class="fa-solid fa-house"></i> <span>Dashboard</span></a></li>
                 <li><a href="entry.html"><i class="fa-solid fa-pen"></i> <span>Add Entry</span></a></li>
-                <li><a href="list.html" class="active"><i class="fa-solid fa-chart-pie"></i> <span>Reports</span></a></li>
+                <li><a href="reports.html" class="active"><i class="fa-solid fa-chart-pie"></i> <span>Reports</span></a></li>
                 <li><a href="profile.html"><i class="fa-solid fa-user"></i> <span>Profile</span></a></li>
             </ul>
             <div class="sidebar-footer">
@@ -77,25 +77,33 @@
                         <input type="date" id="toDate" class="filter-input">
                     </div>
                     
-                    <!-- ১. [নতুন] সোর্স ফিল্টার -->
+                    <!-- Multiple Selection Filters -->
                     <div class="filter-group">
                         <label>Source (Paid By)</label>
-                        <select id="sourceFilter" class="filter-input">
-                            <option value="">All Sources</option>
-                            <!-- JS দিয়ে লোড হবে -->
-                        </select>
+                        <select id="sourceFilter" multiple placeholder="All Sources"></select>
                     </div>
 
                     <div class="filter-group">
                         <label>Category</label>
-                        <select id="catFilter" class="filter-input">
-                            <option value="">All Categories</option>
+                        <select id="catFilter" multiple placeholder="All Categories"></select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Status</label>
+                        <select id="statusFilter" multiple placeholder="All Status">
+                            <option value="Paid">Paid</option>
+                            <option value="Unpaid">Unpaid</option>
                         </select>
                     </div>
 
-                    <div class="filter-group" style="min-width: 200px;">
+                    <div class="filter-group">
+                        <label>Search Purpose</label>
+                        <input type="text" id="purposeFilter" class="filter-input" placeholder="Search purpose...">
+                    </div>
+
+                    <div class="filter-group">
                         <label>Payee / Name</label>
-                        <select id="payeeFilter" multiple placeholder="Search Payees..." autocomplete="off"></select>
+                        <select id="payeeFilter" multiple placeholder="Search Payees..."></select>
                     </div>
 
                     <div class="btn-area">
@@ -115,16 +123,16 @@
                             <tr>
                                 <th>Date</th>
                                 <th>Category</th>
-                                <!-- ২. [নতুন] টেবিল হেডার -->
                                 <th style="color: #4f46e5;">Paid By</th> 
                                 <th>Payee</th>
                                 <th>Purpose</th>
                                 <th style="text-align: right;">Amount (₹)</th>
+                                <th style="text-align: center;">Status</th>
                                 <th style="text-align: center; width: 50px;">Action</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody">
-                            <tr><td colspan="7" style="text-align:center; padding:30px; color:#64748b;">Loading data...</td></tr>
+                            <tr><td colspan="8" style="text-align:center; padding:30px; color:#64748b;">Loading data...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -145,7 +153,6 @@
                 <div class="form-group"><label>Date</label><input type="date" id="editDate" class="modal-input"></div>
                 <div class="form-group"><label>Category</label><select id="editCategory" class="modal-input"></select></div>
                 
-                <!-- ৩. [নতুন] এডিট সোর্স -->
                 <div class="form-group">
                     <label>Source (Paid By)</label>
                     <input type="text" id="editPaidBy" class="modal-input" placeholder="e.g. Malik A">
@@ -164,6 +171,6 @@
     <script src="assets/js/config.js" defer></script>
     <script src="assets/js/auth.js" defer></script>
     <script src="assets/js/sidebar.js" defer></script> 
-    <script src="assets/js/list.js" defer></script>
+    <script src="assets/js/reports.js" defer></script>
 </body>
 </html>
