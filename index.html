@@ -3,69 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ExpensePro - Track and manage your daily expenses efficiently with detailed reports and analytics">
     <title>Dashboard | Expense Manager</title>
     
-    <!-- ফন্ট এবং স্টাইল -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icon CDN (আইকন দেখার জন্য জরুরি) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
 
-    <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4f46e5">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2344/2344132.png">
 
-    <!-- স্ক্রিপ্টস (DEFER যোগ করা হয়েছে ফাস্ট লোডিংয়ের জন্য) -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 </head>
 <body>
 
-    <!-- ==========================
-         GLOBAL LOADER (ADDED)
-    ========================== -->
-    <div id="globalLoader">
+    <div id="globalLoader" style="display:none">
         <div class="spinner"></div>
         <div class="loader-text">Processing...</div>
     </div>
 
     <div class="dashboard-wrapper">
         
-        <!-- ১. সাইডবার (ডেস্কটপে ফিক্সড, মোবাইলে লুকানো) -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-brand">
                 <i class="fa-solid fa-wallet"></i> 
                 <span>ExpensePro</span>
-                <!-- ক্লোজ বাটন (শুধু মোবাইলে দেখাবে) -->
-                <button class="close-btn" id="closeSidebar"><i class="fa-solid fa-xmark"></i></button>
+                <button class="close-btn" id="closeSidebar" aria-label="Close sidebar"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <ul class="sidebar-menu">
-                <li>
-                    <a href="index.html" class="active">
-                        <i class="fa-solid fa-house"></i> <span>Dashboard</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="entry.html">
-                        <i class="fa-solid fa-pen"></i> <span>Add Entry</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="reports.html">
-                        <i class="fa-solid fa-chart-pie"></i> <span>Reports</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="profile.html">
-                        <i class="fa-solid fa-user"></i> <span>Profile</span>
-                    </a>
-                </li>
-            </ul>
+            <nav aria-label="Main navigation">
+                <ul class="sidebar-menu">
+                    <li>
+                        <a href="index.html" class="active">
+                            <i class="fa-solid fa-house"></i> <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="entry.html">
+                            <i class="fa-solid fa-pen"></i> <span>Add Entry</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="reports.html">
+                            <i class="fa-solid fa-chart-pie"></i> <span>Reports</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="profile.html">
+                            <i class="fa-solid fa-user"></i> <span>Profile</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
 
             <div class="sidebar-footer">
                 <a href="#" onclick="logout()" class="logout-btn">
@@ -74,62 +70,49 @@
             </div>
         </aside>
 
-        <!-- ২. মেইন কন্টেন্ট এরিয়া -->
         <div class="main-content">
             
-            <!-- টপ হেডার -->
             <header class="topbar">
-                
-                <!-- বাম পাশ: শুধু পেজের নাম থাকবে -->
                 <div class="header-left">
-                    <h2 class="page-title">Dashboard</h2>
+                    <h1 class="page-title">Dashboard</h1>
                 </div>
 
-                <!-- ডান পাশ: প্রোফাইল এবং হ্যামবার্গার বাটন একসাথে -->
                 <div class="header-right" style="display: flex; align-items: center; gap: 15px;">
-                    
-                    <!-- প্রোফাইল ছবি -->
                     <div class="top-profile">
-                        <img src="https://via.placeholder.com/40" id="headerAvatar" class="header-avatar" alt="User">
+                        <img src="https://via.placeholder.com/40" id="headerAvatar" class="header-avatar" alt="User profile" width="40" height="40">
                     </div>
-
-                    <!-- হ্যামবার্গার বাটন (এখন ডান দিকে) -->
-                    <button id="menuToggle" class="hamburger-btn">
+                    <button id="menuToggle" class="hamburger-btn" aria-label="Toggle menu">
                         <i class="fa-solid fa-bars"></i>
                     </button>
-                    
                 </div>
             </header>
             
-            <!-- ড্যাশবোর্ড বডি -->
-            <div class="content-body">
+            <main class="content-body" role="main">
                 
-                <!-- ওয়েলকাম সেকশন -->
                 <div class="user-welcome">
                     <div class="welcome-text">
-                        <h1 id="welcomeTitle">Hello, <span id="userName">User</span>!</h1>
+                        <h2 id="welcomeTitle">Hello, <span id="userName">User</span>!</h2>
                         <p>Overview for <span id="currentMonthName" class="highlight-text">this month</span>.</p>
                     </div>
                 </div>
 
-                <!-- স্ট্যাটাস কার্ড -->
                 <div class="dashboard-grid">
                     <div class="stat-card blue">
-                        <div class="icon-box"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+                        <div class="icon-box" aria-hidden="true"><i class="fa-solid fa-indian-rupee-sign"></i></div>
                         <div>
-                            <div class="stat-title">Total Spent </div>
+                            <div class="stat-title">Total Spent</div>
                             <div class="stat-value">₹<span id="totalMonth">0</span></div>
                         </div>
                     </div>
                     <div class="stat-card green">
-                        <div class="icon-box"><i class="fa-solid fa-calendar-day"></i></div>
+                        <div class="icon-box" aria-hidden="true"><i class="fa-solid fa-calendar-day"></i></div>
                         <div>
                             <div class="stat-title">Spent Today</div>
                             <div class="stat-value">₹<span id="totalToday">0</span></div>
                         </div>
                     </div>
                     <div class="stat-card orange">
-                        <div class="icon-box"><i class="fa-solid fa-receipt"></i></div>
+                        <div class="icon-box" aria-hidden="true"><i class="fa-solid fa-receipt"></i></div>
                         <div>
                             <div class="stat-title">Transactions</div>
                             <div class="stat-value" id="txCount">0</div>
@@ -137,23 +120,21 @@
                     </div>
                 </div>
 
-                <!-- চার্ট সেকশন -->
                 <div class="charts-container">
                     <div class="chart-box">
                         <h3>📅 Daily Spending</h3>
                         <div class="chart-wrapper">
-                            <canvas id="barChart"></canvas>
+                            <canvas id="barChart" role="img" aria-label="Daily spending bar chart"></canvas>
                         </div>
                     </div>
                     <div class="chart-box">
                         <h3>🍰 Top Categories</h3>
                         <div class="chart-wrapper">
-                            <canvas id="pieChart"></canvas>
+                            <canvas id="pieChart" role="img" aria-label="Top categories pie chart"></canvas>
                         </div>
                     </div>
                 </div>
 
-                <!-- রিসেন্ট ট্রানজেকশন -->
                 <div class="recent-section">
                     <div class="section-header">
                         <h3>📝 Recent Transactions</h3>
@@ -161,6 +142,13 @@
                     </div>
                     <div class="table-responsive">
                         <table class="recent-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Payee</th>
+                                    <th scope="col">Amount</th>
+                                </tr>
+                            </thead>
                             <tbody id="recentTableBody">
                                 <tr><td colspan="3" class="loading-text">Loading...</td></tr>
                             </tbody>
@@ -168,24 +156,24 @@
                     </div>
                 </div>
 
-            </div> <!-- End content-body -->
-        </div> <!-- End main-content -->
+            </main>
+        </div>
     </div>
 
-    <!-- স্ক্রিপ্টস (DEFER দিয়ে লোড করা) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <script src="assets/js/config.js" defer></script>
     <script src="assets/js/auth.js" defer></script>
     <script src="assets/js/index.js" defer></script>
     <script src="assets/js/sidebar.js" defer></script>
     <script src="assets/js/footer.js" defer></script>
 
-    <!-- PWA Service Worker -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('sw.js')
-            .then(reg => console.log('PWA Service Worker Registered'))
-            .catch(err => console.log('SW Registration Failed', err));
+            .then(reg => console.log('SW Registered'))
+            .catch(err => console.log('SW Failed', err));
         });
       }
     </script>

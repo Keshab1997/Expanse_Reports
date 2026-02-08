@@ -1,10 +1,8 @@
 /* =========================================
    1. VARIABLES & RESET
    ========================================= */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 :root {
-    --primary: #4f46e5;       /* মডার্ন ইন্ডিগো কালার */
+    --primary: #4f46e5;
     --primary-hover: #4338ca;
     --bg-light: #f3f4f6;
     --white: #ffffff;
@@ -13,14 +11,14 @@
     --danger: #ef4444;
     --success: #10b981;
     --warning: #f59e0b;
-    --sidebar-width: 280px;   /* সাইডবার একটু চওড়া করা হলো */
+    --sidebar-width: 280px;
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 body {
@@ -38,33 +36,28 @@ ul { list-style: none; }
     display: flex;
     min-height: 100vh;
     width: 100%;
-    overflow-x: hidden; /* হরাইজন্টাল স্ক্রল বন্ধ রাখা */
+    overflow-x: hidden;
     position: relative;
 }
 
-/* --- SIDEBAR STYLING (Hidden on Right Side) --- */
 .sidebar {
     width: var(--sidebar-width);
     background: var(--white);
     height: 100vh;
-    position: fixed;  
+    position: fixed;
     top: 0;
-    
-    /* বাম দিক রিসেট করে ডান দিকে সেট করা হলো */
-    left: auto;       
-    right: -100%;     /* শুরুতে ডান দিকে স্ক্রিনের বাইরে লুকানো */
-    
+    left: auto;
+    right: -100%;
     border-right: none;
-    border-left: 1px solid #e5e7eb; /* বর্ডার বাম পাশে */
-    
+    border-left: 1px solid #e5e7eb;
     display: flex;
     flex-direction: column;
-    z-index: 2000;    /* সবার উপরে থাকবে */
-    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* স্মুথ অ্যানিমেশন */
-    box-shadow: -5px 0 15px rgba(0,0,0,0.1); /* শ্যাডো বাম দিকে */
+    z-index: 2000;
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+    will-change: transform;
 }
 
-/* Active ক্লাস যোগ হলে ডান দিক থেকে বের হবে */
 .sidebar.active {
     right: 0;
 }
@@ -119,7 +112,6 @@ ul { list-style: none; }
 }
 .logout-btn:hover { background-color: #fee2e2; }
 
-/* --- Main Content Area --- */
 .main-content {
     flex: 1;
     display: flex;
@@ -129,7 +121,7 @@ ul { list-style: none; }
 }
 
 /* =========================================
-   3. TOPBAR HEADER (Full Width Fixed)
+   3. TOPBAR HEADER
    ========================================= */
 .topbar {
     background: var(--white);
@@ -139,13 +131,9 @@ ul { list-style: none; }
     justify-content: space-between;
     padding: 0 30px;
     border-bottom: 1px solid #e5e7eb;
-    
-    /* Sticky Position */
     position: sticky;
     top: 0;
     z-index: 900;
-    
-    /* Full Width Fix */
     width: 100%;
     box-sizing: border-box;
 }
@@ -153,7 +141,7 @@ ul { list-style: none; }
 .page-title { font-size: 1.25rem; font-weight: 600; color: var(--text-dark); }
 
 .hamburger-btn {
-    display: block;   
+    display: block;
     background: none;
     border: none;
     font-size: 1.4rem;
@@ -166,7 +154,7 @@ ul { list-style: none; }
 .hamburger-btn:hover { background: #f3f4f6; }
 
 .close-btn {
-    display: block;   
+    display: block;
     background: none;
     border: none;
     font-size: 1.4rem;
@@ -176,17 +164,21 @@ ul { list-style: none; }
 }
 
 .header-avatar {
-    width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e5e7eb;
 }
 
 /* =========================================
-   4. BODY CONTENT (Charts, Cards)
+   4. BODY CONTENT
    ========================================= */
-.content-body { 
-    padding: 30px; 
-    width: 100%; 
-    max-width: 1400px; /* কন্টেন্ট বেশি ছড়াবে না */
-    margin: 0 auto; 
+.content-body {
+    padding: 30px;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
 .user-welcome { margin-bottom: 30px; }
@@ -201,8 +193,16 @@ ul { list-style: none; }
 }
 
 .stat-card {
-    background: var(--white); padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-    display: flex; align-items: center; gap: 20px; transition: transform 0.2s; border-left: 5px solid transparent;
+    background: var(--white);
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: transform 0.2s;
+    border-left: 5px solid transparent;
+    min-height: 120px;
 }
 .stat-card:hover { transform: translateY(-3px); }
 .stat-card.blue { border-color: var(--primary); }
@@ -210,59 +210,113 @@ ul { list-style: none; }
 .stat-card.orange { border-color: var(--warning); }
 
 .icon-box {
-    width: 50px; height: 50px; background: #f8fafc; border-radius: 12px;
-    display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--text-gray);
+    width: 50px;
+    height: 50px;
+    background: #f8fafc;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    color: var(--text-gray);
+    flex-shrink: 0;
 }
-.stat-title { font-size: 0.9rem; color: var(--text-gray); margin-bottom: 5px; }
+.stat-title { font-size: 0.9rem; color: #4b5563; margin-bottom: 5px; }
 .stat-value { font-size: 1.6rem; font-weight: 700; color: var(--text-dark); }
 
-/* Charts Area */
-.charts-container { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-bottom: 30px; }
-.chart-box { background: var(--white); padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-.chart-wrapper { position: relative; height: 300px; width: 100%; }
+.charts-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 25px;
+    margin-bottom: 30px;
+}
+.chart-box {
+    background: var(--white);
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    min-height: 350px;
+}
+.chart-wrapper {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
 
-/* Recent Transactions */
-.recent-section { background: var(--white); padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.view-all { color: var(--primary); font-weight: 600; font-size: 0.9rem; }
+.recent-section {
+    background: var(--white);
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.view-all { color: var(--primary); font-weight: 600; font-size: 0.9rem; text-decoration: underline; }
 .table-responsive { overflow-x: auto; }
 .recent-table { width: 100%; border-collapse: collapse; min-width: 600px; }
-.recent-table th, .recent-table td { padding: 15px; text-align: left; border-bottom: 1px solid #f3f4f6; }
+.recent-table th, .recent-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #f3f4f6;
+}
+.recent-table th {
+    font-weight: 600;
+    color: var(--text-dark);
+    background: #f9fafb;
+}
 .recent-table tr:last-child td { border-bottom: none; }
 .loading-text { text-align: center; color: var(--text-gray); padding: 20px; }
 
 /* =========================================
-   5. GENERAL FORM STYLES (Fallback)
+   5. FORMS
    ========================================= */
-.container { max-width: 500px; margin: 40px auto; background: var(--white); padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+.container {
+    max-width: 500px;
+    margin: 40px auto;
+    background: var(--white);
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+}
 .form-group { margin-bottom: 20px; }
 label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-dark); }
-input, select, textarea { width: 100%; padding: 12px 15px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 1rem; transition: all 0.3s; background: #f9fafb; }
-input:focus, select:focus, textarea:focus { border-color: var(--primary); background: var(--white); outline: none; }
-.btn-submit { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.3s; }
+input, select, textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.3s;
+    background: #f9fafb;
+}
+input:focus, select:focus, textarea:focus {
+    border-color: var(--primary);
+    background: var(--white);
+    outline: none;
+}
+.btn-submit {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+}
 .btn-submit:hover { background: var(--primary-hover); }
 
 /* =========================================
-   6. MOBILE RESPONSIVE
+   6. UTILITIES
    ========================================= */
-@media (max-width: 992px) {
-    .charts-container { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 768px) {
-    .topbar { padding: 0 20px; }
-    .content-body { padding: 20px; }
-    .dashboard-grid { grid-template-columns: 1fr; }
-    .container { margin: 20px; padding: 25px; }
-}
-
-/* =========================================
-   7. PLUGINS & UTILITIES (NEW ADDITIONS)
-   ========================================= */
-
-/* --- A. TomSelect / Payee Search Fix --- */
 .ts-dropdown, .ts-dropdown-content {
-    z-index: 99999 !important; /* ড্রপডাউন সবার উপরে দেখাবে */
+    z-index: 99999 !important;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
@@ -278,16 +332,15 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary); backgr
     box-shadow: none !important;
 }
 
-/* --- B. GLOBAL LOADING ANIMATION --- */
 #globalLoader {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.95); /* প্রায় সাদা ব্যাকগ্রাউন্ড */
-    z-index: 10000; /* সবার উপরে */
-    display: none; /* বাই ডিফল্ট হাইড থাকবে */
+    background: rgba(255, 255, 255, 0.95);
+    z-index: 10000;
+    display: none;
     flex-direction: column;
     justify-content: center;
     align-items: center;
@@ -315,10 +368,10 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary); backgr
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
-/* --- Global Footer Style --- */
+
 .global-footer {
     padding: 25px 0;
-    margin-top: auto; /* কন্টেন্ট কম থাকলেও নিচে থাকবে */
+    margin-top: auto;
     border-top: 1px solid #e2e8f0;
     background: transparent;
     width: 100%;
@@ -358,10 +411,17 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary); backgr
     100% { transform: scale(1); }
 }
 
-/* মোবাইলের জন্য অ্যাডজাস্টমেন্ট */
+/* =========================================
+   7. RESPONSIVE
+   ========================================= */
+@media (max-width: 992px) {
+    .charts-container { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 768px) {
-    .global-footer {
-        padding: 20px 10px;
-        text-align: center;
-    }
+    .topbar { padding: 0 20px; }
+    .content-body { padding: 20px; }
+    .dashboard-grid { grid-template-columns: 1fr; }
+    .container { margin: 20px; padding: 25px; }
+    .global-footer { padding: 20px 10px; text-align: center; }
 }

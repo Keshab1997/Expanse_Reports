@@ -1,37 +1,60 @@
-const CACHE_NAME = 'expense-pro-v1';
+const CACHE_NAME = 'expense-pro-v2';
 const ASSETS = [
-  'index.html',
-  'entry.html',
-  'reports.html',
-  'login.html',
-  'profile.html',
-  'assets/css/style.css',
-  'assets/css/entry.css',
-  'assets/css/list.css',
-  'assets/js/config.js',
-  'assets/js/index.js',
-  'assets/js/entry.js',
-  'assets/js/reports.js',
-  'assets/js/auth.js',
-  'assets/js/sidebar.js'
+  '/',
+  '/index.html',
+  '/entry.html',
+  '/reports.html',
+  '/login.html',
+  '/profile.html',
+  '/assets/css/style.css',
+  '/assets/css/entry.css',
+  '/assets/css/list.css',
+  '/assets/js/config.js',
+  '/assets/js/index.js',
+  '/assets/js/entry.js',
+  '/assets/js/reports.js',
+  '/assets/js/auth.js',
+  '/assets/js/sidebar.js'
 ];
 
-// ইনস্টল করার সময় ফাইলগুলো ক্যাশ করা
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS).catch(err => {
+        console.log('Cache addAll error:', err);
+      });
+    })
   );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+      );
+    })
+  );
+  return self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
-    // পিডিএফ বা ব্লব ইউআরএল গুলোকে ক্যাশ থেকে বাদ দেওয়া (যাতে ডাউনলোড এরর না হয়)
-    if (event.request.url.startsWith('blob:') || event.request.url.includes('supabase')) {
-        return; 
-    }
-    
-    event.respondWith(
-        caches.match(event.request).then((response) => {
-            return response || fetch(event.request);
-        })
-    );
+  if (event.request.url.startsWith('blob:') || 
+      event.request.url.includes('supabase') ||
+      event.request.url.includes('cdn.jsdelivr.net') ||
+      event.request.url.includes('cdnjs.cloudflare.com') ||
+      event.request.url.includes('fonts.googleapis.com')) {
+    return;
+  }
+  
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request).catch(() => {
+        if (event.request.destination === 'document') {
+          return caches.match('/index.html');
+        }
+      });
+    })
+  );
 });

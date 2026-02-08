@@ -35,7 +35,7 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-brand">
                 <i class="fa-solid fa-wallet"></i> <span>ExpensePro</span>
-                <button class="close-btn" id="closeSidebar"><i class="fa-solid fa-xmark"></i></button>
+                <button class="close-btn" id="closeSidebar" aria-label="Close sidebar"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <ul class="sidebar-menu">
                 <li><a href="index.html"><i class="fa-solid fa-house"></i> <span>Dashboard</span></a></li>
@@ -53,7 +53,7 @@
                 <div class="header-left"><h2 class="page-title">Transactions Report</h2></div>
                 <div class="header-right" style="display: flex; align-items: center; gap: 15px;">
                     <div class="top-profile"><img src="https://via.placeholder.com/40" id="headerAvatar" class="header-avatar" alt="User"></div>
-                    <button id="menuToggle" class="hamburger-btn"><i class="fa-solid fa-bars"></i></button>
+                    <button id="menuToggle" class="hamburger-btn" aria-label="Toggle menu"><i class="fa-solid fa-bars"></i></button>
                 </div>
             </header>
 
@@ -61,35 +61,35 @@
                 <div class="action-header" style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
                     <input type="file" id="excelInput" accept=".xlsx, .xls" style="display: none;" onchange="handleFileUpload(this)">
                     <button onclick="document.getElementById('excelInput').click()" 
-                            style="background: #10b981; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                       <i class="fa-solid fa-file-excel"></i> Upload Excel
+                            style="background: #10b981; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;" aria-label="Upload Excel file">
+                       <i class="fa-solid fa-file-excel" aria-hidden="true"></i> Upload Excel
                     </button>
                 </div>
 
                 <!-- ফিল্টার সেকশন -->
                 <div class="filter-box">
                     <div class="filter-group">
-                        <label>From Date</label>
+                        <label for="fromDate">From Date</label>
                         <input type="date" id="fromDate" class="filter-input">
                     </div>
                     <div class="filter-group">
-                        <label>To Date</label>
+                        <label for="toDate">To Date</label>
                         <input type="date" id="toDate" class="filter-input">
                     </div>
                     
                     <!-- Multiple Selection Filters -->
                     <div class="filter-group">
-                        <label>Source (Paid By)</label>
+                        <label for="sourceFilter">Source (Paid By)</label>
                         <select id="sourceFilter" multiple placeholder="All Sources"></select>
                     </div>
 
                     <div class="filter-group">
-                        <label>Category</label>
+                        <label for="catFilter">Category</label>
                         <select id="catFilter" multiple placeholder="All Categories"></select>
                     </div>
 
                     <div class="filter-group">
-                        <label>Status</label>
+                        <label for="statusFilter">Status</label>
                         <select id="statusFilter" multiple placeholder="All Status">
                             <option value="Paid">Paid</option>
                             <option value="Unpaid">Unpaid</option>
@@ -97,18 +97,18 @@
                     </div>
 
                     <div class="filter-group">
-                        <label>Search Purpose</label>
+                        <label for="purposeFilter">Search Purpose</label>
                         <input type="text" id="purposeFilter" class="filter-input" placeholder="Search purpose...">
                     </div>
 
                     <div class="filter-group">
-                        <label>Payee / Name</label>
+                        <label for="payeeFilter">Payee / Name</label>
                         <select id="payeeFilter" multiple placeholder="Search Payees..."></select>
                     </div>
 
                     <div class="btn-area">
-                        <button onclick="resetFilters()" class="btn-reset" title="Clear Filters"><i class="fa-solid fa-rotate-right"></i> Reset</button>
-                        <button onclick="downloadPDF()" class="btn-pdf" title="Download Report"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                        <button onclick="resetFilters()" class="btn-reset" title="Clear Filters" aria-label="Reset all filters"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Reset</button>
+                        <button onclick="downloadPDF()" class="btn-pdf" title="Download Report" aria-label="Download PDF report"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i> PDF</button>
                     </div>
                 </div>
 
@@ -145,22 +145,22 @@
         <div class="modal-box">
             <div class="modal-header">
                 <h3>Edit Expense</h3>
-                <button onclick="closeEditModal()" class="close-modal-btn"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="closeEditModal()" class="close-modal-btn" aria-label="Close edit modal"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editId">
                 
-                <div class="form-group"><label>Date</label><input type="date" id="editDate" class="modal-input"></div>
-                <div class="form-group"><label>Category</label><select id="editCategory" class="modal-input"></select></div>
+                <div class="form-group"><label for="editDate">Date</label><input type="date" id="editDate" class="modal-input"></div>
+                <div class="form-group"><label for="editCategory">Category</label><select id="editCategory" class="modal-input"></select></div>
                 
                 <div class="form-group">
-                    <label>Source (Paid By)</label>
+                    <label for="editPaidBy">Source (Paid By)</label>
                     <input type="text" id="editPaidBy" class="modal-input" placeholder="e.g. Malik A">
                 </div>
 
-                <div class="form-group"><label>Payee</label><input type="text" id="editPayee" class="modal-input"></div>
-                <div class="form-group"><label>Purpose</label><input type="text" id="editPurpose" class="modal-input"></div>
-                <div class="form-group"><label>Amount (₹)</label><input type="number" id="editAmount" class="modal-input"></div>
+                <div class="form-group"><label for="editPayee">Payee</label><input type="text" id="editPayee" class="modal-input"></div>
+                <div class="form-group"><label for="editPurpose">Purpose</label><input type="text" id="editPurpose" class="modal-input"></div>
+                <div class="form-group"><label for="editAmount">Amount (₹)</label><input type="number" id="editAmount" class="modal-input"></div>
 
                 <button onclick="saveUpdate()" class="save-btn">Update Change</button>
                 <button onclick="deleteExpense()" class="delete-btn" style="margin-top:10px; background:#ef4444; color:white; border:none; width:100%; padding:10px; border-radius:6px; cursor:pointer;">Delete Entry</button>
