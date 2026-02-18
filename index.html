@@ -165,10 +165,35 @@
         </div>
     </div>
 
+    <nav class="bottom-nav">
+        <a href="index.html" class="active">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="entry.html">
+            <i class="fa-solid fa-pen"></i>
+            <span>Entry</span>
+        </a>
+        <a href="reports.html">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>Reports</span>
+        </a>
+        <a href="summary.html">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>Summary</span>
+        </a>
+        <a href="profile.html">
+            <i class="fa-solid fa-user"></i>
+            <span>Profile</span>
+        </a>
+    </nav>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <script src="assets/js/config.js" defer></script>
     <script src="assets/js/auth.js" defer></script>
+    <script src="assets/js/notifications.js" defer></script>
+    <script src="assets/js/offline.js" defer></script>
     <script src="assets/js/index.js" defer></script>
     <script src="assets/js/sidebar.js" defer></script>
     <script src="assets/js/footer.js" defer></script>
@@ -177,7 +202,19 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('sw.js')
-            .then(reg => console.log('SW Registered'))
+            .then(reg => {
+                console.log('SW Registered');
+                // Show welcome notification
+                setTimeout(() => {
+                    if (window.notificationManager) {
+                        window.notificationManager.showBanner(
+                            'Welcome to ExpensePro! Track your expenses efficiently.',
+                            'info',
+                            4000
+                        );
+                    }
+                }, 1000);
+            })
             .catch(err => console.log('SW Failed', err));
         });
       }

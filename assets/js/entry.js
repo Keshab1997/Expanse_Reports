@@ -63,19 +63,19 @@ function addNewRow() {
     const today = new Date().toISOString().split('T')[0];
 
     row.innerHTML = `
-        <td><input type="date" class="excel-input row-date" value="${today}"></td>
-        <td><input type="text" class="excel-input row-category" list="catList" placeholder="Category..."></td>
-        <td><input type="text" class="excel-input row-source" list="sourceList" placeholder="Paid by..."></td>
-        <td><input type="text" class="excel-input row-payee" list="payeeList" placeholder="Payee..."></td>
-        <td><input type="text" class="excel-input row-purpose" list="purposeList" placeholder="Purpose..." oninput="handleAutoFill(this)"></td>
-        <td><input type="number" class="excel-input row-amount" placeholder="0.00"></td>
-        <td>
+        <td data-label="Date"><input type="date" class="excel-input row-date" value="${today}"></td>
+        <td data-label="Category"><input type="text" class="excel-input row-category" list="catList" placeholder="Category..."></td>
+        <td data-label="Paid By"><input type="text" class="excel-input row-source" list="sourceList" placeholder="Paid by..."></td>
+        <td data-label="Payee"><input type="text" class="excel-input row-payee" list="payeeList" placeholder="Payee..."></td>
+        <td data-label="Purpose"><input type="text" class="excel-input row-purpose" list="purposeList" placeholder="Purpose..." oninput="handleAutoFill(this)"></td>
+        <td data-label="Amount"><input type="number" class="excel-input row-amount" placeholder="0.00"></td>
+        <td data-label="Status">
             <select class="excel-input row-status">
                 <option value="Paid">Paid</option>
                 <option value="Unpaid">Unpaid</option>
             </select>
         </td>
-        <td style="text-align: center; vertical-align: middle;">
+        <td data-label="Action" style="text-align: center; vertical-align: middle;">
             <button onclick="this.closest('tr').remove()" class="btn-del-row" title="Remove Row">
                 <i class="fa-solid fa-trash-can"></i>
             </button>
@@ -108,12 +108,6 @@ async function saveAllEntries() {
     const rows = document.querySelectorAll('#excelTableBody tr');
     const dataToInsert = [];
 
-    // Offline check
-    if (!navigator.onLine) {
-        alert("You are offline! Please connect to the internet to save entries.");
-        return;
-    }
-
     try {
         const { data: { user } } = await window.db.auth.getUser();
         
@@ -122,7 +116,6 @@ async function saveAllEntries() {
             const category = row.querySelector('.row-category').value.trim();
             const payee = row.querySelector('.row-payee').value.trim();
 
-            // শুধু ভ্যালিড ডাটা নেওয়া হচ্ছে
             if (category && payee && !isNaN(amount)) {
                 dataToInsert.push({
                     date: row.querySelector('.row-date').value,
@@ -145,13 +138,23 @@ async function saveAllEntries() {
         btn.disabled = true;
         btn.innerText = "Saving All...";
 
+        // Check if online
+        if (!navigator.onLine) {
+            // Save to offline queue
+            dataToInsert.forEach(item => window.offlineManager.saveToOfflineQueue(item));
+            alert(`📴 Offline: ${dataToInsert.length} entries saved locally. Will sync when online.`);
+            document.getElementById('excelTableBody').innerHTML = '';
+            addNewRow();
+            return;
+        }
+
         const { error } = await window.db.from('expenses').insert(dataToInsert);
         if (error) throw error;
 
         alert(`✅ Successfully saved ${dataToInsert.length} entries!`);
         document.getElementById('excelTableBody').innerHTML = '';
-        addNewRow(); // ক্লিয়ার করে নতুন রো দেওয়া
-        loadAllSuggestions(); // সাজেশন আপডেট
+        addNewRow();
+        loadAllSuggestions();
 
     } catch (err) {
         alert("Error: " + err.message);

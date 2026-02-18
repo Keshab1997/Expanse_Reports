@@ -1,4 +1,4 @@
-const CACHE_NAME = 'expense-pro-v4';
+const CACHE_NAME = 'expense-pro-v5';
 const ASSETS = [
   '/',
   '/index.html',
@@ -17,7 +17,9 @@ const ASSETS = [
   '/assets/js/reports.js',
   '/assets/js/summary.js',
   '/assets/js/auth.js',
-  '/assets/js/sidebar.js'
+  '/assets/js/sidebar.js',
+  '/assets/js/offline.js',
+  '/assets/js/notifications.js'
 ];
 
 self.addEventListener('install', (e) => {

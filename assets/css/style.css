@@ -243,6 +243,18 @@ ul { list-style: none; }
     width: 100%;
 }
 
+@media (max-width: 768px) {
+    .charts-container {
+        grid-template-columns: 1fr;
+    }
+    .chart-box {
+        min-height: 300px;
+    }
+    .chart-wrapper {
+        height: 250px;
+    }
+}
+
 .recent-section {
     background: var(--white);
     padding: 25px;
@@ -267,6 +279,12 @@ ul { list-style: none; }
     font-weight: 600;
     color: var(--text-dark);
     background: #f9fafb;
+}
+.recent-table td {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .recent-table tr:last-child td { border-bottom: none; }
 .loading-text { text-align: center; color: var(--text-gray); padding: 20px; }
@@ -412,7 +430,59 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* =========================================
-   7. RESPONSIVE
+   7. BOTTOM NAVIGATION (MOBILE)
+   ========================================= */
+.bottom-nav {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .sidebar { display: none !important; }
+    .hamburger-btn { display: none !important; }
+    
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: white;
+        display: flex;
+        justify-content: space-around;
+        padding: 10px 0;
+        border-top: 1px solid #e5e7eb;
+        z-index: 1000;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .bottom-nav a {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        color: #6b7280;
+        font-size: 0.75rem;
+        padding: 8px 12px;
+        border-radius: 8px;
+        transition: all 0.2s;
+        min-width: 60px;
+    }
+    
+    .bottom-nav a i {
+        font-size: 1.3rem;
+    }
+    
+    .bottom-nav a.active {
+        color: var(--primary);
+        background: #eef2ff;
+    }
+    
+    .content-body {
+        padding-bottom: 80px;
+    }
+}
+
+/* =========================================
+   8. RESPONSIVE
    ========================================= */
 @media (max-width: 992px) {
     .charts-container { grid-template-columns: 1fr; }
@@ -424,4 +494,6 @@ input:focus, select:focus, textarea:focus {
     .dashboard-grid { grid-template-columns: 1fr; }
     .container { margin: 20px; padding: 25px; }
     .global-footer { padding: 20px 10px; text-align: center; }
+    .chart-box { padding: 15px; }
+    .chart-box h3 { font-size: 1rem; }
 }
