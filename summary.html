@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grouped Summary | ExpensePro</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/summary.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js" defer></script>
+</head>
+<body>
+
+    <div id="globalLoader">
+        <div class="spinner"></div>
+        <div class="loader-text">Generating Summary...</div>
+    </div>
+
+    <div class="dashboard-wrapper">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-wallet"></i> <span>ExpensePro</span>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="index.html"><i class="fa-solid fa-house"></i> <span>Dashboard</span></a></li>
+                <li><a href="entry.html"><i class="fa-solid fa-pen"></i> <span>Add Entry</span></a></li>
+                <li><a href="reports.html"><i class="fa-solid fa-chart-pie"></i> <span>Reports</span></a></li>
+                <li><a href="summary.html" class="active"><i class="fa-solid fa-layer-group"></i> <span>Grouped Summary</span></a></li>
+                <li><a href="profile.html"><i class="fa-solid fa-user"></i> <span>Profile</span></a></li>
+            </ul>
+        </aside>
+
+        <div class="main-content">
+            <header class="topbar">
+                <h2 class="page-title">Grouped Financial Summary</h2>
+                <button id="menuToggle" class="hamburger-btn"><i class="fa-solid fa-bars"></i></button>
+            </header>
+
+            <div class="content-body">
+                <div class="filter-card">
+                    <div class="filter-row">
+                        <div class="date-group">
+                            <label><i class="fa-solid fa-calendar-day"></i> From Date</label>
+                            <input type="date" id="sumFromDate">
+                        </div>
+                        <div class="date-group">
+                            <label><i class="fa-solid fa-calendar-check"></i> To Date</label>
+                            <input type="date" id="sumToDate">
+                        </div>
+                        <div class="action-buttons">
+                            <button onclick="fetchAndShowSummary()" class="btn-view">
+                                <i class="fa-solid fa-eye"></i> View Summary
+                            </button>
+                            <button onclick="generateGroupedPDF()" class="btn-summary-pdf">
+                                <i class="fa-solid fa-file-pdf"></i> Download PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="summaryDisplay" class="summary-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/config.js" defer></script>
+    <script src="assets/js/auth.js" defer></script>
+    <script src="assets/js/sidebar.js" defer></script>
+    <script src="assets/js/summary.js" defer></script>
+</body>
+</html>

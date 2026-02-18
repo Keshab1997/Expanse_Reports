@@ -1,18 +1,21 @@
-const CACHE_NAME = 'expense-pro-v3';
+const CACHE_NAME = 'expense-pro-v4';
 const ASSETS = [
   '/',
   '/index.html',
   '/entry.html',
   '/reports.html',
+  '/summary.html',
   '/login.html',
   '/profile.html',
   '/assets/css/style.css',
   '/assets/css/entry.css',
   '/assets/css/list.css',
+  '/assets/css/summary.css',
   '/assets/js/config.js',
   '/assets/js/index.js',
   '/assets/js/entry.js',
   '/assets/js/reports.js',
+  '/assets/js/summary.js',
   '/assets/js/auth.js',
   '/assets/js/sidebar.js'
 ];
