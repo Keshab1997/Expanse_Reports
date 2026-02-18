@@ -24,6 +24,8 @@
 body {
     background-color: var(--bg-light);
     color: var(--text-dark);
+    overscroll-behavior-y: contain;
+    overflow-x: hidden;
 }
 
 a { text-decoration: none; }
