@@ -19,19 +19,31 @@ async function getGroupedData() {
     const { data: { user } } = await window.db.auth.getUser();
     const { data: expenses, error } = await window.db
         .from('expenses')
-        .select('amount, category, paid_by, payee, purpose')
+        .select('date, amount, category, paid_by, payee, purpose')
         .eq('user_id', user.id)
         .gte('date', fromDate)
-        .lte('date', toDate);
+        .lte('date', toDate)
+        .order('date', { ascending: true });
 
     if (error) throw error;
 
     return expenses.reduce((acc, item) => {
         const amt = parseFloat(item.amount) || 0;
-        acc.Category[item.category] = (acc.Category[item.category] || 0) + amt;
-        acc.Source[item.paid_by || 'Unknown'] = (acc.Source[item.paid_by || 'Unknown'] || 0) + amt;
-        acc.Payee[item.payee] = (acc.Payee[item.payee] || 0) + amt;
-        acc.Purpose[item.purpose || 'General'] = (acc.Purpose[item.purpose || 'General'] || 0) + amt;
+
+        const addGroupData = (groupName, key) => {
+            const safeKey = key || 'Unknown';
+            if (!acc[groupName][safeKey]) {
+                acc[groupName][safeKey] = { total: 0, items: [] };
+            }
+            acc[groupName][safeKey].total += amt;
+            acc[groupName][safeKey].items.push(item);
+        };
+
+        addGroupData('Category', item.category);
+        addGroupData('Source', item.paid_by);
+        addGroupData('Payee', item.payee);
+        addGroupData('Purpose', item.purpose || 'General');
+
         acc.grandTotal += amt;
         return acc;
     }, { Category: {}, Source: {}, Payee: {}, Purpose: {}, grandTotal: 0 });
@@ -69,20 +81,20 @@ function renderSummaryUI() {
             <div class="summary-card" data-group="${group}">
                 <div class="card-header-flex">
                     <h3>Group by ${group}</h3>
-                    <button class="btn-print-small" onclick="printVisibleGroup('${group}')" title="Download this group PDF">
+                    <button class="btn-print-small" onclick="printVisibleGroup('${group}')" title="Download Detailed PDF">
                         <i class="fa-solid fa-file-pdf"></i>
                     </button>
                 </div>
                 <table class="summary-table">
-                    ${Object.entries(currentSummary[group]).map(([name, total]) => `
+                    ${Object.entries(currentSummary[group]).map(([name, data]) => `
                         <tr class="summary-row">
                             <td width="30">
                                 <input type="checkbox" checked class="row-checkbox" 
-                                    data-group="${group}" data-name="${name}" data-amount="${total}"
+                                    data-group="${group}" data-name="${name}" data-amount="${data.total}"
                                     onchange="updateLiveTotal()">
                             </td>
                             <td class="item-name">${name}</td>
-                            <td class="amount">₹${total.toLocaleString('en-IN')}</td>
+                            <td class="amount">₹${data.total.toLocaleString('en-IN')}</td>
                         </tr>
                     `).join('')}
                 </table>
@@ -122,34 +134,67 @@ function printVisibleGroup(groupName) {
         return;
     }
 
-    let tableData = [];
-    let groupTotal = 0;
-
-    checkedRows.forEach(cb => {
-        const name = cb.getAttribute('data-name');
-        const amt = parseFloat(cb.getAttribute('data-amount'));
-        tableData.push([name, `INR ${amt.toLocaleString('en-IN', {minimumFractionDigits: 2})}`]);
-        groupTotal += amt;
-    });
-
     doc.setFillColor(79, 70, 229);
     doc.rect(0, 0, 210, 20, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(14);
-    doc.text(`Filtered Summary: ${groupName}`, 14, 13);
+    doc.text(`Detailed Breakdown: Grouped by ${groupName}`, 14, 13);
 
-    doc.autoTable({
-        head: [[groupName, 'Amount']],
-        body: tableData,
-        startY: 30,
-        theme: 'grid',
-        headStyles: { fillColor: [79, 70, 229] }
+    let currentY = 30;
+    let selectedGrandTotal = 0;
+
+    checkedRows.forEach(cb => {
+        const name = cb.getAttribute('data-name');
+        const groupData = currentSummary[groupName][name];
+
+        if (!groupData || groupData.items.length === 0) return;
+
+        doc.setFontSize(11);
+        doc.setTextColor(79, 70, 229);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${groupName}: ${name}`, 14, currentY);
+        currentY += 5;
+
+        const tableData = groupData.items.map(item => [
+            new Date(item.date).toLocaleDateString('en-GB'),
+            item.payee || '-',
+            item.purpose || '-',
+            item.paid_by || '-',
+            `INR ${Number(item.amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}`
+        ]);
+
+        tableData.push([
+            { content: 'SUBTOTAL', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold', fillColor: [240, 240, 240] } },
+            { content: `INR ${groupData.total.toLocaleString('en-IN', {minimumFractionDigits: 2})}`, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }
+        ]);
+
+        doc.autoTable({
+            head: [['Date', 'Payee', 'Purpose', 'Paid By', 'Amount']],
+            body: tableData,
+            startY: currentY,
+            theme: 'grid',
+            headStyles: { fillColor: [100, 116, 139], fontSize: 9 },
+            styles: { fontSize: 8, cellPadding: 2 },
+            columnStyles: { 4: { halign: 'right', fontStyle: 'bold' } }
+        });
+
+        currentY = doc.lastAutoTable.finalY + 10;
+        selectedGrandTotal += groupData.total;
+
+        if (currentY > 260) {
+            doc.addPage();
+            currentY = 20;
+        }
     });
 
+    doc.setFillColor(248, 250, 252);
+    doc.rect(14, currentY, 182, 12, 'F');
     doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
-    doc.text(`Total: INR ${groupTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}`, 14, doc.lastAutoTable.finalY + 10);
-    doc.save(`Filtered_${groupName}.pdf`);
+    doc.text(`SELECTED GRAND TOTAL: INR ${selectedGrandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}`, 105, currentY + 8, { align: 'center' });
+
+    doc.save(`Detailed_${groupName}_Summary.pdf`);
 }
 
 async function generateGroupedPDF() {
@@ -189,7 +234,7 @@ async function generateGroupedPDF() {
             doc.text(title, 14, currentY);
             currentY += 5;
 
-            const tableRows = Object.entries(dataObj).map(([key, val]) => [key, val.toLocaleString('en-IN', { minimumFractionDigits: 2 })]);
+            const tableRows = Object.entries(dataObj).map(([key, valObj]) => [key, valObj.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })]);
             
             doc.autoTable({
                 head: [[headLabel, 'Total Amount (INR)']],
