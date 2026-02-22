@@ -195,44 +195,149 @@ function downloadTailorPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
         const today = new Date().toLocaleDateString('en-GB');
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        const groupedData = {};
+        let grandTotal = 0;
+
+        currentFilteredData.forEach(item => {
+            const celeb = item.celebrity_name || 'Unknown';
+            const amt = Number(item.amount) || 0;
+            
+            if (!groupedData[celeb]) {
+                groupedData[celeb] = { total: 0, items: [] };
+            }
+            groupedData[celeb].total += amt;
+            groupedData[celeb].items.push(item);
+            grandTotal += amt;
+        });
 
         doc.setFillColor(217, 119, 6);
-        doc.rect(0, 0, 210, 25, 'F'); 
+        doc.rect(0, 0, pageWidth, 28, 'F'); 
+        
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(16);
+        doc.setFontSize(18);
         doc.setFont("helvetica", "bold");
-        doc.text("TAILOR EXPENSE REPORT", 14, 16);
+        doc.text("TAILOR EXPENSE REPORT", 14, 18);
 
-        doc.setTextColor(80, 80, 80);
         doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
         const fromDate = document.getElementById('tFromDate').value || '-';
         const toDate = document.getElementById('tToDate').value || '-';
-        doc.text(`Period: ${fromDate} to ${toDate}`, 14, 33);
+        doc.text(`Statement Period: ${fromDate} to ${toDate}`, 14, 25);
+        doc.text(`Generated: ${today}`, pageWidth - 14, 25, { align: 'right' });
 
-        let grandTotal = currentFilteredData.reduce((sum, item) => sum + Number(item.amount), 0);
+        let currentY = 35;
 
-        const tableData = currentFilteredData.map(item => [
-            new Date(item.date).toLocaleDateString('en-GB'),
-            item.celebrity_name,
-            item.item_name || '-',
-            Number(item.amount).toFixed(2)
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("EXECUTIVE SUMMARY", 14, currentY);
+        currentY += 5;
+
+        const summaryRows = Object.keys(groupedData).map(celeb => [
+            celeb, 
+            `INR ${groupedData[celeb].total.toLocaleString('en-IN', {minimumFractionDigits: 2})}`
         ]);
 
         doc.autoTable({
-            head: [['Date', 'Celebrity Name', 'Item Name', 'Amount (INR)']],
-            body: tableData,
-            startY: 40,
+            head: [['Celebrity Name', 'Total Amount']],
+            body: summaryRows,
+            startY: currentY,
             theme: 'grid',
-            headStyles: { fillColor: [245, 158, 11], textColor: [255, 255, 255], fontSize: 10 },
-            columnStyles: { 3: { halign: 'right', fontStyle: 'bold' } },
-            styles: { fontSize: 9, cellPadding: 3 }
+            headStyles: { fillColor: [51, 65, 85], textColor: [255, 255, 255], fontSize: 10 },
+            styles: { fontSize: 9, cellPadding: 3 },
+            columnStyles: { 1: { halign: 'right', fontStyle: 'bold' } },
+            margin: { left: 14, right: 14 }
         });
 
-        const finalY = doc.lastAutoTable.finalY + 10;
+        currentY = doc.lastAutoTable.finalY + 15;
+
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(217, 119, 6);
+        doc.text("DETAILED BREAKDOWN", 14, currentY);
+        currentY += 8;
+
+        Object.keys(groupedData).forEach(celeb => {
+            if (currentY > pageHeight - 40) {
+                doc.addPage();
+                currentY = 20;
+            }
+
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(0, 0, 0);
+            doc.setFillColor(243, 244, 246);
+            doc.rect(14, currentY - 5, pageWidth - 28, 8, 'F');
+            doc.text(`Celebrity: ${celeb}`, 16, currentY);
+            currentY += 5;
+
+            const tableData = groupedData[celeb].items.map(item => [
+                new Date(item.date).toLocaleDateString('en-GB'),
+                item.item_name || '-',
+                Number(item.amount).toFixed(2)
+            ]);
+
+            tableData.push([
+                { content: 'SUBTOTAL', colSpan: 2, styles: { halign: 'right', fontStyle: 'bold', fillColor: [254, 243, 199] } },
+                { content: groupedData[celeb].total.toFixed(2), styles: { halign: 'right', fontStyle: 'bold', fillColor: [254, 243, 199] } }
+            ]);
+
+            doc.autoTable({
+                head: [['Date', 'Item Name', 'Amount (INR)']],
+                body: tableData,
+                startY: currentY,
+                theme: 'grid',
+                headStyles: { fillColor: [245, 158, 11], textColor: [255, 255, 255], fontSize: 9 },
+                styles: { fontSize: 9, cellPadding: 2 },
+                columnStyles: { 2: { halign: 'right' } },
+                margin: { left: 14, right: 14 }
+            });
+
+            currentY = doc.lastAutoTable.finalY + 10;
+        });
+
+        if (currentY > pageHeight - 50) {
+            doc.addPage();
+            currentY = 20;
+        }
+        
+        doc.setFillColor(217, 119, 6);
+        doc.rect(14, currentY, pageWidth - 28, 12, 'F');
+        doc.setTextColor(255, 255, 255);
         doc.setFontSize(12);
         doc.setFont("helvetica", "bold");
+        doc.text(`GRAND TOTAL: INR ${grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}`, pageWidth / 2, currentY + 8, { align: 'center' });
+
+        currentY += 35;
+
+        if (currentY > pageHeight - 30) {
+            doc.addPage();
+            currentY = 30;
+        }
+
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.5);
+        doc.line(pageWidth - 60, currentY, pageWidth - 14, currentY); 
+        
         doc.setTextColor(0, 0, 0);
-        doc.text(`GRAND TOTAL: INR ${grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}`, 14, finalY);
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "italic");
+        doc.text("Keshab Sarkar", pageWidth - 37, currentY - 2, { align: 'center' }); 
+        
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text("Authorized Signature", pageWidth - 37, currentY + 5, { align: 'center' });
+
+        const pageCount = doc.internal.getNumberOfPages();
+        for(let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(150);
+            doc.text(`Page ${i} of ${pageCount} | ExpensePro Manager`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        }
 
         doc.save(`Tailor_Report_${today}.pdf`);
         showToast("PDF downloaded!", "success");
