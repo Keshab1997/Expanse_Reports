@@ -57,12 +57,14 @@ function addNewTailorRow() {
 }
 
 async function saveAllTailorEntries() {
+    console.log('💾 Starting save process...');
     const btn = document.getElementById('saveAllBtn');
     const rows = document.querySelectorAll('#tailorExcelBody tr');
     const dataToInsert = [];
 
     try {
         const { data: { user } } = await window.db.auth.getUser();
+        console.log('👤 User ID:', user.id);
         
         rows.forEach(row => {
             const date = row.querySelector('.row-date').value;
@@ -70,7 +72,9 @@ async function saveAllTailorEntries() {
             const item = row.querySelector('.row-item').value.trim();
             const amount = parseFloat(row.querySelector('.row-amount').value);
 
-            if (celeb && item && !isNaN(amount) && amount > 0) {
+            console.log('📝 Row data:', { date, celeb, item, amount });
+
+            if (celeb && !isNaN(amount) && amount > 0) {
                 dataToInsert.push({
                     user_id: user.id,
                     date: date,
@@ -81,7 +85,10 @@ async function saveAllTailorEntries() {
             }
         });
 
+        console.log('📦 Data to insert:', dataToInsert);
+
         if (dataToInsert.length === 0) {
+            console.log('⚠️ No valid data to insert');
             showToast("Please fill at least one complete row!", "error");
             return;
         }
@@ -89,7 +96,10 @@ async function saveAllTailorEntries() {
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving All...';
 
-        const { error } = await window.db.from('tailor_expenses').insert(dataToInsert);
+        const { data, error } = await window.db.from('tailor_expenses').insert(dataToInsert);
+        console.log('✅ Insert response:', data);
+        console.log('❌ Insert error:', error);
+        
         if (error) throw error;
 
         showToast(`Successfully saved ${dataToInsert.length} entries!`, "success");
@@ -100,6 +110,7 @@ async function saveAllTailorEntries() {
         loadTailorSuggestions();
 
     } catch (err) {
+        console.error('❌ Save error:', err);
         showToast("Error: " + err.message, "error");
     } finally {
         btn.disabled = false;
