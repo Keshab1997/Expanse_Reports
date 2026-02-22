@@ -1,4 +1,4 @@
-const CACHE_NAME = 'expense-pro-v7';
+const CACHE_NAME = 'expense-pro-v10';
 const ASSETS = [
   '/',
   '/index.html',
@@ -7,6 +7,8 @@ const ASSETS = [
   '/summary.html',
   '/login.html',
   '/profile.html',
+  '/tailor_entry.html',
+  '/tailor_list.html',
   '/assets/css/style.css',
   '/assets/css/entry.css',
   '/assets/css/list.css',
@@ -19,7 +21,9 @@ const ASSETS = [
   '/assets/js/auth.js',
   '/assets/js/sidebar.js',
   '/assets/js/offline.js',
-  '/assets/js/notifications.js'
+  '/assets/js/notifications.js',
+  '/assets/js/tailor_entry.js',
+  '/assets/js/tailor_list.js'
 ];
 
 self.addEventListener('install', (e) => {

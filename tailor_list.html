@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Tailor List - Filter and export tailor expenses">
+    <title>Tailor List | ExpensePro</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
+    
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/list.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js" defer></script>
+</head>
+<body>
+    <div id="globalLoader" style="display:none">
+        <div class="spinner"></div>
+        <div class="loader-text">Loading Data...</div>
+    </div>
+
+    <div class="dashboard-wrapper">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-wallet"></i> 
+                <span>ExpensePro</span>
+                <button class="close-btn" id="closeSidebar" aria-label="Close sidebar"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <nav aria-label="Main navigation">
+                <ul class="sidebar-menu">
+                    <li><a href="index.html"><i class="fa-solid fa-house"></i> <span>Dashboard</span></a></li>
+                    <li><a href="entry.html"><i class="fa-solid fa-pen"></i> <span>Add Entry</span></a></li>
+                    <li><a href="reports.html"><i class="fa-solid fa-chart-pie"></i> <span>Reports</span></a></li>
+                    <li><a href="summary.html"><i class="fa-solid fa-layer-group"></i> <span>Grouped Summary</span></a></li>
+                    <li><a href="tailor_entry.html"><i class="fa-solid fa-scissors"></i> <span>Add Tailor Entry</span></a></li>
+                    <li><a href="tailor_list.html" class="active"><i class="fa-solid fa-list-check"></i> <span>Tailor List</span></a></li>
+                    <li><a href="profile.html"><i class="fa-solid fa-user"></i> <span>Profile</span></a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="#" onclick="logout()" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span></a>
+            </div>
+        </aside>
+
+        <div class="main-content">
+            <header class="topbar">
+                <div class="header-left">
+                    <h1 class="page-title">Tailor Expense List</h1>
+                </div>
+                <div class="header-right" style="display: flex; align-items: center; gap: 15px;">
+                    <button id="menuToggle" class="hamburger-btn" aria-label="Toggle menu">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                </div>
+            </header>
+
+            <main class="content-body" role="main">
+                <div class="filter-box" style="margin-bottom: 20px;">
+                    <div class="filter-group">
+                        <label for="tFromDate">From Date</label>
+                        <input type="date" id="tFromDate" class="filter-input">
+                    </div>
+                    <div class="filter-group">
+                        <label for="tToDate">To Date</label>
+                        <input type="date" id="tToDate" class="filter-input">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="celebFilter">Celebrity Name</label>
+                        <select id="celebFilter" multiple placeholder="All Celebrities..."></select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="itemFilter">Item Name</label>
+                        <select id="itemFilter" multiple placeholder="All Items..."></select>
+                    </div>
+
+                    <div class="btn-area">
+                        <button onclick="resetTailorFilters()" class="btn-reset" title="Clear Filters" aria-label="Reset filters">
+                            <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Reset
+                        </button>
+                        <button onclick="downloadTailorPDF()" class="btn-pdf" title="Download Report" aria-label="Download PDF report">
+                            <i class="fa-solid fa-file-pdf" aria-hidden="true"></i> PDF
+                        </button>
+                    </div>
+                </div>
+
+                <div class="summary-bar" style="background: linear-gradient(135deg, #f59e0b, #d97706); margin-bottom: 20px;">
+                    <span style="font-size: 1rem; font-weight: 600;">Filtered Total</span>
+                    <span style="font-size: 1.8rem; font-weight: 700;">₹<span id="tailorTotal">0</span></span>
+                </div>
+
+                <div class="table-responsive" style="background: white; border-radius: 12px; padding: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                    <table class="recent-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th scope="col">Date</th>
+                                <th scope="col">Celebrity Name</th>
+                                <th scope="col">Item Name</th>
+                                <th scope="col" style="text-align: right;">Amount (₹)</th>
+                                <th scope="col" style="text-align: center; width: 80px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tailorTableBody">
+                            <tr><td colspan="5" style="text-align:center; padding: 30px;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">
+        <i class="fa-solid fa-circle-check"></i> <span id="toastMessage">Success!</span>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="index.html"><i class="fa-solid fa-house"></i><span>Home</span></a>
+        <a href="entry.html"><i class="fa-solid fa-pen"></i><span>Entry</span></a>
+        <a href="tailor_entry.html"><i class="fa-solid fa-scissors"></i><span>Tailor</span></a>
+        <a href="tailor_list.html" class="active"><i class="fa-solid fa-list-check"></i><span>List</span></a>
+        <a href="profile.html"><i class="fa-solid fa-user"></i><span>Profile</span></a>
+    </nav>
+
+    <script src="assets/js/config.js" defer></script>
+    <script src="assets/js/auth.js" defer></script>
+    <script src="assets/js/sidebar.js" defer></script>
+    <script src="assets/js/tailor_list.js" defer></script>
+</body>
+</html>

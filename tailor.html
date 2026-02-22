@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Tailor Breakdown - Track tailor expenses separately">
+    <title>Tailor Breakdown | ExpensePro</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/entry.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+</head>
+<body>
+    <div id="globalLoader" style="display:none">
+        <div class="spinner"></div>
+        <div class="loader-text">Processing...</div>
+    </div>
+
+    <div class="dashboard-wrapper">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-wallet"></i> 
+                <span>ExpensePro</span>
+                <button class="close-btn" id="closeSidebar" aria-label="Close sidebar"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <nav aria-label="Main navigation">
+                <ul class="sidebar-menu">
+                    <li><a href="index.html"><i class="fa-solid fa-house"></i> <span>Dashboard</span></a></li>
+                    <li><a href="entry.html"><i class="fa-solid fa-pen"></i> <span>Add Entry</span></a></li>
+                    <li><a href="reports.html"><i class="fa-solid fa-chart-pie"></i> <span>Reports</span></a></li>
+                    <li><a href="summary.html"><i class="fa-solid fa-layer-group"></i> <span>Grouped Summary</span></a></li>
+                    <li><a href="tailor.html" class="active"><i class="fa-solid fa-scissors"></i> <span>Tailor Breakdown</span></a></li>
+                    <li><a href="profile.html"><i class="fa-solid fa-user"></i> <span>Profile</span></a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="#" onclick="logout()" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span></a>
+            </div>
+        </aside>
+
+        <div class="main-content">
+            <header class="topbar">
+                <div class="header-left">
+                    <h1 class="page-title">Tailor Breakdown</h1>
+                </div>
+                <div class="header-right" style="display: flex; align-items: center; gap: 15px;">
+                    <button id="menuToggle" class="hamburger-btn" aria-label="Toggle menu">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                </div>
+            </header>
+
+            <main class="content-body" role="main">
+                <div class="entry-card" style="margin-bottom: 30px;">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-plus"></i> Add New Entry</h2>
+                    </div>
+                    <form id="tailorForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label for="tDate">Date</label>
+                            <input type="date" id="tDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tCelebrity">Celebrity Name</label>
+                            <input type="text" id="tCelebrity" placeholder="e.g. Dev, Jeet..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tItem">Item Name</label>
+                            <input type="text" id="tItem" placeholder="e.g. Jacket, Pant..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tAmount">Amount (₹)</label>
+                            <input type="number" id="tAmount" placeholder="0.00" step="0.01" required>
+                        </div>
+                        <div class="form-actions" style="grid-column: span 2;">
+                            <button type="submit" class="btn-primary" id="saveTailorBtn">Save Entry</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="summary-bar" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; margin-bottom: 20px;">
+                    <span style="font-size: 1rem; font-weight: 600;">Total Tailor Expense</span>
+                    <span style="font-size: 1.5rem; font-weight: 700;">₹<span id="tailorTotal">0</span></span>
+                </div>
+
+                <div class="table-responsive" style="background: white; border-radius: 12px; padding: 10px;">
+                    <table class="recent-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th scope="col">Date</th>
+                                <th scope="col">Celebrity</th>
+                                <th scope="col">Item</th>
+                                <th scope="col" style="text-align: right;">Amount</th>
+                                <th scope="col" style="text-align: center;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tailorTableBody">
+                            <tr><td colspan="5" style="text-align:center;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="index.html"><i class="fa-solid fa-house"></i><span>Home</span></a>
+        <a href="entry.html"><i class="fa-solid fa-pen"></i><span>Entry</span></a>
+        <a href="reports.html"><i class="fa-solid fa-chart-pie"></i><span>Reports</span></a>
+        <a href="tailor.html" class="active"><i class="fa-solid fa-scissors"></i><span>Tailor</span></a>
+        <a href="profile.html"><i class="fa-solid fa-user"></i><span>Profile</span></a>
+    </nav>
+
+    <script src="assets/js/config.js" defer></script>
+    <script src="assets/js/auth.js" defer></script>
+    <script src="assets/js/sidebar.js" defer></script>
+    <script src="assets/js/tailor.js" defer></script>
+</body>
+</html>
