@@ -32,10 +32,15 @@ function hideLoader() {
 // =========================================
 async function loadInitialData() {
     const cacheKey = 'last_report_data';
+    const cacheTimeKey = 'last_report_time';
     
     // ক্যাশ ডাটা থাকলে সাথে সাথে টেবিল দেখানো
     const cached = localStorage.getItem(cacheKey);
-    if (cached) {
+    const cacheTime = localStorage.getItem(cacheTimeKey);
+    const now = Date.now();
+    
+    // ক্যাশ 5 মিনিটের চেয়ে পুরানো হলে নতুন ডাটা লোড করবে
+    if (cached && cacheTime && (now - parseInt(cacheTime)) < 300000) {
         currentFilteredData = JSON.parse(cached);
         renderTable(currentFilteredData);
         hideLoader();
@@ -167,10 +172,10 @@ async function applyFilters() {
         const statuses = statusTom ? statusTom.getValue() : [];
         const payees = payeeTom ? payeeTom.getValue() : [];
 
-        // Supabase Query
+        // Supabase Query - শুধু প্রয়োজনীয় columns select করা
         let query = window.db
             .from('expenses')
-            .select('*')
+            .select('id, date, category, paid_by, payee, purpose, amount, status')
             .eq('user_id', user.id)
             .order('date', { ascending: false });
 
@@ -194,6 +199,7 @@ async function applyFilters() {
         
         // লোকাল স্টোরেজে সেভ করা (পরের বার দ্রুত লোডের জন্য)
         localStorage.setItem('last_report_data', JSON.stringify(currentFilteredData));
+        localStorage.setItem('last_report_time', Date.now().toString());
         
         renderTable(currentFilteredData);
 
