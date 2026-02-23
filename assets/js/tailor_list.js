@@ -336,7 +336,10 @@ function downloadTailorPDF() {
                 theme: 'grid',
                 headStyles: { fillColor: [245, 158, 11], textColor: [255, 255, 255], fontSize: 9 },
                 styles: { fontSize: 9, cellPadding: 2 },
-                columnStyles: { 2: { halign: 'right' } },
+                columnStyles: { 
+                    0: { cellWidth: 25 },
+                    2: { halign: 'right' } 
+                },
                 margin: { left: 14, right: 14 }
             });
 
@@ -367,9 +370,9 @@ function downloadTailorPDF() {
         doc.line(pageWidth - 60, currentY, pageWidth - 14, currentY); 
         
         doc.setTextColor(0, 0, 0);
-        doc.setFontSize(14);
-        doc.setFont("helvetica", "italic");
-        doc.text("Keshab Sarkar", pageWidth - 37, currentY - 2, { align: 'center' }); 
+        doc.setFontSize(16);
+        doc.setFont("times", "italic");
+        doc.text("Keshab Sarkar", pageWidth - 37, currentY - 3, { align: 'center' }); 
         
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
@@ -567,9 +570,9 @@ function downloadDateWisePDF() {
         doc.line(pageWidth - 60, currentY, pageWidth - 14, currentY); 
         
         doc.setTextColor(0, 0, 0);
-        doc.setFontSize(14);
-        doc.setFont("helvetica", "italic");
-        doc.text("Keshab Sarkar", pageWidth - 37, currentY - 2, { align: 'center' }); 
+        doc.setFontSize(16);
+        doc.setFont("times", "italic");
+        doc.text("Keshab Sarkar", pageWidth - 37, currentY - 3, { align: 'center' }); 
         
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
