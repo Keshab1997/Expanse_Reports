@@ -448,6 +448,7 @@ function showToast(message, type = "success") {
 
 window.resetTailorFilters = resetTailorFilters;
 window.downloadTailorPDF = downloadTailorPDF;
+window.downloadDateWisePDF = downloadDateWisePDF;
 window.deleteTailorEntry = deleteTailorEntry;
 window.makeEditable = makeEditable;
 window.makeEditableDate = makeEditableDate;
@@ -456,6 +457,143 @@ window.fixAllUserIds = fixAllUserIds;
 window.toggleSelectAll = toggleSelectAll;
 window.updateDeleteButton = updateDeleteButton;
 window.deleteSelectedEntries = deleteSelectedEntries;
+
+function downloadDateWisePDF() {
+    if (currentFilteredData.length === 0) {
+        showToast("No data to download!", "error");
+        return;
+    }
+
+    const pdfBtn = event.target;
+    const originalHTML = pdfBtn.innerHTML;
+    
+    try {
+        pdfBtn.disabled = true;
+        pdfBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const today = new Date().toLocaleDateString('en-GB');
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        const groupedByDate = {};
+        let grandTotal = 0;
+
+        currentFilteredData.forEach(item => {
+            if (!groupedByDate[item.date]) {
+                groupedByDate[item.date] = { total: 0, items: [] };
+            }
+            groupedByDate[item.date].total += Number(item.amount);
+            groupedByDate[item.date].items.push(item);
+            grandTotal += Number(item.amount);
+        });
+
+        const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
+
+        doc.setFillColor(79, 70, 229);
+        doc.rect(0, 0, pageWidth, 28, 'F'); 
+        
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(18);
+        doc.setFont("helvetica", "bold");
+        doc.text("TAILOR EXPENSE REPORT (DATE-WISE)", 14, 18);
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        const fromDate = document.getElementById('tFromDate').value || '-';
+        const toDate = document.getElementById('tToDate').value || '-';
+        doc.text(`Statement Period: ${fromDate} to ${toDate}`, 14, 25);
+        doc.text(`Generated: ${today}`, pageWidth - 14, 25, { align: 'right' });
+
+        let currentY = 35;
+
+        const tableBody = [];
+
+        sortedDates.forEach(date => {
+            const dateStr = new Date(date).toLocaleDateString('en-GB');
+            const group = groupedByDate[date];
+
+            tableBody.push([
+                { content: `Date: ${dateStr}`, colSpan: 2, styles: { fillColor: [238, 242, 255], textColor: [79, 70, 229], fontStyle: 'bold' } },
+                { content: `INR ${group.total.toLocaleString('en-IN', {minimumFractionDigits: 2})}`, styles: { fillColor: [238, 242, 255], textColor: [79, 70, 229], fontStyle: 'bold', halign: 'right' } }
+            ]);
+
+            group.items.forEach(item => {
+                tableBody.push([
+                    item.celebrity_name,
+                    item.item_name || '-',
+                    Number(item.amount).toFixed(2)
+                ]);
+            });
+        });
+
+        doc.autoTable({
+            head: [['Celebrity Name', 'Item Name', 'Amount (INR)']],
+            body: tableBody,
+            startY: currentY,
+            theme: 'grid',
+            headStyles: { fillColor: [51, 65, 85], textColor: [255, 255, 255], fontSize: 10 },
+            styles: { fontSize: 9, cellPadding: 3 },
+            columnStyles: { 
+                0: { fontStyle: 'bold', textColor: [51, 65, 85] },
+                2: { halign: 'right', fontStyle: 'bold' } 
+            },
+            margin: { left: 14, right: 14 }
+        });
+
+        currentY = doc.lastAutoTable.finalY + 10;
+
+        if (currentY > pageHeight - 50) {
+            doc.addPage();
+            currentY = 20;
+        }
+        
+        doc.setFillColor(79, 70, 229);
+        doc.rect(14, currentY, pageWidth - 28, 12, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text(`GRAND TOTAL: INR ${grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}`, pageWidth / 2, currentY + 8, { align: 'center' });
+
+        currentY += 35;
+
+        if (currentY > pageHeight - 30) {
+            doc.addPage();
+            currentY = 30;
+        }
+
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.5);
+        doc.line(pageWidth - 60, currentY, pageWidth - 14, currentY); 
+        
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "italic");
+        doc.text("Keshab Sarkar", pageWidth - 37, currentY - 2, { align: 'center' }); 
+        
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text("Authorized Signature", pageWidth - 37, currentY + 5, { align: 'center' });
+
+        const pageCount = doc.internal.getNumberOfPages();
+        for(let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(150);
+            doc.text(`Page ${i} of ${pageCount} | ExpensePro Manager`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        }
+
+        doc.save(`Tailor_Report_DateWise_${today}.pdf`);
+        showToast("PDF downloaded!", "success");
+
+    } catch (error) {
+        showToast("PDF generation failed", "error");
+    } finally {
+        pdfBtn.disabled = false;
+        pdfBtn.innerHTML = originalHTML;
+    }
+}
 
 function toggleSelectAll() {
     const selectAll = document.getElementById('selectAll');
