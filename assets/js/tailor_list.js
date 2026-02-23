@@ -21,7 +21,7 @@ async function loadTailorData() {
             .select('*')
             .eq('user_id', user.id)
             .order('date', { ascending: false })
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: true });
 
         console.log('📊 Raw data from DB:', data);
         console.log('❌ Error:', error);

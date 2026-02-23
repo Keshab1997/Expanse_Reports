@@ -166,6 +166,9 @@ async function saveAllTailorEntries() {
     try {
         const { data: { user } } = await window.db.auth.getUser();
         
+        const currentTime = new Date().getTime();
+        let index = 0;
+
         rows.forEach(row => {
             const date = row.querySelector('.row-date').value;
             const celeb = row.querySelector('.row-celeb').value.trim();
@@ -173,13 +176,17 @@ async function saveAllTailorEntries() {
             const amount = parseFloat(row.querySelector('.row-amount').value);
 
             if (celeb && !isNaN(amount) && amount > 0) {
+                const exactTime = new Date(currentTime + index).toISOString();
+
                 dataToInsert.push({
                     user_id: user.id,
                     date: date,
                     celebrity_name: celeb,
                     item_name: item,
-                    amount: amount
+                    amount: amount,
+                    created_at: exactTime
                 });
+                index++;
             }
         });
 
