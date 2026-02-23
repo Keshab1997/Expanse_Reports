@@ -127,12 +127,17 @@ label {
 /* --- বাটন এরিয়া (Reset & PDF) --- */
 .btn-area {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
-    height: 42px;
+    height: auto;
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+    padding-top: 10px;
 }
 
 .btn-reset, .btn-pdf {
-    flex: 1; /* বাটনগুলো সমান জায়গা নেবে */
+    flex: 0 1 auto;
+    padding: 0 20px; /* বাটনগুলো সমান জায়গা নেবে */
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -160,7 +165,7 @@ label {
 }
 
 .btn-reset:hover { background: #e2e8f0; color: #1e293b; }
-.btn-pdf:hover { background: #dc2626; transform: translateY(-1px); }
+.btn-pdf:hover { transform: translateY(-1px); filter: brightness(0.9); }
 
 /* --- টোটাল সামারি বার --- */
 .summary-bar {
