@@ -1,3 +1,5 @@
+let isSaving = false;
+
 document.addEventListener('DOMContentLoaded', async () => {
     await loadTailorSuggestions();
     const hasDraft = loadDraft();
@@ -120,6 +122,11 @@ function loadDraft() {
 
 function setupKeyboardNavigation() {
     document.getElementById('tailorExcelBody').addEventListener('keydown', (e) => {
+        if (isSaving) {
+            e.preventDefault();
+            return;
+        }
+
         if (e.key === 'Enter') {
             e.preventDefault();
             
@@ -150,6 +157,8 @@ function resetTailorEntry() {
 }
 
 async function saveAllTailorEntries() {
+    if (isSaving) return;
+
     const btn = document.getElementById('saveAllBtn');
     const rows = document.querySelectorAll('#tailorExcelBody tr');
     const dataToInsert = [];
@@ -179,6 +188,7 @@ async function saveAllTailorEntries() {
             return;
         }
 
+        isSaving = true;
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving All...';
 
@@ -196,6 +206,7 @@ async function saveAllTailorEntries() {
     } catch (err) {
         showToast("Error: " + err.message, "error");
     } finally {
+        isSaving = false;
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Save All Entries';
     }
