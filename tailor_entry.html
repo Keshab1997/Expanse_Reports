@@ -85,11 +85,16 @@
                         </table>
                     </div>
 
-                    <div class="excel-actions" style="margin-top: 20px; display: flex; gap: 15px;">
-                        <button onclick="addNewTailorRow()" class="btn-secondary" style="background: #f3f4f6; border: 1px solid #d1d5db; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;" aria-label="Add new row">
-                            <i class="fa-solid fa-plus"></i> Add New Row
+                    <div class="excel-actions" style="margin-top: 20px; display: flex; gap: 15px; flex-wrap: wrap;">
+                        <button onclick="addNewTailorRow(true)" class="btn-secondary" style="background: #f3f4f6; border: 1px solid #d1d5db; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;" aria-label="Add new row">
+                            <i class="fa-solid fa-plus"></i> Add Row
                         </button>
-                        <button onclick="saveAllTailorEntries()" id="saveAllBtn" class="btn-primary" style="flex: 1; background: #4f46e5; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem;" aria-label="Save all entries">
+                        
+                        <button onclick="resetTailorEntry()" class="btn-secondary" style="background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;" aria-label="Reset all entries">
+                            <i class="fa-solid fa-rotate-right"></i> Reset
+                        </button>
+
+                        <button onclick="saveAllTailorEntries()" id="saveAllBtn" class="btn-primary" style="flex: 1; background: #4f46e5; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem; min-width: 200px;" aria-label="Save all entries">
                             <i class="fa-solid fa-cloud-arrow-up"></i> Save All Entries
                         </button>
                     </div>
