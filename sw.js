@@ -1,4 +1,4 @@
-const CACHE_NAME = 'expense-pro-v19';
+const CACHE_NAME = 'expense-pro-v20';
 const ASSETS = [
   '/',
   '/index.html',

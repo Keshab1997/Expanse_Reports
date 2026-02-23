@@ -158,16 +158,31 @@ function resetTailorEntry() {
 
 async function saveAllTailorEntries() {
     if (isSaving) return;
+    isSaving = true;
 
     const btn = document.getElementById('saveAllBtn');
     const rows = document.querySelectorAll('#tailorExcelBody tr');
     const dataToInsert = [];
 
     try {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking & Saving...';
+
         const { data: { user } } = await window.db.auth.getUser();
         
+        const { data: existingData } = await window.db
+            .from('tailor_expenses')
+            .select('date, celebrity_name, item_name, amount')
+            .eq('user_id', user.id);
+
+        const existingSignatures = new Set(
+            (existingData || []).map(d => `${d.date}_${d.celebrity_name.toLowerCase()}_${(d.item_name || '').toLowerCase()}_${d.amount}`)
+        );
+
+        const currentBatchSignatures = new Set();
         const currentTime = new Date().getTime();
         let index = 0;
+        let duplicateCount = 0;
 
         rows.forEach(row => {
             const date = row.querySelector('.row-date').value;
@@ -176,33 +191,52 @@ async function saveAllTailorEntries() {
             const amount = parseFloat(row.querySelector('.row-amount').value);
 
             if (celeb && !isNaN(amount) && amount > 0) {
-                const exactTime = new Date(currentTime + index).toISOString();
+                const signature = `${date}_${celeb.toLowerCase()}_${item.toLowerCase()}_${amount}`;
 
-                dataToInsert.push({
-                    user_id: user.id,
-                    date: date,
-                    celebrity_name: celeb,
-                    item_name: item,
-                    amount: amount,
-                    created_at: exactTime
-                });
-                index++;
+                if (existingSignatures.has(signature) || currentBatchSignatures.has(signature)) {
+                    duplicateCount++;
+                    console.log("Duplicate skipped:", signature);
+                } else {
+                    currentBatchSignatures.add(signature);
+                    
+                    const exactTime = new Date(currentTime + index).toISOString();
+                    dataToInsert.push({
+                        user_id: user.id,
+                        date: date,
+                        celebrity_name: celeb,
+                        item_name: item,
+                        amount: amount,
+                        created_at: exactTime
+                    });
+                    index++;
+                }
             }
         });
 
         if (dataToInsert.length === 0) {
-            showToast("Please fill at least one complete row!", "error");
+            if (duplicateCount > 0) {
+                showToast(`${duplicateCount} Duplicate entries skipped!`, "error");
+                localStorage.removeItem('tailor_entry_draft');
+                document.getElementById('tailorExcelBody').innerHTML = '';
+                addNewTailorRow();
+                calculateLiveTotal();
+            } else {
+                showToast("Please fill at least one complete row!", "error");
+            }
+            isSaving = false;
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Save All Entries';
             return;
         }
-
-        isSaving = true;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving All...';
 
         const { error } = await window.db.from('tailor_expenses').insert(dataToInsert);
         if (error) throw error;
 
-        showToast(`Successfully saved ${dataToInsert.length} entries!`, "success");
+        let msg = `Successfully saved ${dataToInsert.length} entries!`;
+        if (duplicateCount > 0) {
+            msg += ` (${duplicateCount} duplicates skipped)`;
+        }
+        showToast(msg, "success");
         
         localStorage.removeItem('tailor_entry_draft');
         document.getElementById('tailorExcelBody').innerHTML = '';
