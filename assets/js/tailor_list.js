@@ -118,7 +118,7 @@ function renderTailorTable(data) {
         tbody.innerHTML += `
             <tr>
                 <td><input type="checkbox" class="row-checkbox" data-id="${item.id}" onchange="updateDeleteButton()"></td>
-                <td>${dateStr}</td>
+                <td class="editable-cell" ondblclick="makeEditableDate(this)" onblur="saveTailorInline(this, '${item.id}', 'date')">${dateStr}</td>
                 <td class="editable-cell" ondblclick="makeEditable(this)" onblur="saveTailorInline(this, '${item.id}', 'celebrity_name')" style="font-weight: 600; color: #4f46e5;">${item.celebrity_name}</td>
                 <td class="editable-cell" ondblclick="makeEditable(this)" onblur="saveTailorInline(this, '${item.id}', 'item_name')">${displayItem}</td>
                 <td class="editable-cell" ondblclick="makeEditable(this)" onblur="saveTailorInline(this, '${item.id}', 'amount')" style="text-align: right; font-weight: bold;">₹${Number(item.amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
@@ -145,9 +145,22 @@ function makeEditable(el) {
     selection.addRange(range);
 }
 
+function makeEditableDate(el) {
+    const currentDate = el.innerText.split('/').reverse().join('-');
+    el.innerHTML = `<input type="date" value="${currentDate}" style="border: 2px solid #4f46e5; padding: 4px; border-radius: 4px;" onblur="this.parentElement.innerText = new Date(this.value).toLocaleDateString('en-GB'); this.parentElement.blur();">`;
+    el.querySelector('input').focus();
+}
+
 async function saveTailorInline(el, id, field) {
     el.contentEditable = "false";
     let newValue = el.innerText.trim();
+    
+    if (field === 'date') {
+        const dateParts = newValue.split('/');
+        if (dateParts.length === 3) {
+            newValue = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+        }
+    }
     
     if (field === 'amount') {
         newValue = parseFloat(newValue.replace(/[^\d.-]/g, ''));
@@ -401,6 +414,7 @@ window.resetTailorFilters = resetTailorFilters;
 window.downloadTailorPDF = downloadTailorPDF;
 window.deleteTailorEntry = deleteTailorEntry;
 window.makeEditable = makeEditable;
+window.makeEditableDate = makeEditableDate;
 window.saveTailorInline = saveTailorInline;
 window.fixAllUserIds = fixAllUserIds;
 window.toggleSelectAll = toggleSelectAll;
