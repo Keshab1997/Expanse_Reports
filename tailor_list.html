@@ -84,6 +84,9 @@
                     </div>
 
                     <div class="btn-area">
+                        <button onclick="deleteSelectedEntries()" id="deleteSelectedBtn" class="btn-reset" style="background: #fee2e2; color: #dc2626; display: none;" title="Delete Selected" aria-label="Delete selected entries">
+                            <i class="fa-solid fa-trash" aria-hidden="true"></i> Delete (<span id="selectedCount">0</span>)
+                        </button>
                         <button onclick="resetTailorFilters()" class="btn-reset" title="Clear Filters" aria-label="Reset filters">
                             <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Reset
                         </button>
@@ -109,6 +112,7 @@
                     <table class="recent-table" style="width: 100%;">
                         <thead>
                             <tr>
+                                <th scope="col" style="width: 40px;"><input type="checkbox" id="selectAll" onchange="toggleSelectAll()" aria-label="Select all"></th>
                                 <th scope="col">Date</th>
                                 <th scope="col">Celebrity Name</th>
                                 <th scope="col">Item Name</th>
@@ -117,7 +121,7 @@
                             </tr>
                         </thead>
                         <tbody id="tailorTableBody">
-                            <tr><td colspan="5" style="text-align:center; padding: 30px;">Loading...</td></tr>
+                            <tr><td colspan="6" style="text-align:center; padding: 30px;">Loading...</td></tr>
                         </tbody>
                     </table>
                 </div>

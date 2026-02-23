@@ -105,7 +105,7 @@ function renderTailorTable(data) {
 
     if (data.length === 0) {
         console.log('⚠️ No records to display');
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 30px; color: #64748b;">No records found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 30px; color: #64748b;">No records found</td></tr>';
         totalEl.innerText = '0';
         return;
     }
@@ -117,6 +117,7 @@ function renderTailorTable(data) {
         
         tbody.innerHTML += `
             <tr>
+                <td><input type="checkbox" class="row-checkbox" data-id="${item.id}" onchange="updateDeleteButton()"></td>
                 <td>${dateStr}</td>
                 <td class="editable-cell" ondblclick="makeEditable(this)" onblur="saveTailorInline(this, '${item.id}', 'celebrity_name')" style="font-weight: 600; color: #4f46e5;">${item.celebrity_name}</td>
                 <td class="editable-cell" ondblclick="makeEditable(this)" onblur="saveTailorInline(this, '${item.id}', 'item_name')">${displayItem}</td>
@@ -402,6 +403,53 @@ window.deleteTailorEntry = deleteTailorEntry;
 window.makeEditable = makeEditable;
 window.saveTailorInline = saveTailorInline;
 window.fixAllUserIds = fixAllUserIds;
+window.toggleSelectAll = toggleSelectAll;
+window.updateDeleteButton = updateDeleteButton;
+window.deleteSelectedEntries = deleteSelectedEntries;
+
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.row-checkbox');
+    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+    updateDeleteButton();
+}
+
+function updateDeleteButton() {
+    const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    const countSpan = document.getElementById('selectedCount');
+    
+    if (checkboxes.length > 0) {
+        deleteBtn.style.display = 'block';
+        countSpan.textContent = checkboxes.length;
+    } else {
+        deleteBtn.style.display = 'none';
+        document.getElementById('selectAll').checked = false;
+    }
+}
+
+async function deleteSelectedEntries() {
+    const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+    const ids = Array.from(checkboxes).map(cb => cb.dataset.id);
+    
+    if (ids.length === 0) return;
+    
+    if (!confirm(`Delete ${ids.length} selected entries?`)) return;
+    
+    const loader = document.getElementById('globalLoader');
+    if (loader) loader.style.display = 'flex';
+
+    try {
+        const { error } = await window.db.from('tailor_expenses').delete().in('id', ids);
+        if (error) throw error;
+        showToast(`${ids.length} entries deleted!`, "success");
+        await loadTailorData();
+    } catch (err) {
+        showToast("Delete failed", "error");
+    } finally {
+        if (loader) loader.style.display = 'none';
+    }
+}
 
 async function fixAllUserIds() {
     const loader = document.getElementById('globalLoader');
