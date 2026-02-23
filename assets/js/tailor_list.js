@@ -100,7 +100,7 @@ function renderTailorTable(data) {
     const tbody = document.getElementById('tailorTableBody');
     const totalEl = document.getElementById('tailorTotal');
     
-    let total = 0;
+    let grandTotal = 0;
     tbody.innerHTML = '';
 
     if (data.length === 0) {
@@ -110,28 +110,64 @@ function renderTailorTable(data) {
         return;
     }
 
+    const groupedData = {};
     data.forEach(item => {
-        total += Number(item.amount);
-        const dateStr = new Date(item.date).toLocaleDateString('en-GB');
-        const displayItem = item.item_name ? item.item_name : '<span style="color:#94a3b8; font-style:italic;">Double click to add</span>';
-        
-        tbody.innerHTML += `
-            <tr>
-                <td><input type="checkbox" class="row-checkbox" data-id="${item.id}" onchange="updateDeleteButton()"></td>
-                <td class="editable-cell" ondblclick="makeEditableDate(this)" onblur="saveTailorInline(this, '${item.id}', 'date')">${dateStr}</td>
-                <td class="editable-cell" ondblclick="makeEditable(this)" onblur="saveTailorInline(this, '${item.id}', 'celebrity_name')" style="font-weight: 600; color: #4f46e5;">${item.celebrity_name}</td>
-                <td class="editable-cell" ondblclick="makeEditable(this)" onblur="saveTailorInline(this, '${item.id}', 'item_name')">${displayItem}</td>
-                <td class="editable-cell" ondblclick="makeEditable(this)" onblur="saveTailorInline(this, '${item.id}', 'amount')" style="text-align: right; font-weight: bold;">₹${Number(item.amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                <td style="text-align: center;">
-                    <button onclick="deleteTailorEntry('${item.id}')" style="background: #fee2e2; color: #ef4444; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;" title="Delete Entry">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
+        if (!groupedData[item.date]) {
+            groupedData[item.date] = { items: [], subtotal: 0 };
+        }
+        groupedData[item.date].items.push(item);
+        groupedData[item.date].subtotal += Number(item.amount);
+        grandTotal += Number(item.amount);
     });
 
-    totalEl.innerText = total.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    const sortedDates = Object.keys(groupedData).sort((a, b) => new Date(b) - new Date(a));
+
+    sortedDates.forEach(date => {
+        const dateStr = new Date(date).toLocaleDateString('en-GB');
+        const group = groupedData[date];
+
+        tbody.innerHTML += `
+            <tr style="background: #eef2ff; border-top: 2px solid #c7d2fe; border-bottom: 1px solid #c7d2fe;">
+                <td style="text-align: center;"><input type="checkbox" disabled style="opacity: 0.3;"></td>
+                <td colspan="3" style="font-weight: 700; color: #4f46e5; font-size: 1rem; padding: 12px 15px;">
+                    <i class="fa-regular fa-calendar-days"></i> ${dateStr}
+                </td>
+                <td style="text-align: right; font-weight: 700; color: #4f46e5; padding: 12px 15px;">
+                    ₹${group.subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                </td>
+                <td></td>
+            </tr>
+        `;
+
+        group.items.forEach(item => {
+            const displayItem = item.item_name ? item.item_name : '<span style="color:#94a3b8; font-style:italic; font-size:0.85rem;">Double click to add</span>';
+            
+            tbody.innerHTML += `
+                <tr style="background: #ffffff; transition: all 0.2s;">
+                    <td style="text-align: center;"><input type="checkbox" class="row-checkbox" data-id="${item.id}" onchange="updateDeleteButton()"></td>
+                    <td style="color: #cbd5e1; text-align: center; font-size: 1.2rem;">
+                        <i class="fa-solid fa-turn-up fa-rotate-90"></i>
+                    </td>
+                    <td class="editable-cell" ondblclick="makeEditable(this)" onblur="saveTailorInline(this, '${item.id}', 'celebrity_name')" style="font-weight: 600; color: #334155;">
+                        ${item.celebrity_name}
+                    </td>
+                    <td class="editable-cell" ondblclick="makeEditable(this)" onblur="saveTailorInline(this, '${item.id}', 'item_name')">
+                        ${displayItem}
+                    </td>
+                    <td class="editable-cell" ondblclick="makeEditable(this)" onblur="saveTailorInline(this, '${item.id}', 'amount')" style="text-align: right; font-weight: 600; color: #1e293b;">
+                        ₹${Number(item.amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                    </td>
+                    <td style="text-align: center;">
+                        <button onclick="deleteTailorEntry('${item.id}')" style="background: #fee2e2; color: #ef4444; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;" title="Delete Entry">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    });
+
+    totalEl.innerText = grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2});
 }
 
 function makeEditable(el) {
