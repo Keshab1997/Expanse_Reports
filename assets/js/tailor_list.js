@@ -20,7 +20,8 @@ async function loadTailorData() {
             .from('tailor_expenses')
             .select('*')
             .eq('user_id', user.id)
-            .order('date', { ascending: false });
+            .order('date', { ascending: false })
+            .order('created_at', { ascending: false });
 
         console.log('📊 Raw data from DB:', data);
         console.log('❌ Error:', error);
@@ -29,13 +30,6 @@ async function loadTailorData() {
 
         allTailorData = data || [];
         console.log('✅ Total records loaded:', allTailorData.length);
-        
-        if (allTailorData.length === 0) {
-            const { data: allData } = await window.db.from('tailor_expenses').select('*').limit(1);
-            if (allData && allData.length > 0) {
-                document.getElementById('fixUserIdBtn').style.display = 'block';
-            }
-        }
         
         if (allTailorData.length > 0) {
             const oldestDate = allTailorData[allTailorData.length - 1].date;

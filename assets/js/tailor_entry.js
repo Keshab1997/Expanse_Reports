@@ -45,10 +45,10 @@ function addNewTailorRow() {
             <input type="text" class="excel-input row-item" list="itemList" placeholder="Type to search...">
         </td>
         <td data-label="Amount">
-            <input type="number" class="excel-input row-amount" placeholder="0.00" step="0.01">
+            <input type="number" class="excel-input row-amount" placeholder="0.00" step="0.01" oninput="calculateLiveTotal()">
         </td>
         <td data-label="Action" style="text-align: center; vertical-align: middle;">
-            <button onclick="this.closest('tr').remove()" class="btn-del-row" title="Remove Row" aria-label="Remove row">
+            <button onclick="this.closest('tr').remove(); calculateLiveTotal();" class="btn-del-row" title="Remove Row" aria-label="Remove row">
                 <i class="fa-solid fa-trash-can"></i>
             </button>
         </td>
@@ -106,6 +106,7 @@ async function saveAllTailorEntries() {
         
         document.getElementById('tailorExcelBody').innerHTML = '';
         addNewTailorRow();
+        calculateLiveTotal();
         
         loadTailorSuggestions();
 
@@ -139,5 +140,20 @@ function showToast(message, type = "success") {
     }, 3000);
 }
 
+function calculateLiveTotal() {
+    const amountInputs = document.querySelectorAll('.row-amount');
+    let total = 0;
+    
+    amountInputs.forEach(input => {
+        const val = parseFloat(input.value);
+        if (!isNaN(val) && val > 0) {
+            total += val;
+        }
+    });
+    
+    document.getElementById('liveEntryTotal').innerText = total.toLocaleString('en-IN', {minimumFractionDigits: 2});
+}
+
 window.addNewTailorRow = addNewTailorRow;
 window.saveAllTailorEntries = saveAllTailorEntries;
+window.calculateLiveTotal = calculateLiveTotal;
