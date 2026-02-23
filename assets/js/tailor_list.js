@@ -101,7 +101,7 @@ function renderTailorTable(data) {
     const totalEl = document.getElementById('tailorTotal');
     
     let grandTotal = 0;
-    tbody.innerHTML = '';
+    let htmlContent = '';
 
     if (data.length === 0) {
         console.log('⚠️ No records to display');
@@ -126,7 +126,7 @@ function renderTailorTable(data) {
         const dateStr = new Date(date).toLocaleDateString('en-GB');
         const group = groupedData[date];
 
-        tbody.innerHTML += `
+        htmlContent += `
             <tr style="background: #eef2ff; border-top: 2px solid #c7d2fe; border-bottom: 1px solid #c7d2fe;">
                 <td style="text-align: center;"><input type="checkbox" disabled style="opacity: 0.3;"></td>
                 <td colspan="3" style="font-weight: 700; color: #4f46e5; font-size: 1rem; padding: 12px 15px;">
@@ -142,7 +142,7 @@ function renderTailorTable(data) {
         group.items.forEach(item => {
             const displayItem = item.item_name ? item.item_name : '<span style="color:#94a3b8; font-style:italic; font-size:0.85rem;">Double click to add</span>';
             
-            tbody.innerHTML += `
+            htmlContent += `
                 <tr style="background: #ffffff; transition: all 0.2s;">
                     <td style="text-align: center;"><input type="checkbox" class="row-checkbox" data-id="${item.id}" onchange="updateDeleteButton()"></td>
                     <td style="color: #cbd5e1; text-align: center; font-size: 1.2rem;">
@@ -167,6 +167,7 @@ function renderTailorTable(data) {
         });
     });
 
+    tbody.innerHTML = htmlContent;
     totalEl.innerText = grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2});
 }
 
@@ -425,9 +426,18 @@ function resetTailorFilters() {
     applyTailorFilters();
 }
 
+let filterTimeout;
+
 function setupEventListeners() {
-    document.getElementById('tFromDate').addEventListener('change', applyTailorFilters);
-    document.getElementById('tToDate').addEventListener('change', applyTailorFilters);
+    const handleFilter = () => {
+        clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(() => {
+            applyTailorFilters();
+        }, 300);
+    };
+
+    document.getElementById('tFromDate').addEventListener('input', handleFilter);
+    document.getElementById('tToDate').addEventListener('input', handleFilter);
 }
 
 function showToast(message, type = "success") {
