@@ -521,3 +521,115 @@ tr:hover { background-color: #f8fafc; }
     text-transform: uppercase;
     color: #b45309;
 }
+ pointer;
+    margin-top: 10px;
+    transition: 0.2s;
+}
+.save-btn:hover { background: #1d4ed8; }
+
+/* --- Toast Notification Style --- */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 12px 25px;
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    display: none;
+    align-items: center;
+    gap: 10px;
+    z-index: 10000;
+    font-weight: 600;
+    animation: slideIn 0.3s ease-out;
+}
+
+.toast.show {
+    display: flex;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(-100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* =========================================
+   RESPONSIVE DESIGN (MOBILE & TABLET)
+========================================= */
+
+@media (max-width: 992px) {
+    .filter-box {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 0 15px;
+        margin: 20px auto;
+    }
+
+    .action-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+
+    .btn-excel {
+        width: 100%;
+    }
+
+    .filter-box {
+        grid-template-columns: 1fr;
+        padding: 15px;
+        gap: 12px;
+    }
+
+    .btn-area {
+        height: 48px;
+        margin-top: 5px;
+    }
+
+    .summary-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+        padding: 15px;
+    }
+    
+    .summary-bar span:last-child {
+        font-size: 1.8rem;
+    }
+
+    th, td {
+        padding: 12px 15px;
+        font-size: 0.9rem;
+    }
+    
+    .status-paid, .status-unpaid {
+        font-size: 0.7rem;
+        padding: 3px 6px;
+    }
+}
+
+.first-record-date {
+    background-color: #fef3c7;
+    color: #d97706;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+    border: 1px solid #fcd34d;
+    display: inline-block;
+    position: relative;
+}
+
+.first-record-date::after {
+    content: 'First Entry';
+    position: absolute;
+    top: -15px;
+    left: 0;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    color: #b45309;
+}
