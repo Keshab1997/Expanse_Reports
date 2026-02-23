@@ -29,9 +29,10 @@ async function getGroupedData() {
 
     return expenses.reduce((acc, item) => {
         const amt = parseFloat(item.amount) || 0;
+        const normalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : 'Unknown';
 
         const addGroupData = (groupName, key) => {
-            const safeKey = key || 'Unknown';
+            const safeKey = normalize(key);
             if (!acc[groupName][safeKey]) {
                 acc[groupName][safeKey] = { total: 0, items: [] };
             }

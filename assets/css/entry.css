@@ -199,6 +199,7 @@ input:focus, select:focus {
     outline: none; 
     background: transparent;
     min-height: 44px;
+    text-transform: capitalize;
 }
 
 .excel-input:focus { 

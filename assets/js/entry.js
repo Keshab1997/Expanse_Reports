@@ -40,7 +40,11 @@ async function loadAllSuggestions() {
 
 function renderDatalists(expenses) {
     const updateList = (id, key) => {
-        const list = [...new Set(expenses.map(i => i[key]))].filter(Boolean);
+        const list = [...new Set(expenses.map(i => {
+            const val = i[key];
+            if (!val) return null;
+            return val.charAt(0).toUpperCase() + val.slice(1).toLowerCase();
+        }))].filter(Boolean);
         const dl = document.getElementById(id);
         if (dl) dl.innerHTML = list.map(v => `<option value="${v}">`).join('');
     };
@@ -117,12 +121,14 @@ async function saveAllEntries() {
             const payee = row.querySelector('.row-payee').value.trim();
 
             if (category && payee && !isNaN(amount)) {
+                const normalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
+                
                 dataToInsert.push({
                     date: row.querySelector('.row-date').value,
-                    category: category,
-                    paid_by: row.querySelector('.row-source').value.trim(),
-                    payee: payee,
-                    purpose: row.querySelector('.row-purpose').value.trim(),
+                    category: normalize(category),
+                    paid_by: normalize(row.querySelector('.row-source').value.trim()),
+                    payee: normalize(payee),
+                    purpose: normalize(row.querySelector('.row-purpose').value.trim()),
                     amount: amount,
                     status: row.querySelector('.row-status').value,
                     user_id: user.id

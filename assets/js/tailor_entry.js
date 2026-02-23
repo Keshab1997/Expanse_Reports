@@ -20,8 +20,9 @@ async function loadTailorSuggestions() {
             .limit(200);
 
         if (expenses) {
-            const celebs = [...new Set(expenses.map(i => i.celebrity_name).filter(Boolean))];
-            const items = [...new Set(expenses.map(i => i.item_name).filter(Boolean))];
+            const normalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
+            const celebs = [...new Set(expenses.map(i => normalize(i.celebrity_name)).filter(Boolean))];
+            const items = [...new Set(expenses.map(i => normalize(i.item_name)).filter(Boolean))];
 
             document.getElementById('celebList').innerHTML = celebs.map(v => `<option value="${v}">`).join('');
             document.getElementById('itemList').innerHTML = items.map(v => `<option value="${v}">`).join('');
@@ -191,7 +192,10 @@ async function saveAllTailorEntries() {
             const amount = parseFloat(row.querySelector('.row-amount').value);
 
             if (celeb && !isNaN(amount) && amount > 0) {
-                const signature = `${date}_${celeb.toLowerCase()}_${item.toLowerCase()}_${amount}`;
+                const normalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
+                const normalizedCeleb = normalize(celeb);
+                const normalizedItem = normalize(item);
+                const signature = `${date}_${normalizedCeleb.toLowerCase()}_${normalizedItem.toLowerCase()}_${amount}`;
 
                 if (existingSignatures.has(signature) || currentBatchSignatures.has(signature)) {
                     duplicateCount++;
@@ -203,8 +207,8 @@ async function saveAllTailorEntries() {
                     dataToInsert.push({
                         user_id: user.id,
                         date: date,
-                        celebrity_name: celeb,
-                        item_name: item,
+                        celebrity_name: normalizedCeleb,
+                        item_name: normalizedItem,
                         amount: amount,
                         created_at: exactTime
                     });
