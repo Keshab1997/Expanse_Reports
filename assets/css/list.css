@@ -62,7 +62,7 @@
     
     /* গ্রিড লেআউট (Desktop First) */
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 15px;
     align-items: end;
 }
@@ -132,18 +132,20 @@ label {
     height: auto;
     grid-column: 1 / -1;
     justify-content: flex-end;
-    padding-top: 10px;
+    margin-top: 10px;
+    border-top: 1px solid #f8fafc;
+    padding-top: 15px;
 }
 
 .btn-reset, .btn-pdf {
     flex: 0 1 auto;
-    padding: 0 20px; /* বাটনগুলো সমান জায়গা নেবে */
+    padding: 0 25px; /* বাটনগুলো সমান জায়গা নেবে */
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.9rem;
-    height: 100%;
+    height: 42px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -162,6 +164,7 @@ label {
     background: #ef4444;
     color: white;
     box-shadow: 0 2px 5px rgba(239, 68, 68, 0.2);
+    min-width: 130px;
 }
 
 .btn-reset:hover { background: #e2e8f0; color: #1e293b; }
