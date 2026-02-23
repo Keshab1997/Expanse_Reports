@@ -384,7 +384,6 @@ function downloadTailorPDF() {
         }
 
         doc.save(`Tailor_Report_${today}.pdf`);
-        showToast("PDF downloaded!", "success");
 
     } catch (error) {
         showToast("PDF generation failed", "error");
@@ -585,7 +584,6 @@ function downloadDateWisePDF() {
         }
 
         doc.save(`Tailor_Report_DateWise_${today}.pdf`);
-        showToast("PDF downloaded!", "success");
 
     } catch (error) {
         showToast("PDF generation failed", "error");
