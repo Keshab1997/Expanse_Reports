@@ -1,7 +1,7 @@
 let recentExpenses = []; // আগের ডাটা সেভ রাখার জন্য
 
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log("🚀 Entry Page Loaded");
+    // console.log("🚀 Entry Page Loaded");
     await loadAllSuggestions();
     addNewRow(); // শুরুতে একটি রো থাকবে
 });
@@ -32,18 +32,25 @@ async function loadAllSuggestions() {
             renderDatalists(expenses);
         }
     } catch (err) { 
-        console.error("Suggestion Error:", err); 
+        // Silent fail
     } finally { 
         hideLoader(); 
     }
 }
 
 function renderDatalists(expenses) {
+    const normalize = (str) => {
+        if (!str) return '';
+        return str.trim().split(/\s+/).map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ');
+    };
+    
     const updateList = (id, key) => {
         const list = [...new Set(expenses.map(i => {
             const val = i[key];
             if (!val) return null;
-            return val.charAt(0).toUpperCase() + val.slice(1).toLowerCase();
+            return normalize(val);
         }))].filter(Boolean);
         const dl = document.getElementById(id);
         if (dl) dl.innerHTML = list.map(v => `<option value="${v}">`).join('');
@@ -121,7 +128,12 @@ async function saveAllEntries() {
             const payee = row.querySelector('.row-payee').value.trim();
 
             if (category && payee && !isNaN(amount)) {
-                const normalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
+                const normalize = (str) => {
+                    if (!str) return '';
+                    return str.trim().split(/\s+/).map(word => 
+                        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                    ).join(' ');
+                };
                 
                 dataToInsert.push({
                     date: row.querySelector('.row-date').value,

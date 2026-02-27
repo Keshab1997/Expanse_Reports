@@ -8,13 +8,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadTailorData() {
-    console.log('🔄 Loading tailor data...');
+    // console.log('🔄 Loading tailor data...');
     const loader = document.getElementById('globalLoader');
     if (loader) loader.style.display = 'flex';
 
     try {
         const { data: { user } } = await window.db.auth.getUser();
-        console.log('👤 User ID:', user.id);
+        // console.log('👤 User ID:', user.id);
         
         const { data, error } = await window.db
             .from('tailor_expenses')
@@ -23,18 +23,18 @@ async function loadTailorData() {
             .order('date', { ascending: false })
             .order('created_at', { ascending: true });
 
-        console.log('📊 Raw data from DB:', data);
-        console.log('❌ Error:', error);
+        // console.log('📊 Raw data from DB:', data);
+        // console.log('❌ Error:', error);
 
         if (error) throw error;
 
         allTailorData = data || [];
-        console.log('✅ Total records loaded:', allTailorData.length);
+        // console.log('✅ Total records loaded:', allTailorData.length);
         
         if (allTailorData.length > 0) {
             const oldestDate = allTailorData[allTailorData.length - 1].date;
             const today = new Date().toISOString().split('T')[0];
-            console.log('📅 Date range:', oldestDate, 'to', today);
+            // console.log('📅 Date range:', oldestDate, 'to', today);
             
             if (!document.getElementById('tFromDate').value) {
                 document.getElementById('tFromDate').value = oldestDate;
@@ -75,12 +75,12 @@ function applyTailorFilters() {
     const selectedCelebs = celebTom ? celebTom.getValue() : [];
     const selectedItems = itemTom ? itemTom.getValue() : [];
 
-    console.log('🔍 Applying filters:');
-    console.log('  From Date:', fromDate);
-    console.log('  To Date:', toDate);
-    console.log('  Selected Celebs:', selectedCelebs);
-    console.log('  Selected Items:', selectedItems);
-    console.log('  Total data before filter:', allTailorData.length);
+    // console.log('🔍 Applying filters:');
+    // console.log('  From Date:', fromDate);
+    // console.log('  To Date:', toDate);
+    // console.log('  Selected Celebs:', selectedCelebs);
+    // console.log('  Selected Items:', selectedItems);
+    // console.log('  Total data before filter:', allTailorData.length);
 
     currentFilteredData = allTailorData.filter(item => {
         let match = true;
@@ -91,12 +91,12 @@ function applyTailorFilters() {
         return match;
     });
 
-    console.log('✅ Filtered data count:', currentFilteredData.length);
+    // console.log('✅ Filtered data count:', currentFilteredData.length);
     renderTailorTable(currentFilteredData);
 }
 
 function renderTailorTable(data) {
-    console.log('🎨 Rendering table with', data.length, 'records');
+    // console.log('🎨 Rendering table with', data.length, 'records');
     const tbody = document.getElementById('tailorTableBody');
     const totalEl = document.getElementById('tailorTotal');
     
@@ -104,7 +104,7 @@ function renderTailorTable(data) {
     let htmlContent = '';
 
     if (data.length === 0) {
-        console.log('⚠️ No records to display');
+        // console.log('⚠️ No records to display');
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 30px; color: #64748b;">No records found</td></tr>';
         totalEl.innerText = '0';
         return;
@@ -669,3 +669,40 @@ async function fixAllUserIds() {
         if (loader) loader.style.display = 'none';
     }
 }
+
+function downloadTailorExcel() {
+    if (!currentFilteredData || currentFilteredData.length === 0) {
+        showToast("No data to download!", "error");
+        return;
+    }
+
+    try {
+        const excelData = currentFilteredData.map(item => ({
+            'Date': item.date,
+            'Celebrity Name': item.celebrity_name,
+            'Item Name': item.item_name || '-',
+            'Amount (INR)': Number(item.amount).toFixed(2)
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        
+        const wscols = [
+            {wch: 15}, {wch: 25}, {wch: 30}, {wch: 15}
+        ];
+        worksheet['!cols'] = wscols;
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Tailor Expenses");
+        
+        const today = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+        XLSX.writeFile(workbook, `Tailor_Report_${today}.xlsx`);
+        
+        showToast("Excel downloaded successfully!", "success");
+
+    } catch (error) {
+        console.error("Excel Error:", error);
+        showToast("Failed to generate Excel file", "error");
+    }
+}
+
+window.downloadTailorExcel = downloadTailorExcel;

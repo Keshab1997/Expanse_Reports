@@ -32,7 +32,7 @@ async function syncOfflineData() {
     
     if (unsynced.length === 0) return;
     
-    console.log(`Syncing ${unsynced.length} offline entries...`);
+    // console.log(`Syncing ${unsynced.length} offline entries...`);
     
     for (const item of unsynced) {
         try {
@@ -119,12 +119,12 @@ function showToast(message) {
 
 // Listen for online/offline events
 window.addEventListener('online', () => {
-    console.log('Back online! Syncing data...');
+    // console.log('Back online! Syncing data...');
     syncOfflineData();
 });
 
 window.addEventListener('offline', () => {
-    console.log('Gone offline. Data will be saved locally.');
+    // console.log('Gone offline. Data will be saved locally.');
     updateOfflineIndicator();
 });
 

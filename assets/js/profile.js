@@ -124,7 +124,7 @@ async function uploadAvatar() {
     }
 }
 
-// ইমেজ কমপ্রেশন হেল্পার ফাংশন
+// ইমেজ কমপ্রেশন হেল্পার ফাংশন (WebP support)
 function compressImage(file, maxWidth, maxHeight) {
     return new Promise((resolve) => {
         const reader = new FileReader();
@@ -146,7 +146,12 @@ function compressImage(file, maxWidth, maxHeight) {
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-                canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.7); // ৭০% কোয়ালিটিতে সেভ হবে
+                
+                const supportsWebP = canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+                const format = supportsWebP ? 'image/webp' : 'image/jpeg';
+                const quality = supportsWebP ? 0.8 : 0.7;
+                
+                canvas.toBlob((blob) => resolve(blob), format, quality);
             };
         };
     });

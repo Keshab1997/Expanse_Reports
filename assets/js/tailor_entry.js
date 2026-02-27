@@ -10,6 +10,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadTailorSuggestions() {
+    const normalize = (str) => {
+        if (!str) return '';
+        return str.trim().split(/\s+/).map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ');
+    };
+    
     try {
         const { data: { user } } = await window.db.auth.getUser();
         const { data: expenses } = await window.db
@@ -20,7 +27,6 @@ async function loadTailorSuggestions() {
             .limit(200);
 
         if (expenses) {
-            const normalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
             const celebs = [...new Set(expenses.map(i => normalize(i.celebrity_name)).filter(Boolean))];
             const items = [...new Set(expenses.map(i => normalize(i.item_name)).filter(Boolean))];
 
@@ -192,14 +198,19 @@ async function saveAllTailorEntries() {
             const amount = parseFloat(row.querySelector('.row-amount').value);
 
             if (celeb && !isNaN(amount) && amount > 0) {
-                const normalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
+                const normalize = (str) => {
+                    if (!str) return '';
+                    return str.trim().split(/\s+/).map(word => 
+                        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                    ).join(' ');
+                };
                 const normalizedCeleb = normalize(celeb);
                 const normalizedItem = normalize(item);
                 const signature = `${date}_${normalizedCeleb.toLowerCase()}_${normalizedItem.toLowerCase()}_${amount}`;
 
                 if (existingSignatures.has(signature) || currentBatchSignatures.has(signature)) {
                     duplicateCount++;
-                    console.log("Duplicate skipped:", signature);
+                    // console.log("Duplicate skipped:", signature);
                 } else {
                     currentBatchSignatures.add(signature);
                     

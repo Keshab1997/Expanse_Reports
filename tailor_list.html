@@ -19,6 +19,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js" defer></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js" defer></script>
 </head>
 <body>
@@ -89,6 +90,9 @@
                         </button>
                         <button onclick="resetTailorFilters()" class="btn-reset" title="Clear Filters" aria-label="Reset filters">
                             <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Reset
+                        </button>
+                        <button onclick="downloadTailorExcel()" class="btn-pdf" title="Download Excel" style="background: #10b981;" aria-label="Download Excel report">
+                            <i class="fa-solid fa-file-excel" aria-hidden="true"></i> Excel
                         </button>
                         <button onclick="downloadTailorPDF()" class="btn-pdf" title="Group by Celebrity" aria-label="Download celebrity-wise PDF" style="background: #ea580c;">
                             <i class="fa-solid fa-user-tie" aria-hidden="true"></i> PDF (Celeb)

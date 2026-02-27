@@ -15,6 +15,7 @@
     <!-- মেইন স্টাইল -->
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/list.css">
+    <link rel="stylesheet" href="assets/css/image-optimization.css">
 
     <!-- লাইব্রেরি -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
@@ -55,7 +56,7 @@
             <header class="topbar">
                 <div class="header-left"><h2 class="page-title">Transactions Report</h2></div>
                 <div class="header-right" style="display: flex; align-items: center; gap: 15px;">
-                    <div class="top-profile"><img src="https://via.placeholder.com/40" id="headerAvatar" class="header-avatar" alt="User"></div>
+                    <div class="top-profile"><img src="https://via.placeholder.com/40" id="headerAvatar" class="header-avatar" alt="User" loading="lazy" width="40" height="40"></div>
                     <button id="menuToggle" class="hamburger-btn" aria-label="Toggle menu"><i class="fa-solid fa-bars"></i></button>
                 </div>
             </header>
@@ -111,6 +112,7 @@
 
                     <div class="btn-area">
                         <button onclick="resetFilters()" class="btn-reset" title="Clear Filters" aria-label="Reset all filters"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Reset</button>
+                        <button onclick="downloadExcel()" class="btn-excel-download" style="background: #10b981; color: white; border: none; border-radius: 8px; padding: 0 20px; height: 42px; cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 8px;" title="Download Excel" aria-label="Download Excel report"><i class="fa-solid fa-file-excel" aria-hidden="true"></i> Excel</button>
                         <button onclick="downloadPDF()" class="btn-pdf" title="Download Report" aria-label="Download PDF report"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i> PDF</button>
                     </div>
                 </div>

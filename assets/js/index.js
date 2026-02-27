@@ -1,23 +1,20 @@
 document.addEventListener('DOMContentLoaded', async () => {
     
-    // ১. ডাটাবেস কানেকশন চেক
     if (typeof window.db === 'undefined') {
-        console.error("Database connection not found. Check config.js");
         return;
     }
 
-    // ২. ইউজার লগইন চেক
-    const { data: { user } } = await window.db.auth.getUser();
-    if (!user) return window.location.href = 'login.html';
+    try {
+        const { data: { user } } = await window.db.auth.getUser();
+        if (!user) return window.location.href = 'login.html';
 
-    // ৩. ইউজারের নাম লোড করা
-    loadUserName(user.id);
-
-    // ৪. ড্যাশবোর্ড ডাটা লোড (আপডেটেড লজিক সহ)
-    await loadDashboardStats(user.id);
+        loadUserName(user.id);
+        await loadDashboardStats(user.id);
+    } catch (error) {
+        // Silent fail
+    }
 });
 
-// শুধু নাম লোড করার ফাংশন
 async function loadUserName(userId) {
     try {
         const { data: profile } = await window.db
@@ -36,7 +33,7 @@ async function loadUserName(userId) {
             }
         }
     } catch (error) {
-        console.error("Name load error:", error);
+        // Silent fail
     }
 }
 
@@ -49,7 +46,7 @@ async function loadDashboardStats(userId) {
     if (cachedData) {
         const expenses = JSON.parse(cachedData);
         processAndRender(expenses); // ক্যাশ ডাটা দিয়ে সাথে সাথে রেন্ডার
-        console.log("⚡ Dashboard loaded instantly from Cache");
+        // console.log("⚡ Dashboard loaded instantly from Cache");
     }
 
     // ২. ব্যাকগ্রাউন্ডে সুপাবেস থেকে লেটেস্ট ডাটা আনা
@@ -68,10 +65,10 @@ async function loadDashboardStats(userId) {
             
             // ৪. যদি ক্যাশ ডাটা আর নতুন ডাটা আলাদা হয়, তবে UI আপডেট করা
             processAndRender(expenses);
-            console.log("🔄 Dashboard updated from Server in background");
+            // console.log("🔄 Dashboard updated from Server in background");
         }
     } catch (err) {
-        console.error("Background Load Error:", err);
+        // Silent fail
     } finally {
         // লোডার বন্ধ করা
         const loader = document.getElementById('globalLoader');

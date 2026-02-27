@@ -1,0 +1,43 @@
+/* Image Optimization Styles */
+
+/* Lazy loading placeholder */
+img[data-src] {
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Avatar optimization */
+.header-avatar,
+#avatarPreview {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    will-change: transform;
+}
+
+/* Smooth image loading */
+img {
+    transition: opacity 0.3s ease-in-out;
+}
+
+img[data-src] {
+    opacity: 0.6;
+}
+
+img:not([data-src]) {
+    opacity: 1;
+}
+
+/* WebP support detection */
+.webp .avatar {
+    background-image: url('avatar.webp');
+}
+
+.no-webp .avatar {
+    background-image: url('avatar.jpg');
+}

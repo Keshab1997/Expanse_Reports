@@ -31,15 +31,15 @@ function hideLoader() {
 // 2. INITIAL SETUP WITH FAST LOADING
 // =========================================
 async function loadInitialData() {
+    showLoader();
+    
     const cacheKey = 'last_report_data';
     const cacheTimeKey = 'last_report_time';
     
-    // ক্যাশ ডাটা থাকলে সাথে সাথে টেবিল দেখানো
     const cached = localStorage.getItem(cacheKey);
     const cacheTime = localStorage.getItem(cacheTimeKey);
     const now = Date.now();
     
-    // ক্যাশ 5 মিনিটের চেয়ে পুরানো হলে নতুন ডাটা লোড করবে
     if (cached && cacheTime && (now - parseInt(cacheTime)) < 300000) {
         currentFilteredData = JSON.parse(cached);
         renderTable(currentFilteredData);
@@ -48,7 +48,7 @@ async function loadInitialData() {
 
     try {
         if (!window.db) {
-            console.error("Supabase client not found!");
+            hideLoader();
             return;
         }
 
@@ -85,7 +85,7 @@ async function loadInitialData() {
         await applyFilters();
 
     } catch (error) {
-        console.error("Init Error:", error);
+        // Silent fail
     } finally {
         hideLoader();
     }
@@ -145,7 +145,7 @@ async function initTomSelects() {
             });
         }
     } catch (err) { 
-        console.error("TomSelect Init Error:", err); 
+        // Silent fail
     }
 }
 
@@ -204,7 +204,6 @@ async function applyFilters() {
         renderTable(currentFilteredData);
 
     } catch (error) {
-        console.error("Filter Error:", error);
         tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Error loading data</td></tr>';
     }
 }
@@ -352,7 +351,7 @@ async function updateInline(id, field, value) {
             
         if (error) throw error;
         
-        console.log(`Updated ${field}:`, value);
+        // console.log(`Updated ${field}:`, value);
         
         // ক্যাশ আপডেট
         const itemIndex = expenseCache.findIndex(item => item.id === id);
@@ -445,7 +444,7 @@ async function openEditModal(id) {
 
     } catch (err) {
         alert("Error fetching data");
-        console.error(err);
+        // console.error(err);
     } finally {
         hideLoader();
     }
@@ -481,7 +480,7 @@ async function saveUpdate() {
         alert("Updated successfully!");
 
     } catch (err) {
-        console.error("Update failed:", err);
+        // console.error("Update failed:", err);
         alert("Failed to update record.");
     } finally {
         hideLoader();
@@ -647,15 +646,11 @@ function downloadPDF() {
                     files: [file],
                     title: 'Expense Report',
                     text: 'Here is my expense report prepared by Keshab Sarkar.'
-                }).then(() => console.log('Shared successfully'))
-                  .catch((error) => console.log('Error sharing:', error));
+                }).catch(() => {});
             }
-        } else {
-            console.log("Web Share not supported on this browser/OS.");
         }
 
     } catch (error) {
-        console.error("PDF Error:", error);
         alert("Failed to generate PDF");
     }
 }
@@ -755,7 +750,7 @@ window.handleFileUpload = async function (input) {
                     loadInitialData();
                 }
             } catch (err) {
-                console.error(err);
+                // console.error(err);
                 alert("Invalid File Format");
             } finally {
                 hideLoader();
@@ -766,3 +761,44 @@ window.handleFileUpload = async function (input) {
         hideLoader();
     }
 }
+
+// =========================================
+// 12. EXCEL DOWNLOAD FUNCTION
+// =========================================
+function downloadExcel() {
+    if (!currentFilteredData || currentFilteredData.length === 0) {
+        alert("No data to download!");
+        return;
+    }
+
+    try {
+        const excelData = currentFilteredData.map(item => ({
+            'Date': item.date,
+            'Category': item.category,
+            'Paid By': item.paid_by || '-',
+            'Payee': item.payee,
+            'Purpose': item.purpose || '-',
+            'Amount (INR)': Number(item.amount).toFixed(2),
+            'Status': item.status || 'Unpaid'
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        
+        const wscols = [
+            {wch: 12}, {wch: 15}, {wch: 25}, {wch: 20}, 
+            {wch: 30}, {wch: 15}, {wch: 10}
+        ];
+        worksheet['!cols'] = wscols;
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
+        
+        const today = new Date().toLocaleDateString('en-GB').replace(/\//g, '-');
+        XLSX.writeFile(workbook, `Expense_Report_${today}.xlsx`);
+
+    } catch (error) {
+        alert("Failed to generate Excel file");
+    }
+}
+
+window.downloadExcel = downloadExcel;
