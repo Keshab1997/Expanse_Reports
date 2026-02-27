@@ -8,6 +8,8 @@
   "theme_color": "#4f46e5",
   "scope": "/",
   "description": "Track and manage your daily expenses efficiently with detailed reports and analytics",
+  "categories": ["finance", "productivity"],
+  "prefer_related_applications": false,
   "icons": [
     { 
       "src": "https://cdn-icons-png.flaticon.com/192/2344/2344132.png", 

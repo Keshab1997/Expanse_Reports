@@ -1,4 +1,4 @@
-const CACHE_NAME = 'expense-pro-v28';
+const CACHE_NAME = 'expense-pro-v33';
 const ASSETS = [
   '/',
   '/index.html',
@@ -53,7 +53,8 @@ self.addEventListener('fetch', (event) => {
       event.request.url.includes('supabase') ||
       event.request.url.includes('cdn.jsdelivr.net') ||
       event.request.url.includes('cdnjs.cloudflare.com') ||
-      event.request.url.includes('fonts.googleapis.com')) {
+      event.request.url.includes('fonts.googleapis.com') ||
+      event.request.url.includes('via.placeholder.com')) {
     return;
   }
   

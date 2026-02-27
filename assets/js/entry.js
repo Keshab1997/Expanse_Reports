@@ -99,9 +99,19 @@ function checkConsistency(el) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // console.log("🚀 Entry Page Loaded");
     await loadAllSuggestions();
-    addNewRow(); // শুরুতে একটি রো থাকবে
+    addNewRow();
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target.classList.contains('excel-input')) {
+            e.preventDefault();
+            const inputs = Array.from(document.querySelectorAll('.excel-input'));
+            const index = inputs.indexOf(e.target);
+            if (index > -1 && index < inputs.length - 1) {
+                inputs[index + 1].focus();
+            }
+        }
+    });
 });
 
 async function loadAllSuggestions() {

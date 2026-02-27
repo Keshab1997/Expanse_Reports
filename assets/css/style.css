@@ -26,6 +26,19 @@ body {
     color: var(--text-dark);
     overscroll-behavior-y: contain;
     overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+input, textarea, select, button {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+* {
+    -webkit-tap-highlight-color: transparent;
 }
 
 a { text-decoration: none; }
