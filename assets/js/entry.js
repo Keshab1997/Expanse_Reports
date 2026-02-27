@@ -1,4 +1,102 @@
-let recentExpenses = []; // আগের ডাটা সেভ রাখার জন্য
+let recentExpenses = [];
+
+function getSimilarity(s1, s2) {
+    let longer = s1.toLowerCase();
+    let shorter = s2.toLowerCase();
+    if (s1.length < s2.length) {
+        longer = s2.toLowerCase();
+        shorter = s1.toLowerCase();
+    }
+    let longerLength = longer.length;
+    if (longerLength === 0) return 1.0;
+    return (longerLength - editDistance(longer, shorter)) / longerLength;
+}
+
+function editDistance(s1, s2) {
+    let costs = [];
+    for (let i = 0; i <= s1.length; i++) {
+        let lastValue = i;
+        for (let j = 0; j <= s2.length; j++) {
+            if (i == 0) costs[j] = j;
+            else {
+                if (j > 0) {
+                    let newValue = costs[j - 1];
+                    if (s1.charAt(i - 1) != s2.charAt(j - 1))
+                        newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                    costs[j - 1] = lastValue;
+                    lastValue = newValue;
+                }
+            }
+        }
+        if (i > 0) costs[s2.length] = lastValue;
+    }
+    return costs[s2.length];
+}
+
+function formatInput(el) {
+    let val = el.value.trim();
+    if (!val) return;
+    
+    const listId = el.getAttribute('list');
+    if (!listId) {
+        el.value = val.split(/\s+/).map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ');
+        return;
+    }
+
+    const datalist = document.getElementById(listId);
+    const options = Array.from(datalist.options).map(opt => opt.value);
+
+    let bestMatch = null;
+    let highestSimilarity = 0;
+
+    options.forEach(option => {
+        let similarity = getSimilarity(val, option);
+        if (similarity > highestSimilarity) {
+            highestSimilarity = similarity;
+            bestMatch = option;
+        }
+    });
+
+    if (highestSimilarity >= 0.8 && highestSimilarity < 1.0) {
+        el.value = bestMatch;
+        el.style.backgroundColor = "#d1fae5";
+        setTimeout(() => el.style.backgroundColor = "", 800);
+    } else {
+        el.value = val.split(/\s+/).map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ');
+    }
+}
+
+function checkConsistency(el) {
+    const val = el.value;
+    const listId = el.getAttribute('list');
+    if (!listId) return;
+
+    const datalist = document.getElementById(listId);
+    const options = Array.from(datalist.options).map(opt => opt.value);
+
+    if (val && !options.includes(val)) {
+        const similar = options.find(opt => {
+            const s1 = val.toLowerCase();
+            const s2 = opt.toLowerCase();
+            return s1 !== s2 && (s1.includes(s2.slice(0, -1)) || s2.includes(s1.slice(0, -1)));
+        });
+        
+        if (similar) {
+            el.style.borderColor = "#f59e0b";
+            el.style.backgroundColor = "#fffbeb";
+        } else {
+            el.style.borderColor = "";
+            el.style.backgroundColor = "";
+        }
+    } else {
+        el.style.borderColor = "";
+        el.style.backgroundColor = "";
+    }
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     // console.log("🚀 Entry Page Loaded");
@@ -75,10 +173,10 @@ function addNewRow() {
 
     row.innerHTML = `
         <td data-label="Date"><input type="date" class="excel-input row-date" value="${today}"></td>
-        <td data-label="Category"><input type="text" class="excel-input row-category" list="catList" placeholder="Category..."></td>
-        <td data-label="Paid By"><input type="text" class="excel-input row-source" list="sourceList" placeholder="Paid by..."></td>
-        <td data-label="Payee"><input type="text" class="excel-input row-payee" list="payeeList" placeholder="Payee..."></td>
-        <td data-label="Purpose"><input type="text" class="excel-input row-purpose" list="purposeList" placeholder="Purpose..." oninput="handleAutoFill(this)"></td>
+        <td data-label="Category"><input type="text" class="excel-input row-category" list="catList" placeholder="Category..." onblur="formatInput(this)"></td>
+        <td data-label="Paid By"><input type="text" class="excel-input row-source" list="sourceList" placeholder="Paid by..." onblur="formatInput(this)"></td>
+        <td data-label="Payee"><input type="text" class="excel-input row-payee" list="payeeList" placeholder="Payee..." onblur="formatInput(this)"></td>
+        <td data-label="Purpose"><input type="text" class="excel-input row-purpose" list="purposeList" placeholder="Purpose..." oninput="handleAutoFill(this)" onblur="formatInput(this)"></td>
         <td data-label="Amount"><input type="number" class="excel-input row-amount" placeholder="0.00"></td>
         <td data-label="Status">
             <select class="excel-input row-status">
@@ -185,3 +283,4 @@ async function saveAllEntries() {
 window.addNewRow = addNewRow;
 window.handleAutoFill = handleAutoFill;
 window.saveAllEntries = saveAllEntries;
+window.formatInput = formatInput;

@@ -43,7 +43,6 @@ async function loadInitialData() {
     if (cached && cacheTime && (now - parseInt(cacheTime)) < 300000) {
         currentFilteredData = JSON.parse(cached);
         renderTable(currentFilteredData);
-        hideLoader();
     }
 
     try {

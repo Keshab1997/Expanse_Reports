@@ -10,7 +10,7 @@
     padding: 0 20px;
 }
 
-/* --- পেজ হেডার এবং এক্সেল বাটন এরিয়া --- */
+/* --- পেজ হেডার এবং এক্সেল বাটন এরিয়া --- */
 .action-header {
     display: flex;
     justify-content: space-between;
@@ -67,7 +67,7 @@
     align-items: end;
 }
 
-/* Payee এবং Purpose একটু বড় জায়গা নেবে */
+/* Payee এবং Purpose একটু বড় জায়গা নেবে */
 .filter-box .filter-group:has(#payeeFilter),
 .filter-box .filter-group:has(#purposeFilter) {
     grid-column: span 1; /* ডিফল্ট */
@@ -141,7 +141,7 @@ label {
     overflow-y: auto !important;
 }
 
-/* --- বাটন এরিয়া (Reset & PDF) --- */
+/* --- বাটন এরিয়া (Reset & PDF) --- */
 .btn-area {
     display: flex;
     flex-wrap: wrap;
@@ -154,9 +154,9 @@ label {
     padding-top: 15px;
 }
 
-.btn-reset, .btn-pdf {
+.btn-reset, .btn-pdf, .btn-excel-download {
     flex: 0 1 auto;
-    padding: 0 25px; /* বাটনগুলো সমান জায়গা নেবে */
+    padding: 0 25px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -184,8 +184,15 @@ label {
     min-width: 130px;
 }
 
+.btn-excel-download {
+    background: #10b981;
+    color: white;
+    box-shadow: 0 2px 5px rgba(16, 185, 129, 0.2);
+}
+
 .btn-reset:hover { background: #e2e8f0; color: #1e293b; }
 .btn-pdf:hover { transform: translateY(-1px); filter: brightness(0.9); }
+.btn-excel-download:hover { transform: translateY(-1px); filter: brightness(0.9); }
 
 /* --- টোটাল সামারি বার --- */
 .summary-bar {
@@ -218,7 +225,7 @@ label {
     border-radius: 12px; 
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); 
     padding: 0;
-    overflow-x: auto; /* মোবাইলে টেবিল স্ক্রল হবে */
+    overflow-x: auto;
     border: 1px solid #f1f5f9;
 }
 
@@ -226,7 +233,7 @@ table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.95rem;
-    min-width: 800px; /* টেবিল খুব ছোট হলে স্ক্রল হবে */
+    min-width: 800px;
 }
 
 thead {
@@ -336,7 +343,6 @@ tr:hover { background-color: #f8fafc; }
     background-color: #f8fafc;
 }
 
-/* ডাবল ক্লিক করার পর যখন এডিট হবে */
 .editable-cell.is-editing {
     background: #fff !important;
     outline: 2px solid #3b82f6 !important;
@@ -383,7 +389,7 @@ tr:hover { background-color: #f8fafc; }
     border-radius: 16px;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
     animation: modalSlideUp 0.3s ease-out;
-    max-height: 90vh; /* ছোট স্ক্রিনে স্ক্রল হবে */
+    max-height: 90vh;
     overflow-y: auto;
 }
 
@@ -441,109 +447,6 @@ tr:hover { background-color: #f8fafc; }
 }
 .save-btn:hover { background: #1d4ed8; }
 
-/* =========================================
-   RESPONSIVE DESIGN (MOBILE & TABLET)
-========================================= */
-
-@media (max-width: 992px) {
-    /* Tablet View */
-    .filter-box {
-        grid-template-columns: 1fr 1fr; /* দুই কলামে ভাগ হবে */
-    }
-    
-    .filter-box .filter-group:has(#payeeFilter),
-    .filter-box .filter-group:has(#purposeFilter) {
-        grid-column: span 2; /* বড় ইনপুটগুলো পুরো লাইন নেবে */
-    }
-}
-
-@media (max-width: 600px) {
-    /* Mobile View */
-    .container {
-        padding: 0 15px;
-        margin: 20px auto;
-    }
-
-    .action-header {
-        flex-direction: column;
-        align-items: stretch; /* পুরো চওড়া */
-        gap: 15px;
-    }
-
-    .btn-excel {
-        width: 100%; /* বাটন ফুল উইডথ */
-    }
-
-    .filter-box {
-        grid-template-columns: 1fr; /* সব এক লাইনে */
-        padding: 15px;
-        gap: 12px;
-    }
-
-    .filter-box .filter-group:has(#payeeFilter),
-    .filter-box .filter-group:has(#purposeFilter) {
-        grid-column: span 1;
-    }
-
-    /* বাটনগুলো মোবাইলে একটু বড় দেখাবে যাতে ট্যাপ করতে সুবিধা হয় */
-    .btn-area {
-        height: 48px;
-        margin-top: 5px;
-    }
-
-    /* সামারি বার মোবাইলে ভেঙে নিচে নামবে */
-    .summary-bar {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
-        padding: 15px;
-    }
-    
-    .summary-bar span:last-child {
-        font-size: 1.8rem; /* অ্যামাউন্ট বড় দেখাবে */
-    }
-
-    /* টেবিল ফন্ট সাইজ */
-    th, td {
-        padding: 12px 15px;
-        font-size: 0.9rem;
-    }
-    
-    /* অ্যাকশন বাটন সাইজ */
-    /* Status badges smaller on mobile */
-    .status-paid, .status-unpaid {
-        font-size: 0.7rem;
-        padding: 3px 6px;
-    }
-}
-
-/* সর্বপ্রথম হিসাবের তারিখের জন্য বিশেষ স্টাইল */
-.first-record-date {
-    background-color: #fef3c7; /* হালকা হলুদ/কমলা আভা */
-    color: #d97706;            /* গাঢ় কমলা টেক্সট */
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-weight: 700;
-    border: 1px solid #fcd34d;
-    display: inline-block;
-    position: relative;
-}
-
-.first-record-date::after {
-    content: 'First Entry';
-    position: absolute;
-    top: -15px;
-    left: 0;
-    font-size: 0.6rem;
-    text-transform: uppercase;
-    color: #b45309;
-}
- pointer;
-    margin-top: 10px;
-    transition: 0.2s;
-}
-.save-btn:hover { background: #1d4ed8; }
-
 /* --- Toast Notification Style --- */
 .toast {
     position: fixed;
@@ -571,6 +474,28 @@ tr:hover { background-color: #f8fafc; }
     to { transform: translateX(0); opacity: 1; }
 }
 
+/* সর্বপ্রথম হিসাবের তারিখের জন্য বিশেষ স্টাইল */
+.first-record-date {
+    background-color: #fef3c7;
+    color: #d97706;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+    border: 1px solid #fcd34d;
+    display: inline-block;
+    position: relative;
+}
+
+.first-record-date::after {
+    content: 'First Entry';
+    position: absolute;
+    top: -15px;
+    left: 0;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    color: #b45309;
+}
+
 /* =========================================
    RESPONSIVE DESIGN (MOBILE & TABLET)
 ========================================= */
@@ -578,6 +503,11 @@ tr:hover { background-color: #f8fafc; }
 @media (max-width: 992px) {
     .filter-box {
         grid-template-columns: 1fr 1fr;
+    }
+    
+    .filter-box .filter-group:has(#payeeFilter),
+    .filter-box .filter-group:has(#purposeFilter) {
+        grid-column: span 2;
     }
 }
 
@@ -603,9 +533,20 @@ tr:hover { background-color: #f8fafc; }
         gap: 12px;
     }
 
+    .filter-box .filter-group:has(#payeeFilter),
+    .filter-box .filter-group:has(#purposeFilter) {
+        grid-column: span 1;
+    }
+
     .btn-area {
-        height: 48px;
+        height: auto;
         margin-top: 5px;
+    }
+    
+    .btn-reset, .btn-pdf, .btn-excel-download {
+        flex: 1 1 auto;
+        min-width: 100px;
+        height: 48px;
     }
 
     .summary-bar {
@@ -628,25 +569,4 @@ tr:hover { background-color: #f8fafc; }
         font-size: 0.7rem;
         padding: 3px 6px;
     }
-}
-
-.first-record-date {
-    background-color: #fef3c7;
-    color: #d97706;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-weight: 700;
-    border: 1px solid #fcd34d;
-    display: inline-block;
-    position: relative;
-}
-
-.first-record-date::after {
-    content: 'First Entry';
-    position: absolute;
-    top: -15px;
-    left: 0;
-    font-size: 0.6rem;
-    text-transform: uppercase;
-    color: #b45309;
 }
