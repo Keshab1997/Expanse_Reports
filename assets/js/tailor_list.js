@@ -706,3 +706,27 @@ function downloadTailorExcel() {
 }
 
 window.downloadTailorExcel = downloadTailorExcel;
+
+// টেইলর ডেটা পিওএস-এর জন্য কপি করার ফাংশন
+function copyTailorForPOS() {
+    if (!currentFilteredData || currentFilteredData.length === 0) {
+        showToast("ডেটা পাওয়া যায়নি!", "error");
+        return;
+    }
+
+    let copyText = currentFilteredData.map(item => {
+        const date = item.date;
+        const category = "Tailor";
+        const purpose = `${item.item_name || ''} - ${item.celebrity_name}`.replace(/^ - | - $/g, '');
+        const method = "online";
+        const source = "Bank";
+        const amount = item.amount;
+
+        return `${date} | ${category} | ${purpose} | ${method} | ${source} | ${amount}`;
+    }).join('\n');
+
+    navigator.clipboard.writeText(copyText).then(() => {
+        showToast(currentFilteredData.length + " টি টেইলর রেকর্ড কপি হয়েছে!", "success");
+    });
+}
+window.copyTailorForPOS = copyTailorForPOS;

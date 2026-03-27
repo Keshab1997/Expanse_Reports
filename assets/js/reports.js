@@ -801,3 +801,32 @@ function downloadExcel() {
 }
 
 window.downloadExcel = downloadExcel;
+
+// =========================================
+// 13. COPY FOR POS FUNCTION
+// =========================================
+function copyForPOS() {
+    if (!currentFilteredData || currentFilteredData.length === 0) {
+        alert("কপি করার জন্য কোনো ডেটা নেই!");
+        return;
+    }
+
+    // স্মার্ট পিওএস ফরম্যাট: Date | Category | Purpose | Method | Source | Amount
+    let copyText = currentFilteredData.map(item => {
+        const date = item.date;
+        const category = item.category;
+        const purpose = `${item.purpose || ''} - ${item.payee || ''}`.replace(/^ - | - $/g, '');
+        const method = "online";
+        const source = item.paid_by || "Bank";
+        const amount = item.amount;
+
+        return `${date} | ${category} | ${purpose} | ${method} | ${source} | ${amount}`;
+    }).join('\n');
+
+    navigator.clipboard.writeText(copyText).then(() => {
+        alert("✅ " + currentFilteredData.length + " টি রেকর্ড কপি হয়েছে! এখন স্মার্ট পিওএস-এ গিয়ে পেস্ট করুন।");
+    }).catch(err => {
+        alert("কপি করতে সমস্যা হয়েছে!");
+    });
+}
+window.copyForPOS = copyForPOS;
