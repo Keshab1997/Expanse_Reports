@@ -57,8 +57,50 @@
                 </div>
             </header>
 
-            <main class="content-body" role="main">
-                <div class="entry-card excel-mode">
+            <main class="content-body" role="main" style="padding: 0;">
+                
+                <!-- ==========================================
+                     AI AUTO EXTRACTION SECTION
+                =========================================== -->
+                <div class="entry-card" style="margin: 0; border-radius: 0; border-left: 4px solid #10b981; box-shadow: none; max-width: none; width: 100%; padding: 25px;">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+                        <div>
+                            <h2><i class="fa-solid fa-robot" style="color: #10b981;"></i> AI Auto Data Extraction</h2>
+                            <p>Extract data from handwritten images using Google AI Studio.</p>
+                        </div>
+                        <a href="https://aistudio.google.com/prompts" target="_blank" class="btn-primary" style="background: #10b981; text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Google AI Studio
+                        </a>
+                    </div>
+
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e2e8f0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center;">
+                            <strong style="color: #334155; font-size: 0.95rem;">১. এই প্রম্পটটি কপি করুন:</strong>
+                            <button onclick="copyAIPrompt()" style="background: #e2e8f0; color: #475569; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: 0.2s;">
+                                <i class="fa-solid fa-copy"></i> Copy Prompt
+                            </button>
+                        </div>
+                        <textarea id="aiPromptText" readonly style="width: 100%; height: 160px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: monospace; font-size: 0.85rem; resize: none; background: #fff; color: #475569;">Extract handwritten Bengali ledger data from this image. Return ONLY a valid JSON array. No markdown formatting.
+Keys required: "date", "celebrity", "item", "amount".
+Rules:
+1. date: YYYY-MM-DD (assume year 2026). If blank, use the previous date.
+2. celebrity: The FIRST word of the text is usually the name (e.g., অঙ্কুশ=Ankush, বানি=Bani, বুম্বা=Bumba, যম=Jom, দের/দেব=Dev, সোদপুর=Sodepur, শিবুদা=Shibuda). Translate to English. If the row has no name, use the previous row's name.
+3. item: The REST of the text after the name (e.g., Pant, ছোট Pant, শার্ট, পাঞ্জাবী). Translate to English. If there is no item, write "Unknown".
+4. amount: Number only.</textarea>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <strong style="color: #334155; display: block; margin-bottom: 10px; font-size: 0.95rem;">২. AI Studio থেকে পাওয়া JSON কোড এখানে পেস্ট করুন:</strong>
+                        <textarea id="aiJsonInput" placeholder='[{"date": "2026-02-22", "celebrity": "Ankush", "item": "Pant", "amount": 450}]' style="width: 100%; height: 120px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: monospace; font-size: 0.9rem; resize: vertical;"></textarea>
+                    </div>
+
+                    <button onclick="processAIData()" class="btn-primary" style="background: #3b82f6; width: 100%; padding: 12px; font-size: 1rem; justify-content: center;">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Auto Fill Entries
+                    </button>
+                </div>
+                <!-- ========================================== -->
+
+                <div class="entry-card excel-mode" style="margin: 20px;">
                     <div class="card-header">
                         <h2><i class="fa-solid fa-file-invoice"></i> Bulk Entry Mode</h2>
                         <p>Add multiple rows and save all at once. Type to see suggestions.</p>
@@ -141,5 +183,88 @@
     <script src="assets/js/auth.js" defer></script>
     <script src="assets/js/sidebar.js" defer></script>
     <script src="assets/js/tailor_entry.js" defer></script>
+
+    <!-- AI Integration Scripts -->
+    <script>
+        // প্রম্পট কপি করার ফাংশন
+        function copyAIPrompt() {
+            const promptText = document.getElementById('aiPromptText');
+            promptText.select();
+            promptText.setSelectionRange(0, 99999); // For mobile devices
+            navigator.clipboard.writeText(promptText.value).then(() => {
+                showToastMessage('Prompt copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy prompt. Please copy it manually.');
+            });
+        }
+
+        // JSON ডেটা প্রসেস করে টেবিলে বসানোর ফাংশন
+        function processAIData() {
+            const jsonInput = document.getElementById('aiJsonInput').value.trim();
+            
+            if (!jsonInput) {
+                alert('Please paste the JSON data from Google AI Studio first.');
+                return;
+            }
+
+            try {
+                // JSON পার্স করা
+                const data = JSON.parse(jsonInput);
+                
+                if (!Array.isArray(data)) {
+                    throw new Error("Data is not a valid JSON array.");
+                }
+
+                const tbody = document.getElementById('tailorExcelBody');
+                tbody.innerHTML = ''; // আগের সব রো ক্লিয়ার করে দেওয়া
+
+                // প্রতিটি ডেটার জন্য নতুন রো তৈরি করা
+                data.forEach((row) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><input type="date" class="row-date" value="${row.date || ''}"></td>
+                        <td><input type="text" class="row-celeb" list="celebList" placeholder="Type..." value="${row.celebrity || ''}"></td>
+                        <td><input type="text" class="row-item" list="itemList" placeholder="Type..." value="${row.item || ''}"></td>
+                        <td><input type="number" class="row-amount" placeholder="0.00" step="0.01" value="${row.amount || ''}" oninput="if(typeof calculateLiveTotal === 'function') calculateLiveTotal()"></td>
+                        <td style="text-align: center;">
+                            <button onclick="this.closest('tr').remove(); if(typeof calculateLiveTotal === 'function') calculateLiveTotal();" class="btn-delete" style="background: #fee2e2; color: #ef4444; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;" title="Delete Row">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // টোটাল এমাউন্ট আপডেট করা
+                if(typeof calculateLiveTotal === 'function') {
+                    calculateLiveTotal();
+                }
+                
+                // ইনপুট বক্স ক্লিয়ার করা
+                document.getElementById('aiJsonInput').value = ''; 
+                showToastMessage('AI Data successfully loaded!');
+
+            } catch (error) {
+                console.error("JSON Parse Error:", error);
+                alert('Invalid JSON format! Please make sure you copied exactly what the AI provided without any extra text like ```json.');
+            }
+        }
+
+        // টোস্ট মেসেজ দেখানোর হেল্পার ফাংশন
+        function showToastMessage(msg) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMessage');
+            if(toast && toastMsg) {
+                toastMsg.innerText = msg;
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            } else {
+                alert(msg);
+            }
+        }
+    </script>
 </body>
 </html>
