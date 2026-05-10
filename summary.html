@@ -61,8 +61,18 @@
                             <button onclick="generateGroupedPDF()" class="btn-summary-pdf">
                                 <i class="fa-solid fa-file-pdf"></i> Download PDF
                             </button>
+                            <button onclick="generateSimpleListPDF()" class="btn-summary-pdf" style="background: #059669;">
+                                <i class="fa-solid fa-list"></i> Simple List
+                            </button>
                         </div>
                     </div>
+                </div>
+
+                <div class="filter-source-card" id="sourceFilterCard" style="display:none;">
+                    <label><i class="fa-solid fa-filter"></i> Filter by Payment Source:</label>
+                    <select id="sourceFilter" onchange="filterBySource()">
+                        <option value="all">All Sources</option>
+                    </select>
                 </div>
 
                 <div id="summaryDisplay" class="summary-container"></div>

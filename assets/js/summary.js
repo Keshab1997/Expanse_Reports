@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let currentSummary = null;
+let allExpenses = [];
+let selectedSource = 'all';
 
 async function getGroupedData() {
     const fromDate = document.getElementById('sumFromDate').value;
@@ -27,6 +29,11 @@ async function getGroupedData() {
 
     if (error) throw error;
 
+    allExpenses = expenses;
+    return processGroupedData(expenses);
+}
+
+function processGroupedData(expenses) {
     return expenses.reduce((acc, item) => {
         const amt = parseFloat(item.amount) || 0;
         const normalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : 'Unknown';
@@ -61,15 +68,46 @@ async function fetchAndShowSummary() {
         
         if (currentSummary.grandTotal === 0) {
             display.innerHTML = "<p style='text-align:center; width:100%;'>No data found for this period.</p>";
+            document.getElementById('sourceFilterCard').style.display = 'none';
             return;
         }
 
+        populateSourceDropdown();
+        document.getElementById('sourceFilterCard').style.display = 'block';
         renderSummaryUI();
     } catch (err) {
         alert("Error: " + err.message);
     } finally {
         loader.style.display = 'none';
     }
+}
+
+function populateSourceDropdown() {
+    const select = document.getElementById('sourceFilter');
+    select.innerHTML = '<option value="all">All Sources</option>';
+    
+    Object.keys(currentSummary.Source).sort().forEach(source => {
+        select.innerHTML += `<option value="${source}">${source}</option>`;
+    });
+    
+    selectedSource = 'all';
+    select.value = 'all';
+}
+
+function filterBySource() {
+    selectedSource = document.getElementById('sourceFilter').value;
+    
+    if (selectedSource === 'all') {
+        currentSummary = processGroupedData(allExpenses);
+    } else {
+        const filtered = allExpenses.filter(exp => {
+            const normalize = (str) => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : 'Unknown';
+            return normalize(exp.paid_by) === selectedSource;
+        });
+        currentSummary = processGroupedData(filtered);
+    }
+    
+    renderSummaryUI();
 }
 
 function renderSummaryUI() {
@@ -271,6 +309,84 @@ async function generateGroupedPDF() {
     } catch (err) {
         console.error(err);
         alert("Error generating summary: " + err.message);
+    } finally {
+        loader.style.display = 'none';
+    }
+}
+
+async function generateSimpleListPDF() {
+    const loader = document.getElementById('globalLoader');
+    loader.style.display = 'flex';
+
+    try {
+        const summary = await getGroupedData();
+        if (!summary) return;
+
+        if (summary.grandTotal === 0) {
+            alert("No data found for this range");
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const fromDate = document.getElementById('sumFromDate').value;
+        const toDate = document.getElementById('sumToDate').value;
+
+        doc.setFillColor(5, 150, 105);
+        doc.rect(0, 0, pageWidth, 25, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(18);
+        doc.text("SIMPLE SUMMARY LIST", 14, 17);
+        
+        doc.setFontSize(10);
+        doc.text(`Period: ${fromDate} to ${toDate}`, pageWidth - 14, 17, { align: 'right' });
+
+        let currentY = 35;
+
+        const createSimpleTable = (title, dataObj, headLabel) => {
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.text(title, 14, currentY);
+            currentY += 5;
+
+            const tableRows = Object.entries(dataObj).map(([key, valObj]) => [key, valObj.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })]);
+            
+            doc.autoTable({
+                head: [[headLabel, 'Total Amount (INR)']],
+                body: tableRows,
+                startY: currentY,
+                theme: 'striped',
+                headStyles: { fillColor: [5, 150, 105] },
+                styles: { fontSize: 9 },
+                margin: { left: 14, right: 14 }
+            });
+            currentY = doc.lastAutoTable.finalY + 12;
+        };
+
+        createSimpleTable("Summary by Category", summary.Category, "Category");
+        createSimpleTable("Summary by Paid By (Source)", summary.Source, "Paid By");
+        createSimpleTable("Summary by Payee", summary.Payee, "Payee Name");
+        
+        if (currentY > 220) { doc.addPage(); currentY = 20; }
+        createSimpleTable("Summary by Purpose", summary.Purpose, "Purpose");
+
+        doc.setFillColor(240, 253, 244);
+        doc.rect(14, currentY, pageWidth - 28, 15, 'F');
+        doc.setTextColor(5, 150, 105);
+        doc.setFontSize(14);
+        doc.text(`GRAND TOTAL: INR ${summary.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, pageWidth / 2, currentY + 10, { align: 'center' });
+
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text("Generated by ExpensePro Manager | Author: Keshab Sarkar", pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+
+        doc.save(`SimpleList_${fromDate}_to_${toDate}.pdf`);
+
+    } catch (err) {
+        console.error(err);
+        alert("Error generating simple list: " + err.message);
     } finally {
         loader.style.display = 'none';
     }
