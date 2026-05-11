@@ -93,10 +93,14 @@
                         </table>
                     </div>
 
-                    <div class="excel-actions" style="margin-top: 20px; display: flex; gap: 15px;">
+                    <div class="excel-actions" style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
                         <button onclick="addNewRow()" class="btn-secondary" style="background: #f3f4f6; border: 1px solid #d1d5db; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;" aria-label="Add new expense row">
                             <i class="fa-solid fa-plus" aria-hidden="true"></i> Add New Row
                         </button>
+                        <label style="background: #059669; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;" aria-label="Import Excel file">
+                            <i class="fa-solid fa-file-excel" aria-hidden="true"></i> Import Excel
+                            <input type="file" id="xlsxFileInput" accept=".xlsx,.xls" style="display:none" onchange="importFromExcel(this)">
+                        </label>
                         <button onclick="saveAllEntries()" id="saveAllBtn" class="btn-primary" style="flex: 1; background: #4f46e5; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 1rem;" aria-label="Save all expense entries">
                             <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i> Save All Entries
                         </button>

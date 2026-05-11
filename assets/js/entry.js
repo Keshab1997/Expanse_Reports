@@ -221,11 +221,12 @@ function handleAutoFill(input) {
     }
 }
 
-// ৩. সব রো একসাথে সেভ করা
+// ৩. সব রো একসাথে সেভ করা (batch insert - no row limit)
 async function saveAllEntries() {
     const btn = document.getElementById('saveAllBtn');
     const rows = document.querySelectorAll('#excelTableBody tr');
     const dataToInsert = [];
+    const normalize = (str) => str ? str.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') : '';
 
     try {
         const { data: { user } } = await window.db.auth.getUser();
@@ -234,15 +235,7 @@ async function saveAllEntries() {
             const amount = parseFloat(row.querySelector('.row-amount').value);
             const category = row.querySelector('.row-category').value.trim();
             const payee = row.querySelector('.row-payee').value.trim();
-
-            if (category && payee && !isNaN(amount)) {
-                const normalize = (str) => {
-                    if (!str) return '';
-                    return str.trim().split(/\s+/).map(word => 
-                        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-                    ).join(' ');
-                };
-                
+            if (category && payee && !isNaN(amount) && amount > 0) {
                 dataToInsert.push({
                     date: row.querySelector('.row-date').value,
                     category: normalize(category),
@@ -262,11 +255,9 @@ async function saveAllEntries() {
         }
 
         btn.disabled = true;
-        btn.innerText = "Saving All...";
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
 
-        // Check if online
         if (!navigator.onLine) {
-            // Save to offline queue
             dataToInsert.forEach(item => window.offlineManager.saveToOfflineQueue(item));
             alert(`📴 Offline: ${dataToInsert.length} entries saved locally. Will sync when online.`);
             document.getElementById('excelTableBody').innerHTML = '';
@@ -274,8 +265,13 @@ async function saveAllEntries() {
             return;
         }
 
-        const { error } = await window.db.from('expenses').insert(dataToInsert);
-        if (error) throw error;
+        // Batch insert in chunks of 50 to avoid any server limits
+        const CHUNK = 50;
+        for (let i = 0; i < dataToInsert.length; i += CHUNK) {
+            const chunk = dataToInsert.slice(i, i + CHUNK);
+            const { error } = await window.db.from('expenses').insert(chunk);
+            if (error) throw error;
+        }
 
         alert(`✅ Successfully saved ${dataToInsert.length} entries!`);
         document.getElementById('excelTableBody').innerHTML = '';
@@ -289,8 +285,100 @@ async function saveAllEntries() {
         btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Save All Entries';
     }
 }
+
+// ৪. Excel ফাইল import করে rows populate করা
+function importFromExcel(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const workbook = XLSX.read(e.target.result, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+        // Find header row (DATE, CATEGORY, etc.) — skip blank rows at top
+        let headerIdx = -1;
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i].map(c => String(c).trim().toUpperCase());
+            if (row.includes('DATE') && row.includes('AMOUNT')) {
+                headerIdx = i;
+                break;
+            }
+        }
+        if (headerIdx === -1) { alert('Header row not found! Expected: DATE, CATEGORY, PAID BY, PAYEE, PURPOSE, AMOUNT, STATUS'); return; }
+
+        const headers = rows[headerIdx].map(c => String(c).trim().toUpperCase());
+        const colIdx = {
+            date:     headers.indexOf('DATE'),
+            category: headers.indexOf('CATEGORY'),
+            paidBy:   headers.indexOf('PAID BY'),
+            payee:    headers.indexOf('PAYEE'),
+            purpose:  headers.indexOf('PURPOSE'),
+            amount:   headers.indexOf('AMOUNT'),
+            status:   headers.indexOf('STATUS')
+        };
+
+        const dataRows = rows.slice(headerIdx + 1).filter(r => r.some(c => c !== ''));
+        if (dataRows.length === 0) { alert('No data rows found!'); return; }
+
+        // Clear existing rows and populate from Excel
+        document.getElementById('excelTableBody').innerHTML = '';
+        dataRows.forEach(row => {
+            const tbody = document.getElementById('excelTableBody');
+            const tr = document.createElement('tr');
+
+            // Parse date — handle DD/MM/YYYY or Excel serial number
+            let dateVal = '';
+            const rawDate = row[colIdx.date];
+            if (typeof rawDate === 'number') {
+                // Excel serial date
+                const d = new Date(Math.round((rawDate - 25569) * 86400 * 1000));
+                dateVal = d.toISOString().split('T')[0];
+            } else if (rawDate) {
+                const parts = String(rawDate).split('/');
+                if (parts.length === 3) {
+                    // DD/MM/YYYY → YYYY-MM-DD
+                    dateVal = `${parts[2].padStart(4,'0')}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+                } else {
+                    dateVal = String(rawDate);
+                }
+            }
+
+            const status = String(row[colIdx.status] || 'Paid').trim();
+            const amount = parseFloat(row[colIdx.amount]) || '';
+
+            tr.innerHTML = `
+                <td data-label="Date"><input type="date" class="excel-input row-date" value="${dateVal}"></td>
+                <td data-label="Category"><input type="text" class="excel-input row-category" list="catList" value="${row[colIdx.category] || ''}" onblur="formatInput(this)"></td>
+                <td data-label="Paid By"><input type="text" class="excel-input row-source" list="sourceList" value="${row[colIdx.paidBy] || ''}" onblur="formatInput(this)"></td>
+                <td data-label="Payee"><input type="text" class="excel-input row-payee" list="payeeList" value="${row[colIdx.payee] || ''}" onblur="formatInput(this)"></td>
+                <td data-label="Purpose"><input type="text" class="excel-input row-purpose" list="purposeList" value="${row[colIdx.purpose] || ''}" onblur="formatInput(this)"></td>
+                <td data-label="Amount"><input type="number" class="excel-input row-amount" value="${amount}"></td>
+                <td data-label="Status">
+                    <select class="excel-input row-status">
+                        <option value="Paid" ${status === 'Paid' ? 'selected' : ''}>Paid</option>
+                        <option value="Unpaid" ${status === 'Unpaid' ? 'selected' : ''}>Unpaid</option>
+                    </select>
+                </td>
+                <td data-label="Action" style="text-align:center;vertical-align:middle;">
+                    <button onclick="this.closest('tr').remove()" class="btn-del-row" title="Remove Row">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        alert(`✅ ${dataRows.length} rows imported from Excel! Review and click "Save All Entries".`);
+        input.value = ''; // Reset file input
+    };
+    reader.readAsArrayBuffer(file);
+}
+
 // Make functions globally available
 window.addNewRow = addNewRow;
 window.handleAutoFill = handleAutoFill;
 window.saveAllEntries = saveAllEntries;
 window.formatInput = formatInput;
+window.importFromExcel = importFromExcel;
